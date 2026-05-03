@@ -5,7 +5,7 @@ import {
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
 	format_mcp_tool_result,
 	stringify_mcp_tool_result,
@@ -13,6 +13,7 @@ import {
 } from './result.js';
 
 const cleanup_dirs: string[] = [];
+const original_context_config = process.env.MY_PI_CONTEXT_CONFIG;
 
 function temp_dir(prefix = 'pi-mcp-context-'): string {
 	const dir = mkdtempSync(join(tmpdir(), prefix));
@@ -24,8 +25,18 @@ function temp_context_db(): string {
 	return join(temp_dir(), 'context.db');
 }
 
+beforeEach(() => {
+	process.env.MY_PI_CONTEXT_CONFIG = join(
+		temp_dir('pi-mcp-context-config-'),
+		'context.json',
+	);
+});
+
 afterEach(() => {
 	set_context_sidecar_enabled(false);
+	if (original_context_config === undefined)
+		delete process.env.MY_PI_CONTEXT_CONFIG;
+	else process.env.MY_PI_CONTEXT_CONFIG = original_context_config;
 	for (const dir of cleanup_dirs)
 		rmSync(dir, { recursive: true, force: true });
 	cleanup_dirs.length = 0;

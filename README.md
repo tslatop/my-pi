@@ -581,6 +581,8 @@ In interactive mode:
   sources in the current project/session scope
 - `/context stats` / `/context-stats` — inspect scoped/global context
   sidecar stats and active retention policy
+- `/context settings` — configure context sidecar retention, storage,
+  and capture-threshold presets
 - `/context purge [days|expired]` — purge old or expired context
   sidecar entries
 - `/telemetry status|stats|query|export|on|off|path` — inspect, query,

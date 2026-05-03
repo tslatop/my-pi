@@ -1,4 +1,7 @@
-import { maybe_store_context_output } from '@spences10/pi-context';
+import {
+	get_context_mcp_output_limits,
+	maybe_store_context_output,
+} from '@spences10/pi-context';
 import { randomUUID } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -61,8 +64,9 @@ export function truncate_mcp_tool_output(
 		input_summary?: string | null;
 	} = {},
 ): { text: string; details: McpResultTruncationDetails } {
-	const max_bytes = options.max_bytes ?? MCP_RESULT_MAX_BYTES;
-	const max_lines = options.max_lines ?? MCP_RESULT_MAX_LINES;
+	const context_limits = get_context_mcp_output_limits();
+	const max_bytes = options.max_bytes ?? context_limits.max_bytes;
+	const max_lines = options.max_lines ?? context_limits.max_lines;
 	const bytes = Buffer.byteLength(text, 'utf8');
 	const lines = count_lines(text);
 
