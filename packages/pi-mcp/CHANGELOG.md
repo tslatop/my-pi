@@ -1,5 +1,14 @@
 # @spences10/pi-mcp
 
+## 0.0.16
+
+### Patch Changes
+
+- 92b9ff0: Add configurable context sidecar retention, storage caps, capture
+  thresholds, and nested settings menus.
+- Updated dependencies [92b9ff0]
+  - @spences10/pi-context@0.0.6
+
 ## 0.0.15
 
 ### Patch Changes

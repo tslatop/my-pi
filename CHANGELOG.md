@@ -1,5 +1,15 @@
 # my-pi
 
+## 0.1.31
+
+### Patch Changes
+
+- 92b9ff0: Add configurable context sidecar retention, storage caps, capture
+  thresholds, and nested settings menus.
+- Updated dependencies [92b9ff0]
+  - @spences10/pi-context@0.0.6
+  - @spences10/pi-mcp@0.0.16
+
 ## 0.1.30
 
 ### Patch Changes
@@ -464,6 +474,7 @@
   session transfer prompts.
 
   The `/handoff` command now:
+
   - summarizes the current branch conversation with the active model
   - asks the user to review and edit the generated prompt
   - creates a new session linked to the current one
