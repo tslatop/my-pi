@@ -1,5 +1,12 @@
 # @spences10/pi-sqlite-tools
 
+## 0.0.5
+
+### Patch Changes
+
+- 9bbacf1: Improve pi-context chunk retrieval UX with first chunk receipts,
+  aliases, and helpful miss messages.
+
 ## 0.0.4
 
 ### Patch Changes

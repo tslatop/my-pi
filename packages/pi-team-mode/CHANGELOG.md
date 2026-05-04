@@ -1,5 +1,15 @@
 # @spences10/pi-team-mode
 
+## 0.0.13
+
+### Patch Changes
+
+- 9bbacf1: Improve pi-context chunk retrieval UX with first chunk receipts,
+  aliases, and helpful miss messages.
+- Updated dependencies [9bbacf1]
+  - @spences10/pi-tui-modal@0.0.7
+  - @spences10/pi-redact@0.0.5
+
 ## 0.0.12
 
 ### Patch Changes

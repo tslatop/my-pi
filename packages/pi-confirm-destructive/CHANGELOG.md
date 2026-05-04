@@ -1,5 +1,12 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.7
+
+### Patch Changes
+
+- 9bbacf1: Improve pi-context chunk retrieval UX with first chunk receipts,
+  aliases, and helpful miss messages.
+
 ## 0.0.6
 
 ### Patch Changes

@@ -1,5 +1,26 @@
 # my-pi
 
+## 0.1.32
+
+### Patch Changes
+
+- 9bbacf1: Improve pi-context chunk retrieval UX with first chunk receipts,
+  aliases, and helpful miss messages.
+- Updated dependencies [9bbacf1]
+  - @spences10/pi-confirm-destructive@0.0.7
+  - @spences10/pi-sqlite-tools@0.0.5
+  - @spences10/pi-omnisearch@0.0.5
+  - @spences10/pi-team-mode@0.0.13
+  - @spences10/pi-telemetry@0.0.7
+  - @spences10/pi-tui-modal@0.0.7
+  - @spences10/pi-context@0.0.7
+  - @spences10/pi-nopeek@0.0.5
+  - @spences10/pi-recall@0.0.5
+  - @spences10/pi-redact@0.0.5
+  - @spences10/pi-skills@0.0.12
+  - @spences10/pi-lsp@0.0.14
+  - @spences10/pi-mcp@0.0.17
+
 ## 0.1.31
 
 ### Patch Changes
@@ -474,6 +495,7 @@
   session transfer prompts.
 
   The `/handoff` command now:
+
   - summarizes the current branch conversation with the active model
   - asks the user to review and edit the generated prompt
   - creates a new session linked to the current one
