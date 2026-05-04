@@ -4,8 +4,8 @@
 
 ### Patch Changes
 
-- 9bbacf1: Improve pi-context chunk retrieval UX with first chunk receipts,
-  aliases, and helpful miss messages.
+- 9bbacf1: Improve pi-context chunk retrieval UX with first chunk
+  receipts, aliases, and helpful miss messages.
 - Updated dependencies [9bbacf1]
   - @spences10/pi-confirm-destructive@0.0.7
   - @spences10/pi-sqlite-tools@0.0.5
@@ -495,7 +495,6 @@
   session transfer prompts.
 
   The `/handoff` command now:
-
   - summarizes the current branch conversation with the active model
   - asks the user to review and edit the generated prompt
   - creates a new session linked to the current one
