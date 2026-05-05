@@ -4,6 +4,7 @@ import type {
 	Theme,
 } from '@mariozechner/pi-coding-agent';
 import { truncateToWidth, visibleWidth } from '@mariozechner/pi-tui';
+import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
 type Rgb = [number, number, number];
@@ -18,13 +19,41 @@ const ICE: Rgb = [151, 205, 255];
 const PALETTE: Rgb[] = [DEEP_BLUE, BLUE, SKY, ICE, SKY, BLUE];
 
 const TITLE_LINES = [
-	'  ██████╗  ██╗ ',
-	'  ██╔══██╗ ██║ ',
-	'  ██████╔╝ ██║ ',
-	'  ██╔═══╝  ██║ ',
-	'  ██║      ██║ ',
-	'  ╚═╝      ╚═╝ ',
+	'███╗   ███╗                  ██████╗ ██╗',
+	'████╗ ████║ ██╗   ██╗        ██╔══██╗   ',
+	'██╔████╔██║ ╚██╗ ██╔╝ ████╗  ██████╔╝██╗',
+	'██║╚██╔╝██║  ╚████╔╝ ╚═══╝   ██╔═══╝ ██║',
+	'██║ ╚═╝ ██║   ╚██╔╝          ██║     ██║',
+	'╚═╝     ╚═╝   ██╔╝           ╚═╝     ╚═╝',
 ] as const;
+
+const TITLE_WIDTH = Math.max(
+	...TITLE_LINES.map((line) => line.length),
+);
+
+function read_my_pi_version(): string {
+	const candidates = [
+		new URL('../../../package.json', import.meta.url),
+		new URL('../package.json', import.meta.url),
+	];
+
+	for (const candidate of candidates) {
+		try {
+			const parsed: unknown = JSON.parse(
+				readFileSync(candidate, 'utf-8'),
+			);
+			const version = (parsed as { version?: unknown } | null)
+				?.version;
+			if (typeof version === 'string') return version;
+		} catch {
+			// Try the next source/distro-relative location.
+		}
+	}
+
+	return 'dev';
+}
+
+const MY_PI_VERSION = read_my_pi_version();
 
 function mix(a: number, b: number, t: number): number {
 	return Math.round(a + (b - a) * t);
@@ -78,6 +107,24 @@ function color_line(
 		: theme.fg('accent', line);
 }
 
+function gradient_or_theme(
+	theme: Theme,
+	line: string,
+	phase: number,
+): string {
+	return theme.getColorMode() === 'truecolor'
+		? `${BOLD}${gradient_text(line, phase)}${RESET}`
+		: theme.bold(theme.fg('accent', line));
+}
+
+function render_brand(theme: Theme, width: number): string {
+	return gradient_or_theme(
+		theme,
+		center_line(`My-Pi v${MY_PI_VERSION}`, width),
+		0.12,
+	);
+}
+
 function render_subtitle(
 	ctx: ExtensionContext,
 	theme: Theme,
@@ -86,9 +133,7 @@ function render_subtitle(
 ): string {
 	const project = basename(ctx.cwd) || ctx.cwd;
 	const subtitle = center_line(`${model_id} · ${project}`, width);
-	return theme.getColorMode() === 'truecolor'
-		? `${BOLD}${gradient_text(subtitle, 0.18)}${RESET}`
-		: theme.bold(theme.fg('accent', subtitle));
+	return gradient_or_theme(theme, subtitle, 0.18);
 }
 
 export function render_startup_header(
@@ -99,7 +144,10 @@ export function render_startup_header(
 ): string[] {
 	if (width < 24) {
 		return [
-			center_line(theme.bold(theme.fg('accent', 'pi')), width),
+			center_line(
+				theme.bold(theme.fg('accent', `My-Pi v${MY_PI_VERSION}`)),
+				width,
+			),
 			center_line(
 				`${model_id} · ${basename(ctx.cwd) || ctx.cwd}`,
 				width,
@@ -108,11 +156,16 @@ export function render_startup_header(
 	}
 
 	const logo = TITLE_LINES.map((line, row) =>
-		color_line(theme, center_line(line, width), row * 0.045),
+		color_line(
+			theme,
+			center_line(line.padEnd(TITLE_WIDTH), width),
+			row * 0.045,
+		),
 	);
 
 	return [
 		'',
+		render_brand(theme, width),
 		...logo,
 		render_subtitle(ctx, theme, model_id, width),
 		'',

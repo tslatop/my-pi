@@ -3,6 +3,7 @@ import type {
 	Theme,
 } from '@mariozechner/pi-coding-agent';
 import { visibleWidth } from '@mariozechner/pi-tui';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { render_startup_header } from './index.js';
 
@@ -24,6 +25,10 @@ const ctx = {
 	model: { id: 'gpt-5.5' },
 } as ExtensionContext;
 
+const package_version = JSON.parse(
+	readFileSync('package.json', 'utf-8'),
+).version as string;
+
 describe('render_startup_header', () => {
 	it('renders a Davis-style ANSI truecolor title and centered subtitle', () => {
 		const colored = render_startup_header(ctx, truecolor_theme, 72);
@@ -32,8 +37,11 @@ describe('render_startup_header', () => {
 		);
 
 		expect(colored.join('\n')).toContain('\x1b[38;2;');
-		expect(plain).toContain('██████╗  ██╗');
-		expect(plain).toContain('╚═╝      ╚═╝');
+		expect(plain).toContain(`My-Pi v${package_version}`);
+		expect(plain).toContain(
+			'███╗   ███╗                  ██████╗ ██╗',
+		);
+		expect(plain).toContain('╚██╗ ██╔╝ ████╗  ██████╔╝██╗');
 		expect(plain).toContain('gpt-5.5 · state-of-ai-site');
 		expect(colored.every((line) => visibleWidth(line) <= 72)).toBe(
 			true,
@@ -41,11 +49,11 @@ describe('render_startup_header', () => {
 	});
 
 	it('uses a compact fallback for narrow terminals', () => {
-		const lines = render_startup_header(ctx, truecolor_theme, 12);
+		const lines = render_startup_header(ctx, truecolor_theme, 16);
 
 		expect(lines).toHaveLength(2);
-		expect(lines.join('\n')).toContain('pi');
-		expect(lines.every((line) => visibleWidth(line) <= 12)).toBe(
+		expect(lines.join('\n')).toContain(`My-Pi v${package_version}`);
+		expect(lines.every((line) => visibleWidth(line) <= 16)).toBe(
 			true,
 		);
 	});
