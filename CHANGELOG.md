@@ -1,5 +1,16 @@
 # my-pi
 
+## 0.1.33
+
+### Patch Changes
+
+- fadfd9a: Startup splash gradients now derive from active theme
+  colors while preserving truecolor gradient rendering support.
+- 091d232: Add Davis-style gradient startup header with centered
+  model/project subtitle and live model selection updates.
+- 78640fb: Add custom My-Pi startup header with truecolor pixel fill
+  and box-drawing outline styling for clarity.
+
 ## 0.1.32
 
 ### Patch Changes
