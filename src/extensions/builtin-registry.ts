@@ -145,6 +145,25 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 			(await import('@spences10/pi-sqlite-tools')).default,
 	},
 	{
+		key: 'startup-screen',
+		label: 'Startup screen',
+		docs_label: 'Startup screen',
+		description:
+			'Pixel-art gradient startup header for interactive sessions',
+		default_enabled: true,
+		option_name: 'startup_screen',
+		cli_arg: 'no-startup-screen',
+		cli_flag: '--no-startup-screen',
+		cli_description: 'Disable the custom startup screen',
+		aliases: ['startup-screen', 'startup', 'header', 'splash'],
+		mode_constraints: {
+			disabled_in: ['print', 'json', 'rpc'],
+			reason: 'Startup screen only renders in the interactive TUI',
+		},
+		load: async () =>
+			(await import('./startup-screen/index.js')).default,
+	},
+	{
 		key: 'prompt-presets',
 		label: 'Prompt presets',
 		docs_label: 'Prompt presets',

@@ -54,6 +54,7 @@ describe('get_force_disabled_builtins', () => {
 		nopeek: true,
 		omnisearch: true,
 		sqlite_tools: true,
+		startup_screen: true,
 		prompt_presets: true,
 		lsp: true,
 		session_name: true,
@@ -69,6 +70,7 @@ describe('get_force_disabled_builtins', () => {
 		});
 
 		expect(disabled.has('session-name')).toBe(false);
+		expect(disabled.has('startup-screen')).toBe(false);
 		expect(disabled.has('confirm-destructive')).toBe(false);
 	});
 
@@ -79,6 +81,7 @@ describe('get_force_disabled_builtins', () => {
 		});
 
 		expect(disabled.has('session-name')).toBe(true);
+		expect(disabled.has('startup-screen')).toBe(true);
 		expect(disabled.has('confirm-destructive')).toBe(false);
 		expect(disabled.has('mcp')).toBe(false);
 		expect(disabled.has('prompt-presets')).toBe(false);
