@@ -4,153 +4,56 @@ import type {
 	Theme,
 } from '@mariozechner/pi-coding-agent';
 import { truncateToWidth, visibleWidth } from '@mariozechner/pi-tui';
-import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
-interface Rgb {
-	r: number;
-	g: number;
-	b: number;
-}
+type Rgb = [number, number, number];
 
-const LOGO_MASK = [
-	'██   ██ ██  ██        █████  ██',
-	'███ ███  ████         ██  ██   ',
-	'███████   ██    ████  █████  ██',
-	'██ █ ██   ██          ██     ██',
-	'██   ██   ██          ██     ██',
-	'██   ██   ██          ██     ██',
-	'██   ██  ██           ██     ██',
+const RESET = '\x1b[0m';
+const BOLD = '\x1b[1m';
+
+const DEEP_BLUE: Rgb = [22, 83, 189];
+const BLUE: Rgb = [48, 129, 247];
+const SKY: Rgb = [93, 171, 255];
+const ICE: Rgb = [151, 205, 255];
+const PALETTE: Rgb[] = [DEEP_BLUE, BLUE, SKY, ICE, SKY, BLUE];
+
+const TITLE_LINES = [
+	'  ██████╗  ██╗ ',
+	'  ██╔══██╗ ██║ ',
+	'  ██████╔╝ ██║ ',
+	'  ██╔═══╝  ██║ ',
+	'  ██║      ██║ ',
+	'  ╚═╝      ╚═╝ ',
 ] as const;
 
-const BLUE_STOPS: Rgb[] = [
-	{ r: 102, g: 169, b: 255 },
-	{ r: 42, g: 132, b: 255 },
-	{ r: 0, g: 92, b: 224 },
-	{ r: 13, g: 61, b: 170 },
-];
-
-const RESET_FG = '\x1b[39m';
-
-function read_my_pi_version(): string {
-	const candidates = [
-		new URL('../../../package.json', import.meta.url),
-		new URL('../package.json', import.meta.url),
-	];
-
-	for (const candidate of candidates) {
-		try {
-			const parsed: unknown = JSON.parse(
-				readFileSync(candidate, 'utf-8'),
-			);
-			const version = (parsed as { version?: unknown } | null)
-				?.version;
-			if (typeof version === 'string') return version;
-		} catch {
-			// Try the next source/distro-relative location.
-		}
-	}
-
-	return 'dev';
-}
-
-const MY_PI_VERSION = read_my_pi_version();
-
-function lerp(a: number, b: number, t: number): number {
+function mix(a: number, b: number, t: number): number {
 	return Math.round(a + (b - a) * t);
 }
 
-function mix(a: Rgb, b: Rgb, t: number): Rgb {
-	return {
-		r: lerp(a.r, b.r, t),
-		g: lerp(a.g, b.g, t),
-		b: lerp(a.b, b.b, t),
-	};
+function sample_gradient(position: number): Rgb {
+	const wrapped = ((position % 1) + 1) % 1;
+	const scaled = wrapped * PALETTE.length;
+	const index = Math.floor(scaled);
+	const next_index = (index + 1) % PALETTE.length;
+	const t = scaled - index;
+	const a = PALETTE[index]!;
+	const b = PALETTE[next_index]!;
+	return [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)];
 }
 
-function palette_at(t: number): Rgb {
-	const clamped = Math.max(0, Math.min(1, t));
-	const scaled = clamped * (BLUE_STOPS.length - 1);
-	const index = Math.min(Math.floor(scaled), BLUE_STOPS.length - 2);
-	return mix(
-		BLUE_STOPS[index],
-		BLUE_STOPS[index + 1],
-		scaled - index,
-	);
+function ansi_fg([r, g, b]: Rgb, text: string): string {
+	return `\x1b[38;2;${r};${g};${b}m${text}${RESET}`;
 }
 
-function shade(color: Rgb, amount: number): Rgb {
-	return {
-		r: Math.max(0, Math.min(255, Math.round(color.r * amount))),
-		g: Math.max(0, Math.min(255, Math.round(color.g * amount))),
-		b: Math.max(0, Math.min(255, Math.round(color.b * amount))),
-	};
-}
-
-function ansi_rgb(color: Rgb, text: string): string {
-	return `\x1b[38;2;${color.r};${color.g};${color.b}m${text}${RESET_FG}`;
-}
-
-function logo_color(x: number, y: number, width: number): Rgb {
-	const base = palette_at((x + y * 0.22) / Math.max(1, width - 1));
-	const band = x % 4 === 0 ? 1.12 : x % 4 === 3 ? 0.86 : 1;
-	return shade(base, band);
-}
-
-const LOGO_WIDTH = Math.max(...LOGO_MASK.map((line) => line.length));
-const LOGO_HEIGHT = LOGO_MASK.length;
-
-function is_logo_cell(x: number, y: number): boolean {
-	return LOGO_MASK[y]?.[x] !== undefined && LOGO_MASK[y][x] !== ' ';
-}
-
-function is_shifted_logo_cell(x: number, y: number): boolean {
-	return is_logo_cell(x - 1, y - 1);
-}
-
-function is_outline_cell(x: number, y: number): boolean {
-	if (is_logo_cell(x, y) || !is_shifted_logo_cell(x, y)) return false;
-	return (
-		!is_shifted_logo_cell(x - 1, y) ||
-		!is_shifted_logo_cell(x + 1, y) ||
-		!is_shifted_logo_cell(x, y - 1) ||
-		!is_shifted_logo_cell(x, y + 1)
-	);
-}
-
-function outline_char(x: number, y: number): string {
-	const up = is_outline_cell(x, y - 1);
-	const down = is_outline_cell(x, y + 1);
-	const left = is_outline_cell(x - 1, y);
-	const right = is_outline_cell(x + 1, y);
-
-	if ((left || right) && !(up || down)) return '─';
-	if ((up || down) && !(left || right)) return '│';
-	if (right && down) return '┌';
-	if (left && down) return '┐';
-	if (right && up) return '└';
-	if (left && up) return '┘';
-	return '┼';
-}
-
-function render_logo_line(theme: Theme, y: number): string {
-	let line = '';
-	for (let x = 0; x < LOGO_WIDTH + 1; x++) {
-		if (is_logo_cell(x, y)) {
-			line +=
-				theme.getColorMode() === 'truecolor'
-					? ansi_rgb(logo_color(x, y, LOGO_WIDTH), '█')
-					: theme.fg('accent', '█');
-		} else if (is_outline_cell(x, y)) {
-			line +=
-				theme.getColorMode() === 'truecolor'
-					? ansi_rgb({ r: 15, g: 75, b: 170 }, outline_char(x, y))
-					: theme.fg('borderAccent', outline_char(x, y));
-		} else {
-			line += ' ';
-		}
-	}
-	return line.trimEnd();
+function gradient_text(text: string, phase: number): string {
+	const chars = text.split('');
+	const span = Math.max(chars.length - 1, 1);
+	return chars
+		.map((char, index) => {
+			if (char === ' ') return char;
+			return ansi_fg(sample_gradient(index / span + phase), char);
+		})
+		.join('');
 }
 
 function center_line(line: string, width: number): string {
@@ -165,54 +68,95 @@ function center_line(line: string, width: number): string {
 	return `${' '.repeat(padding)}${clipped}`;
 }
 
+function color_line(
+	theme: Theme,
+	line: string,
+	phase: number,
+): string {
+	return theme.getColorMode() === 'truecolor'
+		? gradient_text(line, phase)
+		: theme.fg('accent', line);
+}
+
 function render_subtitle(
 	ctx: ExtensionContext,
 	theme: Theme,
+	model_id: string,
+	width: number,
 ): string {
-	const model = ctx.model?.id ?? 'no model';
 	const project = basename(ctx.cwd) || ctx.cwd;
-	return `${theme.fg('text', model)} ${theme.fg('muted', '·')} ${theme.fg('accent', project)}`;
+	const subtitle = center_line(`${model_id} · ${project}`, width);
+	return theme.getColorMode() === 'truecolor'
+		? `${BOLD}${gradient_text(subtitle, 0.18)}${RESET}`
+		: theme.bold(theme.fg('accent', subtitle));
 }
 
 export function render_startup_header(
 	ctx: ExtensionContext,
 	theme: Theme,
 	width: number,
+	model_id = ctx.model?.id ?? 'no model selected',
 ): string[] {
 	if (width < 24) {
 		return [
-			center_line(theme.bold(theme.fg('accent', 'My-Pi')), width),
-			center_line(render_subtitle(ctx, theme), width),
+			center_line(theme.bold(theme.fg('accent', 'pi')), width),
+			center_line(
+				`${model_id} · ${basename(ctx.cwd) || ctx.cwd}`,
+				width,
+			),
 		];
 	}
 
-	const logo = Array.from({ length: LOGO_HEIGHT + 1 }, (_line, y) =>
-		center_line(render_logo_line(theme, y), width),
-	);
-	const subtitle = center_line(render_subtitle(ctx, theme), width);
-	const help = center_line(
-		theme.fg(
-			'dim',
-			`my-pi v${MY_PI_VERSION} · / commands · ! bash · tab for more`,
-		),
-		width,
+	const logo = TITLE_LINES.map((line, row) =>
+		color_line(theme, center_line(line, width), row * 0.045),
 	);
 
-	return ['', ...logo, '', subtitle, help];
+	return [
+		'',
+		...logo,
+		render_subtitle(ctx, theme, model_id, width),
+		'',
+	];
 }
 
 export default function startup_screen_extension(
 	pi: ExtensionAPI,
 ): void {
-	pi.on('session_start', async (_event, ctx) => {
-		if (!ctx.hasUI) return;
+	let request_render: (() => void) | undefined;
+	let current_model_id = 'no model selected';
 
-		ctx.ui.setHeader((_tui, theme) => ({
-			invalidate() {},
-			render(width: number) {
-				return render_startup_header(ctx, theme, width);
-			},
-		}));
+	function install_header(ctx: ExtensionContext): void {
+		ctx.ui.setHeader((tui, theme) => {
+			request_render = () => tui.requestRender();
+			return {
+				invalidate() {
+					tui.requestRender();
+				},
+				render(width: number) {
+					return render_startup_header(
+						ctx,
+						theme,
+						width,
+						current_model_id,
+					);
+				},
+			};
+		});
+	}
+
+	pi.on('session_start', async (_event, ctx) => {
+		current_model_id = ctx.model?.id ?? 'no model selected';
+		if (!ctx.hasUI) return;
+		install_header(ctx);
+	});
+
+	pi.on('model_select', (event) => {
+		current_model_id = event.model.id;
+		request_render?.();
+	});
+
+	pi.on('session_shutdown', (_event, ctx) => {
+		if (ctx.hasUI) ctx.ui.setHeader(undefined);
 	});
 
 	pi.registerCommand('builtin-header', {
