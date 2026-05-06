@@ -347,12 +347,13 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 		runtime_mode,
 	});
 	const builtins_config = load_builtin_extensions_config();
-	const skills_manager = is_builtin_extension_active(
+	const skills_builtin_enabled = is_builtin_extension_active(
 		builtins_config,
 		'skills',
 		force_disabled,
-	)
-		? (await import('@spences10/pi-skills')).create_skills_manager()
+	);
+	const skills_package = skills_builtin_enabled
+		? await import('@spences10/pi-skills')
 		: undefined;
 
 	const managed_extension_factories: ExtensionFactory[] = [
@@ -383,6 +384,11 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 		sessionManager: SessionManager;
 		sessionStartEvent?: unknown;
 	}) => {
+		// Keep skill filtering reloadable so profile changes made by
+		// /skills are reflected without restarting the process.
+		const runtime_skills_manager =
+			skills_package?.create_skills_manager();
+
 		const services = await createAgentSessionServices({
 			cwd: runtime_cwd,
 			agentDir: effective_agent_dir,
@@ -412,7 +418,8 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 					managed_inline_paths,
 				),
 				skillsOverride: (base: any) => {
-					if (!skills_manager) return base;
+					if (!runtime_skills_manager) return base;
+					runtime_skills_manager.refresh();
 
 					const include_project_skills = is_resource_enabled(
 						process.env.MY_PI_PROJECT_SKILLS,
@@ -438,7 +445,7 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 							) {
 								return false;
 							}
-							return skills_manager.is_enabled_by_skill(
+							return runtime_skills_manager.is_enabled_by_skill(
 								skill.name,
 								skill.filePath,
 							);

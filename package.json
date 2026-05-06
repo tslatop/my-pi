@@ -78,7 +78,7 @@
 		"@spences10/pi-themes": "workspace:*",
 		"@spences10/pi-tui-modal": "workspace:*",
 		"citty": "^0.2.2",
-		"typebox": "^1.1.37"
+		"typebox": "^1.1.38"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.31.0",

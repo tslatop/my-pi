@@ -304,6 +304,77 @@ describe('create_my_pi environment scoping', () => {
 			rmSync(cwd, { recursive: true, force: true });
 		}
 	});
+
+	it('reloads skill profile changes into the resource filter', async () => {
+		const cwd = mkdtempSync(join(tmpdir(), 'my-pi-api-skills-'));
+		const xdg_config_home = mkdtempSync(
+			join(tmpdir(), 'my-pi-api-skills-config-'),
+		);
+		const agent_dir = join(cwd, 'agent');
+		const skill_dir = join(agent_dir, 'skills', 'cl-duncan-table');
+		const skills_config = join(
+			xdg_config_home,
+			'my-pi',
+			'skills.json',
+		);
+
+		try {
+			process.env.XDG_CONFIG_HOME = xdg_config_home;
+			mkdirSync(skill_dir, { recursive: true });
+			mkdirSync(join(xdg_config_home, 'my-pi'), { recursive: true });
+			writeFileSync(
+				join(skill_dir, 'SKILL.md'),
+				`---\nname: cl-duncan-table\ndescription: Duncan table test skill.\n---\n\n# Duncan\n`,
+			);
+			writeFileSync(
+				skills_config,
+				JSON.stringify({
+					version: 3,
+					enabled: {},
+					defaults: 'all-disabled',
+					current_profile: 'blocked',
+					profiles: {
+						blocked: { include: [], exclude: ['cl-*'] },
+						allowed: { include: ['cl-*'], exclude: [] },
+					},
+				}),
+			);
+
+			const runtime = await create_my_pi({
+				cwd,
+				agent_dir,
+				runtime_mode: 'json',
+				...disabled_builtins,
+				skills: true,
+			});
+			const get_skill_names = () =>
+				runtime.services.resourceLoader
+					.getSkills()
+					.skills.map((skill) => skill.name);
+
+			expect(get_skill_names()).not.toContain('cl-duncan-table');
+			writeFileSync(
+				skills_config,
+				JSON.stringify({
+					version: 3,
+					enabled: {},
+					defaults: 'all-disabled',
+					current_profile: 'allowed',
+					profiles: {
+						blocked: { include: [], exclude: ['cl-*'] },
+						allowed: { include: ['cl-*'], exclude: [] },
+					},
+				}),
+			);
+
+			await runtime.session.reload();
+			expect(get_skill_names()).toContain('cl-duncan-table');
+			await runtime.dispose();
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+			rmSync(xdg_config_home, { recursive: true, force: true });
+		}
+	});
 });
 
 function make_model(overrides: Record<string, unknown> = {}) {
