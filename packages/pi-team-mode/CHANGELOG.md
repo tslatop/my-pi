@@ -1,5 +1,16 @@
 # @spences10/pi-team-mode
 
+## 0.0.15
+
+### Patch Changes
+
+- 3a8937a: Make team wait actions non-blocking so lead sessions remain
+  available while teammates continue background work.
+- fd8a6ae: Make team dashboard live-refresh and show recent mailbox
+  message previews for relay verification.
+- Updated dependencies [fd8a6ae]
+  - @spences10/pi-tui-modal@0.0.8
+
 ## 0.0.14
 
 ### Patch Changes

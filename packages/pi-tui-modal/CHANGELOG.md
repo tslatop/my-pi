@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.8
+
+### Patch Changes
+
+- fd8a6ae: Make team dashboard live-refresh and show recent mailbox
+  message previews for relay verification.
+
 ## 0.0.7
 
 ### Patch Changes
