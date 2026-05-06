@@ -1,5 +1,17 @@
 # my-pi
 
+## 0.1.34
+
+### Patch Changes
+
+- 1ef0bb8: Fix skills reload using fresh profile config so enabled
+  cl-\* skills appear after TUI reload.
+- Updated dependencies [1ef0bb8]
+  - @spences10/pi-team-mode@0.0.14
+  - @spences10/pi-context@0.0.8
+  - @spences10/pi-lsp@0.0.15
+  - @spences10/pi-mcp@0.0.18
+
 ## 0.1.33
 
 ### Patch Changes
