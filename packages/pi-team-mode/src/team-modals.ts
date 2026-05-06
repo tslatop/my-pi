@@ -1,4 +1,5 @@
 import type { ExtensionCommandContext } from '@mariozechner/pi-coding-agent';
+import { watch, type FSWatcher } from 'node:fs';
 import {
 	getKeybindings,
 	Key,
@@ -766,29 +767,71 @@ export async function show_team_dashboard_modal(
 	ctx: ExtensionCommandContext,
 	store: TeamStore,
 	status: TeamStatus,
+	runners: Map<string, RpcTeammate> = new Map(),
 ): Promise<'close' | 'results'> {
-	const dashboard = format_team_dashboard(status, {
-		team_dir: store.team_dir(status.team.id),
-		mailboxes: collect_team_mailboxes(store, status),
-		session_usage: collect_session_usage(status.members),
-	});
+	let current_status = status;
+	const dashboard_lines = () =>
+		format_team_dashboard(current_status, {
+			team_dir: store.team_dir(current_status.team.id),
+			mailboxes: collect_team_mailboxes(store, current_status),
+			session_usage: collect_session_usage(current_status.members),
+		}).split('\n');
 
 	return await show_modal<'close' | 'results'>(
 		ctx,
 		{
 			title: 'Team dashboard',
-			subtitle: `${status.team.name} • ${format_status_counts(status)}`,
-			footer: '↑↓ scroll • enter/s results • q/esc close',
+			subtitle: () =>
+				`${current_status.team.name} • ${format_status_counts(current_status)}`,
+			footer:
+				'live refresh • ↑↓ scroll • enter/s results • q/esc close',
 			overlay_options: { width: '90%', minWidth: 72 },
 		},
-		({ done }, theme, layout) => {
-			const dashboard_lines = dashboard.split('\n');
+		({ done }, theme, layout, tui) => {
 			let offset = 0;
 			let max_offset = 0;
+			let disposed = false;
+			let refreshing = false;
+			let refresh_queued = false;
+			const refresh = async () => {
+				if (disposed) return;
+				if (refreshing) {
+					refresh_queued = true;
+					return;
+				}
+				refreshing = true;
+				try {
+					current_status = await get_team_status(
+						store,
+						current_status.team.id,
+						runners,
+					);
+					tui.requestRender();
+				} catch {
+					// Keep showing the last known dashboard snapshot.
+				} finally {
+					refreshing = false;
+					if (refresh_queued) {
+						refresh_queued = false;
+						void refresh();
+					}
+				}
+			};
+			let watcher: FSWatcher | undefined;
+			try {
+				watcher = watch(
+					store.events_path(current_status.team.id),
+					{ persistent: false },
+					() => void refresh(),
+				);
+			} catch {
+				// If watching is unavailable, the dashboard still renders the
+				// snapshot captured when it opened.
+			}
 
 			return {
 				render: (width: number) => {
-					const rendered = dashboard_lines.map((line) => {
+					const rendered = dashboard_lines().map((line) => {
 						const styled = /^[A-Z][^:]+$/.test(line)
 							? theme.fg('accent', theme.bold(line))
 							: line;
@@ -823,6 +866,10 @@ export async function show_team_dashboard_modal(
 					return visible;
 				},
 				invalidate: () => undefined,
+				dispose: () => {
+					disposed = true;
+					watcher?.close();
+				},
 				handleInput: (data: string) => {
 					const keybindings = getKeybindings();
 					if (

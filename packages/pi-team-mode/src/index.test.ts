@@ -613,6 +613,11 @@ describe('team dashboard', () => {
 				body: 'Please check in',
 				urgent: true,
 			});
+			await store.send_message(team.id, {
+				from: 'relay1',
+				to: 'relay2',
+				body: 'CHAIN_1_TO_2',
+			});
 
 			const notifications: string[] = [];
 			await handle_team_command(
@@ -641,6 +646,13 @@ describe('team dashboard', () => {
 			expect(dashboard).toContain(
 				'alice: 1 unacknowledged · 1 unread · 1 urgent',
 			);
+			expect(dashboard).toContain(
+				'queued urgent from lead: Please check in',
+			);
+			expect(dashboard).toContain(
+				'relay2: 1 unacknowledged · 1 unread',
+			);
+			expect(dashboard).toContain('queued from relay1: CHAIN_1_TO_2');
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}

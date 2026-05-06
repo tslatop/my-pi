@@ -797,6 +797,7 @@ export class TeamStore {
 				: undefined;
 			const messages = this.list_messages(team_id, normalized_member);
 			const timestamp = now();
+			const changed: TeamMessage[] = [];
 			for (const message of messages) {
 				if (id_filter && !id_filter.has(message.id)) continue;
 				const before = JSON.stringify(message);
@@ -809,6 +810,13 @@ export class TeamStore {
 					),
 					message,
 				);
+				changed.push(message);
+			}
+			if (changed.length > 0) {
+				this.append_event(team_id, 'messages_updated', {
+					member: normalized_member,
+					messages: changed,
+				});
 			}
 			return messages;
 		});

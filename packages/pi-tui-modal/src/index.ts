@@ -54,6 +54,7 @@ export interface ModalOptions {
 
 export interface ModalBody extends Component {
 	handleInput?(data: string): void;
+	dispose?(): void;
 }
 
 export interface ModalControls<T> {
@@ -787,6 +788,7 @@ export async function show_modal<T>(
 		controls: ModalControls<T>,
 		theme: ModalTheme,
 		layout: ModalLayout,
+		tui: TUI,
 	) => ModalBody,
 ): Promise<T> {
 	return await ctx.ui.custom<T>(
@@ -795,7 +797,7 @@ export async function show_modal<T>(
 				get_max_body_lines: (body_width?: number) =>
 					get_modal_body_line_budget(tui, options, body_width),
 			};
-			const body = create_body({ done }, theme, layout);
+			const body = create_body({ done }, theme, layout, tui);
 
 			return {
 				get focused(): boolean {
@@ -838,6 +840,7 @@ export async function show_modal<T>(
 				invalidate: () => {
 					body.invalidate();
 				},
+				dispose: () => body.dispose?.(),
 				handleInput: (data: string) => {
 					body.handleInput?.(data);
 					tui.requestRender();

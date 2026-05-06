@@ -335,7 +335,12 @@ export async function handle_team_command(
 						}
 						if (action === 'dashboard') {
 							const dashboard_action =
-								await show_team_dashboard_modal(ctx, store, status);
+								await show_team_dashboard_modal(
+									ctx,
+									store,
+									status,
+									runners,
+								);
 							if (dashboard_action === 'results') {
 								present_completed_task_results(ctx, status);
 							}
@@ -512,6 +517,7 @@ export async function handle_team_command(
 						ctx,
 						store,
 						status,
+						runners,
 					);
 					if (action === 'results') {
 						present_completed_task_results(ctx, status);

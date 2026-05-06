@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import {
 	TeamStore,
 	type TeamMember,
@@ -308,6 +309,19 @@ export function collect_team_mailboxes(
 	for (const task of status.tasks) {
 		if (task.assignee) names.add(task.assignee);
 	}
+	const mailbox_root = join(
+		store.team_dir(status.team.id),
+		'mailboxes',
+	);
+	try {
+		for (const entry of readdirSync(mailbox_root, {
+			withFileTypes: true,
+		})) {
+			if (entry.isDirectory()) names.add(entry.name);
+		}
+	} catch {
+		// Missing mailbox roots are fine for new teams.
+	}
 	return Object.fromEntries(
 		[...names].sort().map((name) => {
 			try {
@@ -347,11 +361,25 @@ function format_member_dashboard_line(
 	return `- ${member.name}: ${details.join(' · ')}`;
 }
 
-function format_mailbox_dashboard_line(
+function message_state(message: TeamMessage): string {
+	if (message.acknowledged_at) return 'acknowledged';
+	if (message.read_at) return 'read';
+	if (message.delivered_at) return 'delivered';
+	return 'queued';
+}
+
+function summarize_message_body(body: string): string {
+	const summary = body.trim().replace(/\s+/g, ' ');
+	return summary.length > 100
+		? `${summary.slice(0, 97)}...`
+		: summary;
+}
+
+function format_mailbox_dashboard_lines(
 	name: string,
 	messages: TeamMessage[],
-): string {
-	if (messages.length === 0) return `- ${name}: no messages`;
+): string[] {
+	if (messages.length === 0) return [`- ${name}: no messages`];
 	const unread = messages.filter(
 		(message) => !message.read_at,
 	).length;
@@ -361,7 +389,19 @@ function format_mailbox_dashboard_line(
 	const urgent = messages.filter(
 		(message) => message.urgent && !message.acknowledged_at,
 	).length;
-	return `- ${name}: ${unacknowledged} unacknowledged · ${unread} unread${urgent ? ` · ${urgent} urgent` : ''}`;
+	const lines = [
+		`- ${name}: ${unacknowledged} unacknowledged · ${unread} unread${urgent ? ` · ${urgent} urgent` : ''}`,
+	];
+	const recent = [...messages]
+		.sort((a, b) => b.created_at.localeCompare(a.created_at))
+		.slice(0, 3);
+	for (const message of recent) {
+		const urgent_label = message.urgent ? ' urgent' : '';
+		lines.push(
+			`  ↳ ${message_state(message)}${urgent_label} from ${message.from}: ${summarize_message_body(message.body)}`,
+		);
+	}
+	return lines;
 }
 
 function push_dashboard_task_group(
@@ -455,7 +495,7 @@ export function format_team_dashboard(
 	if (names.length === 0) lines.push('  none');
 	for (const name of names) {
 		lines.push(
-			format_mailbox_dashboard_line(name, mailboxes[name] ?? []),
+			...format_mailbox_dashboard_lines(name, mailboxes[name] ?? []),
 		);
 	}
 	return lines.join('\n');
