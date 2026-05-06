@@ -36,7 +36,6 @@ import {
 	get_team_status,
 	get_team_statuses,
 	shutdown_orphaned_member,
-	wait_for_orphaned_member,
 } from './runner-orchestration.js';
 import { TeamStore, type TeamConfig } from './store.js';
 import {
@@ -916,22 +915,13 @@ export async function handle_team_command(
 			case 'wait': {
 				const [member] = rest;
 				const name = require_arg(member, 'member');
-				const runner = runners.get(name);
-				if (runner?.is_running) await runner.wait_for_idle();
-				else
-					await wait_for_orphaned_member(
-						store,
-						current_team_id(),
-						name,
-						120_000,
-					);
 				set_team_ui(ctx, store, get_active_team_id(), runners);
 				const status = await get_team_status(
 					store,
 					current_team_id(),
 					runners,
 				);
-				const text = format_status(status);
+				const text = `Not blocking on ${name}; teammate work remains in the background.\n\n${format_status(status)}`;
 				if (has_modal_ui(ctx)) {
 					await show_team_text_modal(ctx, {
 						title: 'Team status',

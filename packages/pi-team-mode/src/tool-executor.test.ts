@@ -17,7 +17,10 @@ afterEach(() => {
 	rmSync(root, { recursive: true, force: true });
 });
 
-function deps(active_team_id: string) {
+function deps(
+	active_team_id: string,
+	overrides: Record<string, unknown> = {},
+) {
 	return {
 		store,
 		runners: new Map(),
@@ -29,8 +32,55 @@ function deps(active_team_id: string) {
 		get_team_root: () => root,
 		get_extension_path: () => join(root, 'extension.js'),
 		teammate_profile: () => undefined,
+		...overrides,
 	};
 }
+
+describe('execute_team_tool wait actions', () => {
+	it('does not block the lead session while teammates run', async () => {
+		const team = store.create_team({ cwd: '/repo' });
+		await store.upsert_member(team.id, {
+			name: 'alice',
+			role: 'teammate',
+			status: 'running_attached',
+		});
+		let wait_called = false;
+		const runners = new Map([
+			[
+				'alice',
+				{
+					is_running: true,
+					wait_for_idle: async () => {
+						wait_called = true;
+						throw new Error('member_wait should not block');
+					},
+				},
+			],
+		]);
+
+		const result = await execute_team_tool(
+			{
+				action: 'member_wait',
+				member: 'alice',
+			},
+			{
+				cwd: '/repo',
+				ui: {
+					setStatus: () => undefined,
+					setWidget: () => undefined,
+				},
+			} as any,
+			deps(team.id, { runners }) as any,
+		);
+
+		expect(wait_called).toBe(false);
+		expect(result.content[0].text).toContain('Not blocking on alice');
+		expect(result.details).toMatchObject({
+			member: 'alice',
+			waiting: false,
+		});
+	});
+});
 
 describe('execute_team_tool mailbox actions', () => {
 	it('marks selected messages read without acknowledging them', async () => {

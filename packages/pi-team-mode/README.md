@@ -32,7 +32,7 @@ This package adds local multi-agent coordination to Pi:
 - spawn real RPC teammate sessions
 - queue, claim, and update tasks
 - send mailbox-backed direct messages
-- steer, follow up with, wait for, or shut down teammates
+- steer, follow up with, check teammate status, or shut down teammates
 - persist team state locally for the current project
 - recover cleanly from stale local locks and orphaned teammate
   processes
@@ -185,11 +185,13 @@ redelivery on the next session.
 ```
 
 Use `/team status` as the source of truth for member state, task
-state, and mailbox activity. See
-[docs/comparison-matrix.md](docs/comparison-matrix.md) for the
-feature-parity gap check against comparable orchestration tools. Use
-`/team dashboard` for a compact modal with members, task groups,
-mailboxes, transcript paths, and available usage totals. Use
+state, and mailbox activity. `/team wait <member>` and the
+`member_wait` tool do not block the lead session; they refresh and
+return current team status while teammate work continues in the
+background. See [docs/comparison-matrix.md](docs/comparison-matrix.md)
+for the feature-parity gap check against comparable orchestration
+tools. Use `/team dashboard` for a compact modal with members, task
+groups, mailboxes, transcript paths, and available usage totals. Use
 `/team results` to join completed task results into a single summary.
 Assigned tasks stay queued until the assigned teammate claims them, so
 the status view reflects actual work in progress. Use
@@ -211,7 +213,8 @@ orchestration. Important actions include:
 - `member_prompt`
 - `member_follow_up`
 - `member_steer`
-- `member_wait`
+- `member_wait` (non-blocking status refresh; teammate work stays
+  backgrounded)
 - `task_create`
 - `task_get`
 - `task_claim_next`

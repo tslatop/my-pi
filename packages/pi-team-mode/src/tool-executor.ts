@@ -14,7 +14,6 @@ import {
 	get_team_status,
 	get_team_statuses,
 	shutdown_orphaned_member,
-	wait_for_orphaned_member,
 } from './runner-orchestration.js';
 import {
 	TeamStore,
@@ -404,17 +403,6 @@ export async function execute_team_tool(
 				params.member ?? params.name,
 				'member',
 			);
-			const runner = runners.get(member_name);
-			if (runner?.is_running) {
-				await runner.wait_for_idle(params.timeout_ms ?? 120_000);
-			} else {
-				await wait_for_orphaned_member(
-					store,
-					require_team_id(),
-					member_name,
-					params.timeout_ms ?? 120_000,
-				);
-			}
 			const status = await get_team_status(
 				store,
 				require_team_id(),
@@ -423,9 +411,12 @@ export async function execute_team_tool(
 			set_team_ui(ctx, store, team_id, runners);
 			return {
 				content: [
-					{ type: 'text' as const, text: format_status(status) },
+					{
+						type: 'text' as const,
+						text: `Not blocking on ${member_name}; teammate work remains in the background. Current status:\n\n${format_status(status)}`,
+					},
 				],
-				details: status,
+				details: { ...status, waiting: false, member: member_name },
 			};
 		}
 		case 'task_create': {

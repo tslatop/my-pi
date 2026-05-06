@@ -31,7 +31,6 @@ import {
 	get_team_status,
 	get_team_statuses,
 	shutdown_orphaned_member,
-	wait_for_orphaned_member,
 } from './runner-orchestration.js';
 import {
 	TeamStore,
@@ -642,16 +641,10 @@ async function run_member_modal_action(
 	}
 
 	if (action === 'wait') {
-		const runner = runners.get(member_name);
-		if (runner?.is_running) await runner.wait_for_idle();
-		else
-			await wait_for_orphaned_member(
-				store,
-				team_id,
-				member_name,
-				120_000,
-			);
-		ctx.ui.notify(`${member_name} is no longer running`);
+		set_team_ui(ctx, store, team_id, runners);
+		ctx.ui.notify(
+			`${member_name} is running in the background; lead session is free`,
+		);
 		return;
 	}
 
