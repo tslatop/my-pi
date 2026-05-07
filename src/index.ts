@@ -4,7 +4,7 @@
 // Extension stacking patterns inspired by https://github.com/disler/pi-vs-claude-code
 
 import { defineCommand, renderUsage, runMain } from 'citty';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -20,9 +20,16 @@ import { install_sqlite_warning_filter } from './warnings.js';
 install_sqlite_warning_filter();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const package_root = join(__dirname, '..');
 const pkg = JSON.parse(
-	readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'),
+	readFileSync(join(package_root, 'package.json'), 'utf-8'),
 );
+
+// my-pi is a wrapper around Pi; upstream Pi update banners are useful in
+// this repo, but confusing for installed wrapper users.
+if (!existsSync(join(package_root, '.git'))) {
+	process.env.PI_SKIP_VERSION_CHECK ??= '1';
+}
 
 async function read_stdin(): Promise<string> {
 	const chunks: Buffer[] = [];
