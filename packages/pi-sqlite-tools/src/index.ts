@@ -1,7 +1,7 @@
 import type {
 	BeforeAgentStartEvent,
 	ExtensionAPI,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 
 const MCP_SQLITE_TOOL_PREFIX = 'mcp__mcp-sqlite-tools__';
 

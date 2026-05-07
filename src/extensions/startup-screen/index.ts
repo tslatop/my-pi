@@ -3,8 +3,11 @@ import type {
 	ExtensionContext,
 	Theme,
 	ThemeColor,
-} from '@mariozechner/pi-coding-agent';
-import { truncateToWidth, visibleWidth } from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-coding-agent';
+import {
+	truncateToWidth,
+	visibleWidth,
+} from '@earendil-works/pi-tui';
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 

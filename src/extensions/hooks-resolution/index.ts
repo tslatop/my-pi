@@ -5,7 +5,7 @@ import type {
 	ExtensionContext,
 	ExtensionFactory,
 	ToolResultEvent,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
 	resolve_project_trust,
 	type ProjectTrustSubject,

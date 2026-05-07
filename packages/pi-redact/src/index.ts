@@ -1,8 +1,11 @@
 // Filter-output extension — redact secrets from tool output
 // Patterns from https://github.com/spences10/nopeek
 
-import type { ImageContent, TextContent } from '@mariozechner/pi-ai';
-import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+import type {
+	ImageContent,
+	TextContent,
+} from '@earendil-works/pi-ai';
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 interface SecretPattern {
 	name: string;

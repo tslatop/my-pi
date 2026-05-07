@@ -1,4 +1,4 @@
-import { type SettingItem } from '@mariozechner/pi-tui';
+import { type SettingItem } from '@earendil-works/pi-tui';
 import type { ManagedSkill, SkillProfile } from './manager.js';
 
 export const ENABLED = '● enabled';

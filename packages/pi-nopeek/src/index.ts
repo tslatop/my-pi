@@ -1,7 +1,7 @@
 import type {
 	BeforeAgentStartEvent,
 	ExtensionAPI,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 
 export function should_inject_nopeek_prompt(
 	event: Pick<BeforeAgentStartEvent, 'systemPromptOptions'>,

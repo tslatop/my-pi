@@ -1,8 +1,8 @@
 import type {
 	ExtensionContext,
 	Theme,
-} from '@mariozechner/pi-coding-agent';
-import { visibleWidth } from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-coding-agent';
+import { visibleWidth } from '@earendil-works/pi-tui';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { render_startup_header } from './index.js';

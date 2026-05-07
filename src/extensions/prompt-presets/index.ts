@@ -2,8 +2,8 @@ import {
 	type ExtensionAPI,
 	type ExtensionCommandContext,
 	type ExtensionContext,
-} from '@mariozechner/pi-coding-agent';
-import type { SettingItem } from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-coding-agent';
+import type { SettingItem } from '@earendil-works/pi-tui';
 import { show_settings_modal } from '@spences10/pi-tui-modal';
 import { existsSync } from 'node:fs';
 import {

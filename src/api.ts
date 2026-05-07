@@ -5,7 +5,7 @@ import {
 	clampThinkingLevel,
 	type Api,
 	type Model,
-} from '@mariozechner/pi-ai';
+} from '@earendil-works/pi-ai';
 import {
 	InteractiveMode,
 	SessionManager,
@@ -18,7 +18,7 @@ import {
 	type CreateAgentSessionFromServicesOptions,
 	type ExtensionFactory,
 	type LoadExtensionsResult,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import { apply_project_trust_untrusted_defaults } from '@spences10/pi-project-trust';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
@@ -492,4 +492,4 @@ export type {
 	ExtensionFactory,
 	InteractiveModeOptions,
 	PrintModeOptions,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';

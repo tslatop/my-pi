@@ -387,7 +387,7 @@ describe('create_my_pi environment scoping', () => {
 		try {
 			writeFileSync(
 				extension_path,
-				`import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+				`import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 export default function tsExtension(pi: ExtensionAPI) {
 	pi.registerCommand('ts-extension-smoke', {

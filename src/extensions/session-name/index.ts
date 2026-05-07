@@ -1,16 +1,16 @@
 // Session name — AI-powered session naming
 // Adapted from Thomas Lopes' pi dotfiles
 
-import { complete, type Message } from '@mariozechner/pi-ai';
+import { complete, type Message } from '@earendil-works/pi-ai';
 import type {
 	ExtensionAPI,
 	SessionEntry,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
 	BorderedLoader,
 	convertToLlm,
 	serializeConversation,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 
 const SYSTEM_PROMPT = `You are a session naming assistant. Given a conversation history, generate a short, descriptive session name (2-5 words) that captures the main topic or task.
 

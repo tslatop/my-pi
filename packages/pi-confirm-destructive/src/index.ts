@@ -8,7 +8,7 @@ import type {
 	ToolResultEvent,
 	UserBashEvent,
 	UserBashEventResult,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';

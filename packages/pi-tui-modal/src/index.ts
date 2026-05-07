@@ -1,4 +1,4 @@
-import { type ExtensionCommandContext } from '@mariozechner/pi-coding-agent';
+import { type ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
 import {
 	Box,
 	fuzzyFilter,
@@ -21,7 +21,7 @@ import {
 	type SettingItem,
 	type SettingsListTheme,
 	type TUI,
-} from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-tui';
 
 type ModalColor = 'accent' | 'muted' | 'dim' | 'warning' | 'success';
 export type ModalBorderStyle = 'rounded' | 'square' | 'line' | 'none';

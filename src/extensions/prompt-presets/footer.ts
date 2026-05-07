@@ -2,12 +2,15 @@ import {
 	clampThinkingLevel,
 	getSupportedThinkingLevels,
 	type ModelThinkingLevel,
-} from '@mariozechner/pi-ai';
+} from '@earendil-works/pi-ai';
 import type {
 	ExtensionContext,
 	ReadonlyFooterDataProvider,
-} from '@mariozechner/pi-coding-agent';
-import { truncateToWidth, visibleWidth } from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-coding-agent';
+import {
+	truncateToWidth,
+	visibleWidth,
+} from '@earendil-works/pi-tui';
 
 function get_footer_prompt_status(
 	active_base_name: string | undefined,

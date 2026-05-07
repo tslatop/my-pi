@@ -3,7 +3,7 @@ import {
 	type BeforeAgentStartEvent,
 	type ExtensionCommandContext,
 	type ExtensionContext,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
 	parse_spawn_request,
 	parse_task_add,

@@ -8,7 +8,7 @@
 Composable [pi](https://pi.dev) coding agent for humans and agents.
 
 Built on the
-[@mariozechner/pi-coding-agent](https://github.com/badlogic/pi-mono)
+[@earendil-works/pi-coding-agent](https://github.com/badlogic/pi-mono)
 SDK. Adds MCP server support, extension stacking, LSP tools, prompt
 presets, local SQLite telemetry for evals, and a programmatic API.
 

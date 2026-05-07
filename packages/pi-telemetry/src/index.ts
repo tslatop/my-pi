@@ -4,7 +4,7 @@ import type {
 	ExtensionCommandContext,
 	ExtensionContext,
 	SessionShutdownEvent,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
 	show_picker_modal,
 	show_text_modal,

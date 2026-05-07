@@ -1,12 +1,12 @@
 import type {
 	ExtensionCommandContext,
 	ExtensionContext,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
 	Container,
 	Text,
 	type SelectItem,
-} from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-tui';
 import {
 	show_picker_modal,
 	show_text_modal,

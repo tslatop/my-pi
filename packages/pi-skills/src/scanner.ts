@@ -2,7 +2,7 @@ import {
 	getAgentDir,
 	parseFrontmatter,
 	type SkillFrontmatter,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
 	existsSync,
 	globSync,

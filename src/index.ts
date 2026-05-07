@@ -307,7 +307,7 @@ const main = defineCommand({
 			{ InteractiveMode, runPrintMode, runRpcMode },
 		] = await Promise.all([
 			import('./api.js'),
-			import('@mariozechner/pi-coding-agent'),
+			import('@earendil-works/pi-coding-agent'),
 		]);
 
 		const runtime = await create_my_pi({

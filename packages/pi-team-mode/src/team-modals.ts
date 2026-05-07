@@ -1,4 +1,4 @@
-import type { ExtensionCommandContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
 import { watch, type FSWatcher } from 'node:fs';
 import {
 	getKeybindings,
@@ -7,7 +7,7 @@ import {
 	truncateToWidth,
 	type SelectItem,
 	type SettingItem,
-} from '@mariozechner/pi-tui';
+} from '@earendil-works/pi-tui';
 import {
 	show_confirm_modal,
 	show_input_modal,
