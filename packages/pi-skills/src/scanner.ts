@@ -3,9 +3,14 @@ import {
 	parseFrontmatter,
 	type SkillFrontmatter,
 } from '@mariozechner/pi-coding-agent';
-import { existsSync, globSync, readFileSync } from 'node:fs';
+import {
+	existsSync,
+	globSync,
+	readFileSync,
+	statSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, parse, resolve } from 'node:path';
 
 export const IMPORT_METADATA_FILE = '.my-pi-source.json';
 
@@ -44,12 +49,15 @@ export interface PluginSkillSource {
 	gitCommitSha?: string;
 }
 
+export type SkillScope = 'global' | 'project' | 'plugin';
+
 export interface DiscoveredSkill {
 	name: string;
 	description: string;
 	skillPath: string;
 	baseDir: string;
 	source: string;
+	scope: SkillScope;
 	kind: 'managed' | 'external';
 	plugin?: PluginSkillSource;
 	import_meta?: ImportedSkillMetadata;
@@ -109,6 +117,7 @@ function scan_dir_for_skills(
 	dir: string,
 	options: {
 		source: string;
+		scope: SkillScope;
 		kind: 'managed' | 'external';
 		plugin?: PluginSkillSource;
 		include_direct_root_skill?: boolean;
@@ -129,6 +138,7 @@ function scan_dir_for_skills(
 				skillPath: direct,
 				baseDir: dir,
 				source: options.source,
+				scope: options.scope,
 				kind: options.kind,
 				plugin: options.plugin,
 				import_meta:
@@ -152,6 +162,7 @@ function scan_dir_for_skills(
 					skillPath: full_path,
 					baseDir: base_dir,
 					source: options.source,
+					scope: options.scope,
 					kind: options.kind,
 					plugin: options.plugin,
 					import_meta:
@@ -190,6 +201,7 @@ export function scan_managed_skills(): DiscoveredSkill[] {
 		join(homedir(), '.claude', 'skills'),
 		{
 			source: 'user-local',
+			scope: 'global',
 			kind: 'managed',
 		},
 	)) {
@@ -200,6 +212,7 @@ export function scan_managed_skills(): DiscoveredSkill[] {
 		join(getAgentDir(), 'skills'),
 		{
 			source: 'pi-native',
+			scope: 'global',
 			kind: 'managed',
 			include_direct_root_skill: false,
 		},
@@ -207,6 +220,72 @@ export function scan_managed_skills(): DiscoveredSkill[] {
 		skills.push(skill);
 	}
 
+	return dedupe_by_skill_path(skills);
+}
+
+function parent_dir(path: string): string | null {
+	const parsed = parse(path);
+	const parent = dirname(path);
+	return parent === path || parent === parsed.root ? null : parent;
+}
+
+function is_directory(path: string): boolean {
+	try {
+		return statSync(path).isDirectory();
+	} catch {
+		return false;
+	}
+}
+
+function project_roots(cwd: string): string[] {
+	const roots: string[] = [];
+	let current = resolve(cwd);
+	while (true) {
+		roots.push(current);
+		if (is_directory(join(current, '.git'))) break;
+		const parent = parent_dir(current);
+		if (!parent) break;
+		current = parent;
+	}
+	return roots;
+}
+
+export function scan_project_skills(
+	cwd = process.cwd(),
+): DiscoveredSkill[] {
+	const skills: DiscoveredSkill[] = [];
+	for (const root of project_roots(cwd)) {
+		for (const skill of scan_dir_for_skills(join(root, '.agents'), {
+			source: 'project:.agents',
+			scope: 'project',
+			kind: 'managed',
+			include_direct_root_skill: false,
+		})) {
+			skills.push(skill);
+		}
+		for (const skill of scan_dir_for_skills(
+			join(root, '.agents', 'skills'),
+			{
+				source: 'project:.agents/skills',
+				scope: 'project',
+				kind: 'managed',
+				include_direct_root_skill: false,
+			},
+		)) {
+			skills.push(skill);
+		}
+		for (const skill of scan_dir_for_skills(
+			join(root, '.pi', 'skills'),
+			{
+				source: 'project:.pi/skills',
+				scope: 'project',
+				kind: 'managed',
+				include_direct_root_skill: false,
+			},
+		)) {
+			skills.push(skill);
+		}
+	}
 	return dedupe_by_skill_path(skills);
 }
 
@@ -234,6 +313,7 @@ export function scan_importable_skills(): DiscoveredSkill[] {
 			join(entry.installPath, 'skills'),
 			{
 				source,
+				scope: 'plugin',
 				kind: 'external',
 				plugin,
 			},
@@ -245,6 +325,7 @@ export function scan_importable_skills(): DiscoveredSkill[] {
 			join(entry.installPath, '.pi', 'skills'),
 			{
 				source,
+				scope: 'plugin',
 				kind: 'external',
 				plugin,
 			},
@@ -261,6 +342,7 @@ export function scan_importable_skills(): DiscoveredSkill[] {
 					skillPath: direct_root_skill,
 					baseDir: entry.installPath,
 					source,
+					scope: 'plugin',
 					kind: 'external',
 					plugin,
 				});
@@ -271,6 +353,12 @@ export function scan_importable_skills(): DiscoveredSkill[] {
 	return dedupe_by_skill_path(skills);
 }
 
-export function scan_all_skills(): DiscoveredSkill[] {
-	return [...scan_managed_skills(), ...scan_importable_skills()];
+export function scan_all_skills(
+	cwd = process.cwd(),
+): DiscoveredSkill[] {
+	return [
+		...scan_managed_skills(),
+		...scan_project_skills(cwd),
+		...scan_importable_skills(),
+	];
 }

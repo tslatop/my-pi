@@ -24,8 +24,26 @@ import {
 	show_skills_manager_modal,
 } from './skills-ui.js';
 
+function is_resource_enabled(value: string | undefined): boolean {
+	const normalized = value?.trim().toLowerCase();
+	if (!normalized) return true;
+	return !['0', 'false', 'no', 'skip', 'disable'].includes(
+		normalized,
+	);
+}
+
 export default async function skills(pi: ExtensionAPI) {
 	const mgr = create_skills_manager();
+
+	pi.on('resources_discover', async (event) => {
+		const resource_mgr = create_skills_manager({
+			cwd: event.cwd,
+			project_skills_enabled: is_resource_enabled(
+				process.env.MY_PI_PROJECT_SKILLS,
+			),
+		});
+		return { skillPaths: resource_mgr.get_enabled_skill_paths() };
+	});
 
 	const subs = [
 		'list',

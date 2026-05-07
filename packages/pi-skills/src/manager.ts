@@ -1,5 +1,6 @@
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import {
+	type SkillContextRule,
 	type SkillDefaultPolicy,
 	type SkillProfileConfig,
 	type SkillsConfig,
@@ -19,6 +20,7 @@ import {
 	type DiscoveredSkill,
 	scan_importable_skills,
 	scan_managed_skills,
+	scan_project_skills,
 } from './scanner.js';
 
 export const SKILLS_PROFILE_ENV = 'MY_PI_SKILLS_PROFILE';
@@ -43,6 +45,7 @@ export interface SkillsManager {
 	get_enabled_skill_paths(): string[];
 	/** Check if a skill should pass through pi's skillsOverride */
 	is_enabled_by_skill(name: string, filePath: string): boolean;
+	set_cwd(cwd: string): void;
 	enable(key: string): boolean;
 	disable(key: string): boolean;
 	toggle(key: string): boolean;
@@ -115,12 +118,19 @@ function escape_regex(value: string): string {
 	return value.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
 }
 
+function normalize_match_path(value: string): string {
+	if (value.startsWith('~/')) {
+		return resolve(process.env.HOME ?? '', value.slice(2));
+	}
+	return value;
+}
+
 function glob_matches(pattern: string, value: string): boolean {
 	const regex = new RegExp(
-		`^${pattern.split('*').map(escape_regex).join('.*')}$`,
+		`^${normalize_match_path(pattern).split('*').map(escape_regex).join('.*')}$`,
 		'i',
 	);
-	return regex.test(value);
+	return regex.test(normalize_match_path(value));
 }
 
 function profile_pattern_matches(
@@ -144,14 +154,21 @@ function require_profile_name(name: string): string {
 	return normalized;
 }
 
-export function create_skills_manager(): SkillsManager {
+export function create_skills_manager(
+	options: { cwd?: string; project_skills_enabled?: boolean } = {},
+): SkillsManager {
 	let config: SkillsConfig = load_skills_config();
+	let cwd = options.cwd ?? process.cwd();
+	let project_skills_enabled = options.project_skills_enabled ?? true;
 	let managed_cache: DiscoveredSkill[] | null = null;
 	let importable_cache: DiscoveredSkill[] | null = null;
 
 	function get_managed(): DiscoveredSkill[] {
 		if (!managed_cache) {
-			managed_cache = scan_managed_skills();
+			managed_cache = [
+				...scan_managed_skills(),
+				...scan_project_skills(cwd),
+			];
 		}
 		return managed_cache;
 	}
@@ -163,9 +180,25 @@ export function create_skills_manager(): SkillsManager {
 		return importable_cache;
 	}
 
+	function context_cwd_values(rule: SkillContextRule): string[] {
+		const value = rule.when.cwd;
+		if (!value) return [];
+		return Array.isArray(value) ? value : [value];
+	}
+
 	function get_active_profile(): string {
 		const from_env = process.env[SKILLS_PROFILE_ENV]?.trim();
 		if (from_env) return require_profile_name(from_env);
+		for (const context of config.contexts) {
+			if (!config.profiles[context.profile]) continue;
+			if (
+				context_cwd_values(context).some((pattern) =>
+					glob_matches(pattern, cwd),
+				)
+			) {
+				return context.profile;
+			}
+		}
 		return config.current_profile ?? 'default';
 	}
 
@@ -204,10 +237,13 @@ export function create_skills_manager(): SkillsManager {
 	}
 
 	function is_effectively_enabled(skill: DiscoveredSkill): boolean {
-		return apply_profile_rules(
-			is_skill_enabled(config, resolve_skill_key(skill)),
-			skill,
-		);
+		if (skill.scope === 'project' && !project_skills_enabled)
+			return false;
+		const initial =
+			skill.scope === 'project'
+				? true
+				: is_skill_enabled(config, resolve_skill_key(skill));
+		return apply_profile_rules(initial, skill);
 	}
 
 	function get_or_create_profile(name: string): SkillProfileConfig {
@@ -283,20 +319,28 @@ export function create_skills_manager(): SkillsManager {
 			if (by_name) return is_effectively_enabled(by_name);
 
 			// Unknown skill sources should remain enabled by default so pi's
-			// native discovery keeps working for project and package skills.
+			// native discovery keeps working for package and explicit skills.
 			return apply_profile_rules(true, {
 				name,
 				description: '',
 				skillPath: filePath,
 				baseDir: dirname(filePath),
 				source: 'pi-native',
+				scope: 'global',
 				kind: 'managed',
 			});
 		},
 
+		set_cwd(next_cwd: string): void {
+			const resolved = resolve(next_cwd);
+			if (resolved === cwd) return;
+			cwd = resolved;
+			managed_cache = null;
+		},
+
 		get_enabled_skill_paths(): string[] {
 			return get_enabled_managed_skills().map(
-				(skill) => skill.baseDir,
+				(skill) => skill.skillPath,
 			);
 		},
 
@@ -443,6 +487,8 @@ export function create_skills_manager(): SkillsManager {
 			managed_cache = null;
 			importable_cache = null;
 			config = load_skills_config();
+			project_skills_enabled =
+				options.project_skills_enabled ?? project_skills_enabled;
 		},
 	};
 }

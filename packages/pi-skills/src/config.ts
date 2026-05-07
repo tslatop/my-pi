@@ -17,6 +17,14 @@ export interface SkillProfileConfig {
 	exclude?: string[];
 }
 
+export interface SkillContextRule {
+	name?: string;
+	profile: string;
+	when: {
+		cwd?: string | string[];
+	};
+}
+
 export interface SkillsConfig {
 	version: number;
 	/** Legacy global enablement map. v3 stores enablement in profiles. */
@@ -25,6 +33,7 @@ export interface SkillsConfig {
 	defaults: SkillDefaultPolicy;
 	current_profile?: string;
 	profiles: Record<string, SkillProfileConfig>;
+	contexts: SkillContextRule[];
 }
 
 const DEFAULT_PROFILES: Record<string, SkillProfileConfig> = {
@@ -41,6 +50,7 @@ const DEFAULT_CONFIG: SkillsConfig = {
 	defaults: 'all-disabled',
 	current_profile: 'default',
 	profiles: DEFAULT_PROFILES,
+	contexts: [],
 };
 
 export function get_config_path(): string {
@@ -107,6 +117,38 @@ function unique_push(values: string[], value: string): void {
 
 function remove_value(values: string[], value: string): string[] {
 	return values.filter((item) => item !== value);
+}
+
+function normalize_contexts(value: unknown): SkillContextRule[] {
+	if (!Array.isArray(value)) return [];
+	const contexts: SkillContextRule[] = [];
+	for (const item of value) {
+		if (!item || typeof item !== 'object') continue;
+		const parsed = item as Record<string, unknown>;
+		const profile =
+			typeof parsed.profile === 'string'
+				? safe_profile_name(parsed.profile)
+				: undefined;
+		const when =
+			parsed.when && typeof parsed.when === 'object'
+				? (parsed.when as Record<string, unknown>)
+				: undefined;
+		const cwd = when ? string_array_or_string(when.cwd) : undefined;
+		if (!profile || !cwd) continue;
+		const rule: SkillContextRule = { profile, when: { cwd } };
+		if (typeof parsed.name === 'string' && parsed.name.trim()) {
+			rule.name = parsed.name.trim();
+		}
+		contexts.push(rule);
+	}
+	return contexts;
+}
+
+function string_array_or_string(
+	value: unknown,
+): string | string[] | undefined {
+	if (typeof value === 'string' && value.trim()) return value.trim();
+	return string_array(value);
 }
 
 function normalize_enabled_map(
@@ -188,6 +230,7 @@ export function load_skills_config(): SkillsConfig {
 			enabled: {},
 			defaults: 'all-disabled',
 			profiles,
+			contexts: normalize_contexts(parsed.contexts),
 		};
 		if (current_profile) config.current_profile = current_profile;
 		return config;

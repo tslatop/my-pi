@@ -374,7 +374,7 @@ describe('skills importing and syncing', () => {
 			.sort();
 		expect(managed_names).toEqual(['frontend-design', 'github-prs']);
 		expect(mgr.get_enabled_skill_paths()).toContain(
-			imported.skillDir,
+			join(imported.skillDir, 'SKILL.md'),
 		);
 		expect(
 			mgr.is_enabled_by_skill(

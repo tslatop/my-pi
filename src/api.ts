@@ -21,7 +21,7 @@ import {
 } from '@mariozechner/pi-coding-agent';
 import { apply_project_trust_untrusted_defaults } from '@spences10/pi-project-trust';
 import { createRequire } from 'node:module';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import {
 	BUILTIN_EXTENSION_REGISTRY,
 	type BuiltinExtensionKey,
@@ -145,28 +145,6 @@ function is_resource_enabled(value: string | undefined): boolean {
 		return false;
 	}
 	return true;
-}
-
-export function is_project_local_skill_path(
-	cwd: string,
-	file_path: string | undefined,
-): boolean {
-	if (!file_path) return false;
-	const absolute = resolve(cwd, file_path);
-	const relative_path = relative(cwd, absolute);
-	if (
-		!relative_path ||
-		relative_path.startsWith('..') ||
-		isAbsolute(relative_path)
-	) {
-		return false;
-	}
-	const parts = relative_path.split(/[\\/]+/);
-	return parts.some(
-		(part, index) =>
-			(part === '.pi' || part === '.claude') &&
-			parts[index + 1] === 'skills',
-	);
 }
 
 function resolve_agent_dir(cwd: string, agent_dir?: string): string {
@@ -387,12 +365,22 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 		// Keep skill filtering reloadable so profile changes made by
 		// /skills are reflected without restarting the process.
 		const runtime_skills_manager =
-			skills_package?.create_skills_manager();
+			skills_package?.create_skills_manager({
+				cwd: runtime_cwd,
+				project_skills_enabled: is_resource_enabled(
+					process.env.MY_PI_PROJECT_SKILLS,
+				),
+			});
+		const additional_skill_paths =
+			runtime_skills_manager?.get_enabled_skill_paths() ?? [];
 
 		const services = await createAgentSessionServices({
 			cwd: runtime_cwd,
 			agentDir: effective_agent_dir,
 			resourceLoaderOptions: {
+				...(additional_skill_paths.length
+					? { additionalSkillPaths: additional_skill_paths }
+					: {}),
 				...(system_prompt !== undefined
 					? {
 							systemPromptOverride: () => system_prompt,
@@ -421,24 +409,12 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 					if (!runtime_skills_manager) return base;
 					runtime_skills_manager.refresh();
 
-					const include_project_skills = is_resource_enabled(
-						process.env.MY_PI_PROJECT_SKILLS,
-					);
 					const selected_skill_names = selected_skills?.length
 						? new Set(selected_skills)
 						: undefined;
 					return {
 						...base,
 						skills: base.skills.filter((skill: any) => {
-							if (
-								!include_project_skills &&
-								is_project_local_skill_path(
-									runtime_cwd,
-									skill.filePath,
-								)
-							) {
-								return false;
-							}
 							if (
 								selected_skill_names &&
 								!selected_skill_names.has(skill.name)

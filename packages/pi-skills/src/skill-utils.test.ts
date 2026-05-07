@@ -16,6 +16,7 @@ function skill(overrides: Partial<ManagedSkill>): ManagedSkill {
 		skillPath: '/skills/research/SKILL.md',
 		baseDir: '/skills/research',
 		source: 'pi-native',
+		scope: 'global',
 		kind: 'managed',
 		key: 'research@pi-native',
 		enabled: true,
@@ -83,6 +84,7 @@ describe('skill utilities', () => {
 			name: 'frontend-design',
 			source: 'plugin:design',
 			key: 'frontend-design@plugin:design',
+			scope: 'plugin',
 			kind: 'external',
 			plugin: {
 				pluginId: 'design',

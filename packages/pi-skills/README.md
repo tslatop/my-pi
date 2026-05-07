@@ -32,6 +32,8 @@ layer for mixed skill ecosystems:
 - discovers Pi-native skills in `$PI_CODING_AGENT_DIR/skills`
   (default: `~/.pi/agent/skills`)
 - discovers user-local Claude skills in `~/.claude/skills`
+- discovers project skills in `.agents/*/SKILL.md`,
+  `.agents/skills/*/SKILL.md`, and `.pi/skills/*/SKILL.md`
 - discovers skills bundled inside installed Claude plugins
 - imports plugin skills into Pi-native skill storage
 - syncs imported skills when upstream plugin content changes
@@ -79,7 +81,31 @@ paths; `*` wildcards are supported. Legacy top-level enablement is
 migrated into the `default` profile on load.
 
 The extension contributes enabled managed skill paths during Pi
-resource discovery.
+resource discovery. Project skills are enabled by default when project
+resources are allowed, and can still be excluded by profile rules.
+
+Profiles can also be selected by context without hardcoding project
+names in code. Example:
+
+```json
+{
+	"contexts": [
+		{
+			"name": "client-workspace",
+			"profile": "client-projects",
+			"when": { "cwd": "~/repos/client-projects/*" }
+		}
+	],
+	"profiles": {
+		"default": { "include": [], "exclude": [] },
+		"client-projects": {
+			"extends": ["default"],
+			"include": ["client-*", "project:*"],
+			"exclude": []
+		}
+	}
+}
+```
 
 In a custom harness such as `my-pi`, this can be combined with a
 resource filter to enforce disabled skills. In vanilla `pi`, Pi's own

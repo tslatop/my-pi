@@ -12,7 +12,6 @@ import {
 	create_lazy_builtin_extension_factory,
 	create_my_pi,
 	get_force_disabled_builtins,
-	is_project_local_skill_path,
 	resolve_effective_thinking_level,
 	resolve_model_reference,
 } from './api.js';
@@ -21,6 +20,7 @@ const original_agent_dir = process.env.PI_CODING_AGENT_DIR;
 const original_runtime_mode = process.env.MY_PI_RUNTIME_MODE;
 const original_mcp_project_config =
 	process.env.MY_PI_MCP_PROJECT_CONFIG;
+const original_project_skills = process.env.MY_PI_PROJECT_SKILLS;
 const original_xdg_config_home = process.env.XDG_CONFIG_HOME;
 
 function restore_env(): void {
@@ -35,6 +35,9 @@ function restore_env(): void {
 	else
 		process.env.MY_PI_MCP_PROJECT_CONFIG =
 			original_mcp_project_config;
+	if (original_project_skills === undefined)
+		delete process.env.MY_PI_PROJECT_SKILLS;
+	else process.env.MY_PI_PROJECT_SKILLS = original_project_skills;
 	if (original_xdg_config_home === undefined)
 		delete process.env.XDG_CONFIG_HOME;
 	else process.env.XDG_CONFIG_HOME = original_xdg_config_home;
@@ -375,6 +378,63 @@ describe('create_my_pi environment scoping', () => {
 			rmSync(xdg_config_home, { recursive: true, force: true });
 		}
 	});
+
+	it('injects project .agents skills and honors untrusted project skill gating', async () => {
+		const cwd = mkdtempSync(
+			join(tmpdir(), 'my-pi-api-project-skills-'),
+		);
+		const xdg_config_home = mkdtempSync(
+			join(tmpdir(), 'my-pi-api-project-skills-config-'),
+		);
+		const agent_dir = join(cwd, 'agent');
+		const project_skill_dir = join(
+			cwd,
+			'.agents',
+			'project-navigation',
+		);
+
+		try {
+			process.env.XDG_CONFIG_HOME = xdg_config_home;
+			mkdirSync(project_skill_dir, { recursive: true });
+			writeFileSync(
+				join(project_skill_dir, 'SKILL.md'),
+				`---\nname: project-navigation\ndescription: Project navigation test skill.\n---\n\n# Project\n`,
+			);
+
+			const runtime = await create_my_pi({
+				cwd,
+				agent_dir,
+				runtime_mode: 'json',
+				...disabled_builtins,
+				skills: true,
+			});
+			const get_skill_names = () =>
+				runtime.services.resourceLoader
+					.getSkills()
+					.skills.map((skill) => skill.name);
+
+			expect(get_skill_names()).toContain('project-navigation');
+			await runtime.dispose();
+
+			process.env.MY_PI_PROJECT_SKILLS = 'skip';
+			const untrusted = await create_my_pi({
+				cwd,
+				agent_dir,
+				runtime_mode: 'json',
+				...disabled_builtins,
+				skills: true,
+			});
+			expect(
+				untrusted.services.resourceLoader
+					.getSkills()
+					.skills.map((skill) => skill.name),
+			).not.toContain('project-navigation');
+			await untrusted.dispose();
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+			rmSync(xdg_config_home, { recursive: true, force: true });
+		}
+	});
 });
 
 function make_model(overrides: Record<string, unknown> = {}) {
@@ -443,34 +503,5 @@ describe('resolve_model_reference', () => {
 		expect(
 			resolve_model_reference('openai/gpt-4o:extended', registry),
 		).toBe(openrouter_model);
-	});
-});
-
-describe('is_project_local_skill_path', () => {
-	it('detects project-local .pi and .claude skills only', () => {
-		expect(
-			is_project_local_skill_path(
-				'/repo',
-				'/repo/.pi/skills/local/SKILL.md',
-			),
-		).toBe(true);
-		expect(
-			is_project_local_skill_path(
-				'/repo',
-				'/repo/.claude/skills/local/SKILL.md',
-			),
-		).toBe(true);
-		expect(
-			is_project_local_skill_path(
-				'/repo',
-				'/home/scott/.pi/agent/skills/global/SKILL.md',
-			),
-		).toBe(false);
-		expect(
-			is_project_local_skill_path(
-				'/repo',
-				'/repo/packages/pi-skills/src/SKILL.md',
-			),
-		).toBe(false);
 	});
 });

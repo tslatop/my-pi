@@ -32,6 +32,7 @@ function test_config(
 		defaults: 'all-disabled',
 		current_profile: 'default',
 		profiles: {},
+		contexts: [],
 		...overrides,
 	};
 }
@@ -87,6 +88,41 @@ describe('load_skills_config', () => {
 		expect(config.profiles.default?.exclude).toEqual(
 			expect.arrayContaining(['legacy-auth@pi-native']),
 		);
+		expect(config.contexts).toEqual([]);
+	});
+
+	it('loads context profile rules', () => {
+		mkdirSync(join(config_home, 'my-pi'), { recursive: true });
+		writeFileSync(
+			join(config_home, 'my-pi', 'skills.json'),
+			JSON.stringify({
+				version: 3,
+				enabled: {},
+				defaults: 'all-disabled',
+				current_profile: 'default',
+				profiles: {
+					default: {},
+					cloud: { include: ['cl-*', 'project:*'] },
+				},
+				contexts: [
+					{
+						name: 'cloud repos',
+						profile: 'cloud',
+						when: { cwd: '~/repos/cloud-lobsters/*' },
+					},
+				],
+			}),
+		);
+
+		const config = load_skills_config();
+
+		expect(config.contexts).toEqual([
+			{
+				name: 'cloud repos',
+				profile: 'cloud',
+				when: { cwd: '~/repos/cloud-lobsters/*' },
+			},
+		]);
 	});
 });
 
