@@ -1,5 +1,17 @@
 # @spences10/pi-telemetry
 
+## 0.0.9
+
+### Patch Changes
+
+- dacf04d: Simplify skills TUI navigation, split importable skill
+  actions, and clarify profile policy/rule wording.
+- 44136fe: Migrate Pi core dependencies from Mario Zechner scope to
+  Earendil Works package scope.
+- Updated dependencies [dacf04d]
+- Updated dependencies [44136fe]
+  - @spences10/pi-tui-modal@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

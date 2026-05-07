@@ -1,5 +1,14 @@
 # @spences10/pi-omnisearch
 
+## 0.0.6
+
+### Patch Changes
+
+- dacf04d: Simplify skills TUI navigation, split importable skill
+  actions, and clarify profile policy/rule wording.
+- 44136fe: Migrate Pi core dependencies from Mario Zechner scope to
+  Earendil Works package scope.
+
 ## 0.0.5
 
 ### Patch Changes

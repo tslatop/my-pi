@@ -1,5 +1,38 @@
 # my-pi
 
+## 0.1.36
+
+### Patch Changes
+
+- 23136b8: Add contextual project skill discovery and profile-based
+  activation for .agents and repository-specific skills.
+- 6786aab: Add regression tests for YAML frontmatter prompts and
+  TypeScript extension loading after Pi 0.73.1.
+- dacf04d: Simplify skills TUI navigation, split importable skill
+  actions, and clarify profile policy/rule wording.
+- 90e3bc9: Suppress upstream Pi update banners for installed my-pi
+  users while preserving checks in development.
+- 44136fe: Migrate Pi core dependencies from Mario Zechner scope to
+  Earendil Works package scope.
+- Updated dependencies [23136b8]
+- Updated dependencies [dacf04d]
+- Updated dependencies [44136fe]
+  - @spences10/pi-skills@0.0.14
+  - @spences10/pi-confirm-destructive@0.0.8
+  - @spences10/pi-project-trust@0.0.6
+  - @spences10/pi-sqlite-tools@0.0.6
+  - @spences10/pi-omnisearch@0.0.6
+  - @spences10/pi-child-env@0.1.4
+  - @spences10/pi-team-mode@0.0.16
+  - @spences10/pi-telemetry@0.0.9
+  - @spences10/pi-tui-modal@0.0.9
+  - @spences10/pi-context@0.0.10
+  - @spences10/pi-nopeek@0.0.6
+  - @spences10/pi-recall@0.0.6
+  - @spences10/pi-redact@0.0.6
+  - @spences10/pi-lsp@0.0.17
+  - @spences10/pi-mcp@0.0.20
+
 ## 0.1.35
 
 ### Patch Changes

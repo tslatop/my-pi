@@ -1,5 +1,12 @@
 # @spences10/pi-project-trust
 
+## 0.0.6
+
+### Patch Changes
+
+- dacf04d: Simplify skills TUI navigation, split importable skill
+  actions, and clarify profile policy/rule wording.
+
 ## 0.0.5
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @spences10/pi-child-env
 
+## 0.1.4
+
+### Patch Changes
+
+- dacf04d: Simplify skills TUI navigation, split importable skill
+  actions, and clarify profile policy/rule wording.
+
 ## 0.1.3
 
 ### Patch Changes
