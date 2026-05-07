@@ -3,8 +3,6 @@ import type { ManagedSkill, SkillProfile } from './manager.js';
 
 export const ENABLED = '● enabled';
 export const DISABLED = '○ disabled';
-export const SYNC = '↻ sync';
-export const IMPORTED_LABEL = '✓ imported';
 
 export interface ImportableSkillState {
 	label: string;
@@ -114,52 +112,6 @@ export function to_setting_item(skill: ManagedSkill): SettingItem {
 		description: detail_lines.join('\n'),
 		currentValue: skill.enabled ? ENABLED : DISABLED,
 		values: [ENABLED, DISABLED],
-	};
-}
-
-export function to_importable_setting_item(
-	managed_skills: ManagedSkill[],
-	skill: ManagedSkill,
-): SettingItem {
-	const state = get_importable_state(managed_skills, skill);
-	const detail_lines = [
-		`${skill.source} • ${skill.key}`,
-		skill.description,
-		skill.baseDir,
-	];
-	if (skill.plugin?.version) {
-		detail_lines.push(
-			`plugin: ${skill.plugin.version}${skill.plugin.gitCommitSha ? ` • ${skill.plugin.gitCommitSha.slice(0, 12)}` : ''}`,
-		);
-	}
-
-	if (state.action === 'import') {
-		return {
-			id: skill.key,
-			label: skill.name,
-			description: detail_lines.join('\n'),
-			currentValue: DISABLED,
-			values: [ENABLED, DISABLED],
-		};
-	}
-
-	if (state.action === 'sync') {
-		detail_lines.push('enter to sync');
-		return {
-			id: skill.key,
-			label: skill.name,
-			description: detail_lines.join('\n'),
-			currentValue: SYNC,
-			values: [SYNC],
-		};
-	}
-
-	detail_lines.push(state.detail);
-	return {
-		id: skill.key,
-		label: skill.name,
-		description: detail_lines.join('\n'),
-		currentValue: IMPORTED_LABEL,
 	};
 }
 

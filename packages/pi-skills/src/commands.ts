@@ -16,6 +16,7 @@ import {
 	pick_profile,
 	pick_skill,
 	show_defaults_modal,
+	show_importable_skills_modal,
 	show_profiles_modal,
 	show_refresh_summary,
 	show_skill_detail_modal,
@@ -173,71 +174,12 @@ export default async function skills(pi: ExtensionAPI) {
 
 					if (selected === 'manage') {
 						if (await show_skills_manager_modal(ctx, mgr)) return;
-					} else if (selected === 'browse') {
-						await show_skill_list_modal(ctx, mgr);
-					} else if (selected === 'import') {
-						const key = await pick_skill(ctx, {
-							title: 'Import skill',
-							subtitle:
-								'Copy an external skill into Pi-native storage',
-							skills: sort_skills(mgr.discover_importable()),
-							empty_message: 'No importable skills found',
-						});
-						if (!key) continue;
-						try {
-							const result = mgr.import_skill(key);
-							ctx.ui.notify(
-								`Imported ${key} to ${result.skillDir}. Reloading...`,
-								'info',
-							);
-							await ctx.reload();
-							return;
-						} catch (error) {
-							ctx.ui.notify(
-								error instanceof Error
-									? error.message
-									: String(error),
-								'warning',
-							);
-						}
-					} else if (selected === 'sync') {
-						const key = await pick_skill(ctx, {
-							title: 'Sync imported skill',
-							subtitle:
-								'Update an imported skill from its upstream source',
-							skills: sort_skills(
-								mgr
-									.discover()
-									.filter((skill) => Boolean(skill.import_meta)),
-							),
-							empty_message: 'No imported skills found',
-						});
-						if (!key) continue;
-						try {
-							const result = mgr.sync_skill(key);
-							if (result.changed) {
-								ctx.ui.notify(`Synced ${key}. Reloading...`, 'info');
-								await ctx.reload();
-								return;
-							}
-							await show_text_modal(ctx, {
-								title: 'Skill already up to date',
-								text: `${key} is already up to date.`,
-							});
-						} catch (error) {
-							ctx.ui.notify(
-								error instanceof Error
-									? error.message
-									: String(error),
-								'warning',
-							);
-						}
+					} else if (selected === 'importable') {
+						if (await show_importable_skills_modal(ctx, mgr)) return;
 					} else if (selected === 'profiles') {
 						if (await show_profiles_modal(ctx, mgr)) return;
 					} else if (selected === 'refresh') {
 						await show_refresh_summary(ctx, mgr);
-					} else if (selected === 'defaults') {
-						await show_defaults_modal(ctx, mgr);
 					}
 				}
 			}
@@ -598,11 +540,11 @@ export default async function skills(pi: ExtensionAPI) {
 					mgr.set_defaults(arg);
 					if (ctx.hasUI) {
 						await show_text_modal(ctx, {
-							title: 'Skill profile baseline updated',
-							text: `Active profile baseline: ${arg}`,
+							title: 'Default skill policy updated',
+							text: `Active profile now starts from: ${arg}`,
 						});
 					} else {
-						ctx.ui.notify(`Active profile baseline: ${arg}`);
+						ctx.ui.notify(`Default skill policy: ${arg}`);
 					}
 					break;
 				}

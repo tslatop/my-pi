@@ -1,5 +1,4 @@
 import type { ExtensionCommandContext } from '@mariozechner/pi-coding-agent';
-import { type SettingItem } from '@mariozechner/pi-tui';
 import {
 	show_input_modal,
 	show_picker_modal,
@@ -18,9 +17,18 @@ import {
 	sets_equal,
 	skill_status,
 	sort_skills,
-	to_importable_setting_item,
 	to_setting_item,
 } from './skill-utils.js';
+
+function importable_action_label(
+	state: ReturnType<typeof get_importable_state>,
+): string {
+	if (state.action === 'import') return 'Import';
+	if (state.action === 'sync') return 'Sync available';
+	return state.label === 'managed'
+		? 'Already managed'
+		: 'Already imported';
+}
 
 export async function show_skills_home_modal(
 	ctx: ExtensionCommandContext,
@@ -35,40 +43,22 @@ export async function show_skills_home_modal(
 			{
 				value: 'manage',
 				label: 'Manage skills',
-				description: 'Enable, disable, import, and sync skills',
+				description: 'Search and enable/disable managed skills',
 			},
 			{
-				value: 'browse',
-				label: 'Browse details',
-				description:
-					'Open read-only detail views for discovered skills',
-			},
-			{
-				value: 'import',
-				label: 'Import skill',
-				description: 'Copy an external skill into Pi-native storage',
-			},
-			{
-				value: 'sync',
-				label: 'Sync imported skill',
-				description:
-					'Update an imported skill from its upstream source',
+				value: 'importable',
+				label: 'Importable skills',
+				description: 'Import external skills or sync imported copies',
 			},
 			{
 				value: 'profiles',
 				label: 'Profiles',
-				description: 'Create and switch named skill sets',
+				description: 'Switch profiles and edit profile rules',
 			},
 			{
 				value: 'refresh',
 				label: 'Refresh discovery',
 				description: 'Rescan managed and importable skills',
-			},
-			{
-				value: 'defaults',
-				label: 'Profile baseline',
-				description:
-					'Choose whether this profile starts enabled or disabled',
 			},
 		],
 		footer: 'enter opens • esc close/back',
@@ -80,9 +70,8 @@ export async function show_skills_manager_modal(
 	mgr: SkillsManager,
 ): Promise<boolean> {
 	const discovered = sort_skills(mgr.discover());
-	const importable = sort_skills(mgr.discover_importable());
-	if (discovered.length === 0 && importable.length === 0) {
-		ctx.ui.notify('No managed or importable skills found');
+	if (discovered.length === 0) {
+		ctx.ui.notify('No managed skills found');
 		return false;
 	}
 
@@ -92,146 +81,34 @@ export async function show_skills_manager_modal(
 			.map((skill) => skill.key),
 	);
 	const current_enabled = new Set(initial_enabled);
-	const queued_imports = new Set<string>();
-	let reload_notice: string | null = null;
-
-	const managed_items = discovered.map(to_setting_item);
-	const importable_items = importable.map((skill) =>
-		to_importable_setting_item(discovered, skill),
-	);
-
-	const all_items: SettingItem[] = [];
-	if (managed_items.length > 0) {
-		all_items.push({
-			id: '__header_managed__',
-			label: `── Managed (${managed_items.length}) ──`,
-			description: '',
-			currentValue: '',
-		});
-		all_items.push(...managed_items);
-	}
-	if (importable_items.length > 0) {
-		all_items.push({
-			id: '__header_importable__',
-			label: `── Importable (${importable_items.length}) ──`,
-			description: '',
-			currentValue: '',
-		});
-		all_items.push(...importable_items);
-	}
-
+	const items = discovered.map(to_setting_item);
 	const metadata_by_id = new Map(
-		all_items.map((item) => [item.id, item.description ?? '']),
+		items.map((item) => [item.id, item.description ?? '']),
 	);
-	for (const item of all_items) {
-		if (!item.id.startsWith('__header_')) item.description = '';
-	}
-
-	const managed_keys = new Set(discovered.map((skill) => skill.key));
-	const importable_map = new Map(
-		importable.map((skill) => [skill.key, skill]),
-	);
+	for (const item of items) item.description = '';
 
 	await show_settings_modal(ctx, {
-		title: 'Skills',
+		title: 'Manage skills',
 		subtitle: () => {
 			const enabled = current_enabled.size;
 			const disabled = discovered.length - enabled;
-			const queued = queued_imports.size;
-			const parts = [
-				`profile ${mgr.get_active_profile()}`,
-				`${enabled} enabled`,
-				`${disabled} disabled`,
-			];
-			if (importable.length > 0)
-				parts.push(`${importable.length} importable`);
-			if (queued > 0) parts.push(`${queued} queued for import`);
-			return parts.join(' • ');
+			return `profile ${mgr.get_active_profile()} • ${enabled} enabled • ${disabled} disabled`;
 		},
-		items: all_items,
-		max_visible: Math.min(Math.max(all_items.length + 4, 8), 12),
+		items,
+		max_visible: Math.min(Math.max(items.length + 4, 8), 12),
 		enable_search: true,
 		metadata: (item) =>
 			item ? metadata_by_id.get(item.id)?.split('\n') : undefined,
 		on_change: (id, new_value) => {
-			if (id.startsWith('__header_')) return;
-
-			if (managed_keys.has(id)) {
-				if (new_value === ENABLED) {
-					current_enabled.add(id);
-					mgr.enable(id);
-				} else {
-					current_enabled.delete(id);
-					mgr.disable(id);
-				}
-				return;
-			}
-
-			const import_skill = importable_map.get(id);
-			if (!import_skill) return;
-
-			const state = get_importable_state(discovered, import_skill);
-			if (state.action === 'import') {
-				if (new_value === ENABLED) queued_imports.add(id);
-				else queued_imports.delete(id);
-				return;
-			}
-
-			if (state.action !== 'sync') return;
-			const imported_skill = find_matching_imported_skill(
-				discovered,
-				import_skill,
-			);
-			if (!imported_skill) {
-				ctx.ui.notify(
-					`Imported copy for ${import_skill.name} was not found`,
-					'warning',
-				);
-				return;
-			}
-
-			try {
-				const result = mgr.sync_skill(imported_skill.key);
-				if (result.changed) {
-					reload_notice = `Synced ${import_skill.name}. Reloading...`;
-					return true;
-				}
-				ctx.ui.notify(
-					`${import_skill.name} is already up to date.`,
-					'info',
-				);
-			} catch (error) {
-				ctx.ui.notify(
-					error instanceof Error ? error.message : String(error),
-					'warning',
-				);
+			if (new_value === ENABLED) {
+				current_enabled.add(id);
+				mgr.enable(id);
+			} else {
+				current_enabled.delete(id);
+				mgr.disable(id);
 			}
 		},
 	});
-
-	if (queued_imports.size > 0) {
-		const imported_names: string[] = [];
-		for (const key of queued_imports) {
-			try {
-				mgr.import_skill(key);
-				imported_names.push(key);
-			} catch (error) {
-				ctx.ui.notify(
-					error instanceof Error ? error.message : String(error),
-					'warning',
-				);
-			}
-		}
-		if (imported_names.length > 0) {
-			reload_notice = `Imported ${imported_names.length} skill(s). Reloading...`;
-		}
-	}
-
-	if (reload_notice) {
-		ctx.ui.notify(reload_notice, 'info');
-		await ctx.reload();
-		return true;
-	}
 
 	if (!sets_equal(initial_enabled, current_enabled)) {
 		ctx.ui.notify('Reloading to apply updated skills...', 'info');
@@ -240,6 +117,94 @@ export async function show_skills_manager_modal(
 	}
 
 	return false;
+}
+
+export async function show_importable_skills_modal(
+	ctx: ExtensionCommandContext,
+	mgr: SkillsManager,
+): Promise<boolean> {
+	while (true) {
+		const managed = sort_skills(mgr.discover());
+		const importable = sort_skills(mgr.discover_importable());
+		if (importable.length === 0) {
+			ctx.ui.notify('No importable skills found');
+			return false;
+		}
+
+		const selected = await show_picker_modal(ctx, {
+			title: 'Importable skills',
+			subtitle: `${importable.length} external skills • enter imports or syncs`,
+			items: importable.map((skill) => {
+				const state = get_importable_state(managed, skill);
+				return {
+					value: skill.key,
+					label: skill.name,
+					description: `${importable_action_label(state)} • ${skill.source} • ${skill.key}`,
+				};
+			}),
+			empty_message: 'No importable skills found',
+		});
+		if (!selected) return false;
+
+		const skill = find_skill(importable, selected);
+		const state = get_importable_state(managed, skill);
+
+		if (state.action === 'import') {
+			try {
+				const result = mgr.import_skill(skill.key);
+				ctx.ui.notify(
+					`Imported ${skill.name} to ${result.skillDir}. Reloading...`,
+					'info',
+				);
+				await ctx.reload();
+				return true;
+			} catch (error) {
+				ctx.ui.notify(
+					error instanceof Error ? error.message : String(error),
+					'warning',
+				);
+			}
+			continue;
+		}
+
+		if (state.action === 'sync') {
+			const imported_skill = find_matching_imported_skill(
+				managed,
+				skill,
+			);
+			if (!imported_skill) {
+				ctx.ui.notify(
+					`Imported copy for ${skill.name} was not found`,
+					'warning',
+				);
+				continue;
+			}
+			try {
+				const result = mgr.sync_skill(imported_skill.key);
+				if (result.changed) {
+					ctx.ui.notify(`Synced ${skill.name}. Reloading...`, 'info');
+					await ctx.reload();
+					return true;
+				}
+				await show_text_modal(ctx, {
+					title: 'Skill already up to date',
+					text: `${skill.name} is already up to date.`,
+				});
+			} catch (error) {
+				ctx.ui.notify(
+					error instanceof Error ? error.message : String(error),
+					'warning',
+				);
+			}
+			continue;
+		}
+
+		await show_text_modal(ctx, {
+			title: skill.name,
+			subtitle: importable_action_label(state),
+			text: state.detail,
+		});
+	}
 }
 
 export async function pick_skill(
@@ -310,26 +275,28 @@ export async function show_defaults_modal(
 	mgr: SkillsManager,
 ): Promise<void> {
 	const selected = await show_picker_modal(ctx, {
-		title: 'Skill profile baseline',
+		title: 'Default skill policy',
 		subtitle: `Active profile: ${mgr.get_active_profile()}`,
 		items: [
 			{
 				value: 'all-enabled',
-				label: 'All enabled',
-				description: 'This profile enables every matching skill',
+				label: 'Enable by default',
+				description:
+					'Start with matching skills enabled; exclude rules turn skills off',
 			},
 			{
 				value: 'all-disabled',
-				label: 'All disabled',
-				description: 'This profile only enables explicit includes',
+				label: 'Disable by default',
+				description:
+					'Start with skills disabled; include rules turn skills on',
 			},
 		],
 	});
 	if (!selected) return;
 	mgr.set_defaults(selected as 'all-enabled' | 'all-disabled');
 	await show_text_modal(ctx, {
-		title: 'Skill profile baseline updated',
-		text: `Active profile baseline: ${selected}`,
+		title: 'Default skill policy updated',
+		text: `Active profile now starts from: ${selected}`,
 	});
 }
 
@@ -371,13 +338,19 @@ export async function show_profiles_modal(
 				},
 				{
 					value: 'include',
-					label: 'Enable skill/pattern',
-					description: 'Enable matching skills in a profile',
+					label: 'Add include rule',
+					description: 'Turn on skills that match a profile pattern',
 				},
 				{
 					value: 'exclude',
-					label: 'Disable skill/pattern',
-					description: 'Disable matching skills in a profile',
+					label: 'Add exclude rule',
+					description: 'Turn off skills that match a profile pattern',
+				},
+				{
+					value: 'defaults',
+					label: 'Default skill policy',
+					description:
+						'Choose the profile starting point before rules apply',
 				},
 				{
 					value: 'show',
@@ -435,15 +408,15 @@ export async function show_profiles_modal(
 				ctx,
 				mgr,
 				selected === 'include'
-					? 'Choose enable profile'
-					: 'Choose disable profile',
+					? 'Choose profile for include rule'
+					: 'Choose profile for exclude rule',
 			);
 			if (!profile) continue;
 			const pattern = await show_input_modal(ctx, {
 				title:
 					selected === 'include'
-						? 'Enable skill or pattern'
-						: 'Disable skill or pattern',
+						? 'Add include rule'
+						: 'Add exclude rule',
 				subtitle: `Profile: ${profile}`,
 				label: 'Skill name, key, or pattern',
 				trim: true,
@@ -462,6 +435,8 @@ export async function show_profiles_modal(
 					'warning',
 				);
 			}
+		} else if (selected === 'defaults') {
+			await show_defaults_modal(ctx, mgr);
 		} else if (selected === 'show') {
 			const profile_name = await pick_profile(
 				ctx,
