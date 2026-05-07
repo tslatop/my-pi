@@ -36,6 +36,19 @@ describe('CLI arg helpers', () => {
 		).toEqual(['/repo/app/a.ts', '/repo/b.ts']);
 	});
 
+	it('does not treat YAML-frontmatter prompt text passed via -p as extension flags', () => {
+		expect(
+			parse_extension_paths(
+				[
+					'my-pi',
+					'-p',
+					'---\ntitle: regression\n---\nSummarize this file.',
+				],
+				'/repo/app',
+			),
+		).toEqual([]);
+	});
+
 	it('parses and dedupes comma-separated tool allowlists across repeated flags', () => {
 		expect(
 			parse_tool_allowlist([

@@ -379,6 +379,49 @@ describe('create_my_pi environment scoping', () => {
 		}
 	});
 
+	it('loads TypeScript extension files through the upstream extension loader', async () => {
+		const cwd = mkdtempSync(join(tmpdir(), 'my-pi-api-ts-ext-'));
+		const agent_dir = join(cwd, 'agent');
+		const extension_path = join(cwd, 'ts-extension.ts');
+
+		try {
+			writeFileSync(
+				extension_path,
+				`import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+
+export default function tsExtension(pi: ExtensionAPI) {
+	pi.registerCommand('ts-extension-smoke', {
+		description: 'TypeScript extension smoke test',
+		async handler() {},
+	});
+}
+`,
+			);
+
+			const runtime = await create_my_pi({
+				cwd,
+				agent_dir,
+				runtime_mode: 'json',
+				extensions: [extension_path],
+				...disabled_builtins,
+			});
+
+			try {
+				expect(
+					runtime.services.resourceLoader
+						.getExtensions()
+						.extensions.flatMap((extension) => [
+							...extension.commands.keys(),
+						]),
+				).toContain('ts-extension-smoke');
+			} finally {
+				await runtime.dispose();
+			}
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
+	});
+
 	it('injects project .agents skills and honors untrusted project skill gating', async () => {
 		const cwd = mkdtempSync(
 			join(tmpdir(), 'my-pi-api-project-skills-'),
