@@ -1,5 +1,16 @@
 # my-pi
 
+## 0.1.37
+
+### Patch Changes
+
+- cf3e775: Enable Svelte guardrails by default and clarify blocked
+  writes must be retried without $effect.
+- dd49073: Add PreToolUse hook blocking and opt-in Svelte guardrails
+  package preventing $effect writes.
+- Updated dependencies [cf3e775]
+  - @spences10/pi-svelte-guardrails@0.0.2
+
 ## 0.1.36
 
 ### Patch Changes
