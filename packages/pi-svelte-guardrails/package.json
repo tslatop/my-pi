@@ -1,0 +1,54 @@
+{
+	"name": "@spences10/pi-svelte-guardrails",
+	"version": "0.0.1",
+	"description": "Pi extension that blocks discouraged Svelte patterns before agents write them",
+	"keywords": [
+		"agent-guardrails",
+		"pi",
+		"pi-package",
+		"svelte",
+		"svelte5"
+	],
+	"license": "MIT",
+	"author": "Scott Spence <me@scottspence.com>",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/spences10/my-pi.git",
+		"directory": "packages/pi-svelte-guardrails"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run build:self",
+		"build:self": "tsc -p tsconfig.build.json",
+		"check": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run check:self",
+		"check:self": "tsc --noEmit -p tsconfig.json",
+		"test": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run test:self",
+		"test:self": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@earendil-works/pi-coding-agent": "^0.74.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.6.1",
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.5"
+	},
+	"engines": {
+		"node": ">=24.15.0"
+	},
+	"pi": {
+		"extensions": [
+			"./dist/index.js"
+		]
+	}
+}

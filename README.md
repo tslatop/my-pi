@@ -519,12 +519,15 @@ restore, save, and load reusable MCP server sets.
 ### Hooks
 
 Claude-style hooks are discovered from `.claude/settings.json`,
-`.rulesync/hooks.json`, and `.pi/hooks.json`. Because hook commands
-run through `bash -lc`, project hook config is untrusted by default.
-Interactive sessions show the hook source files and commands before
-allowing execution; headless sessions skip hooks unless
-`MY_PI_HOOKS_CONFIG=allow` or `MY_PI_HOOKS_CONFIG=trust` is set.
-Trusted hook approvals are remembered per project directory and
+`.rulesync/hooks.json`, and `.pi/hooks.json`. `PreToolUse` hooks run
+before a tool executes and can block by exiting with code `2` or by
+printing JSON like `{ "decision": "block", "reason": "..." }`.
+`PostToolUse` and `PostToolUseFailure` hooks run after tool execution.
+Because hook commands run through `bash -lc`, project hook config is
+untrusted by default. Interactive sessions show the hook source files
+and commands before allowing execution; headless sessions skip hooks
+unless `MY_PI_HOOKS_CONFIG=allow` or `MY_PI_HOOKS_CONFIG=trust` is
+set. Trusted hook approvals are remembered per project directory and
 hook-config hash.
 
 Hook commands receive a restricted child-process environment by

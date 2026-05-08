@@ -12,6 +12,7 @@ import {
 	build_hook_payload,
 	create_hooks_resolution_extension,
 	get_hooks_config_info,
+	hook_block_reason,
 	load_hooks,
 	matches_hook,
 	parse_claude_settings_hooks,
@@ -209,6 +210,30 @@ describe('hooks-resolution helpers', () => {
 			text: 'done',
 		});
 	});
+
+	it('extracts PreToolUse block reasons from JSON and exit code 2', () => {
+		expect(
+			hook_block_reason({
+				code: 0,
+				stdout: JSON.stringify({
+					decision: 'block',
+					reason: 'Nope',
+				}),
+				stderr: '',
+				elapsed_ms: 1,
+				timed_out: false,
+			}),
+		).toBe('Nope');
+		expect(
+			hook_block_reason({
+				code: 2,
+				stdout: '',
+				stderr: 'Blocked',
+				elapsed_ms: 1,
+				timed_out: false,
+			}),
+		).toBe('Blocked');
+	});
 });
 
 describe('hooks-resolution extension', () => {
@@ -306,6 +331,75 @@ describe('hooks-resolution extension', () => {
 				delete process.env.MY_PI_HOOKS_CONFIG;
 			else process.env.MY_PI_HOOKS_CONFIG = previous;
 		}
+	});
+
+	it('blocks PreToolUse hooks that return a block decision', async () => {
+		const { pi, events } = create_test_pi();
+		const run_command_hook = vi
+			.fn<
+				(
+					command: string,
+					cwd: string,
+					payload: Record<string, unknown>,
+				) => Promise<CommandRunResult>
+			>()
+			.mockResolvedValue({
+				code: 0,
+				stdout: JSON.stringify({
+					decision: 'block',
+					reason: 'Do not use $effect',
+				}),
+				stderr: '',
+				elapsed_ms: 12,
+				timed_out: false,
+			});
+		const load_hooks_impl = vi
+			.fn<(cwd: string) => HookState>()
+			.mockReturnValue({
+				project_dir: '/repo',
+				hooks: [
+					{
+						event_name: 'PreToolUse',
+						matcher: /Write/,
+						matcher_text: 'Write',
+						command: 'node guard.js',
+						source: 'a',
+					},
+				],
+			});
+
+		await create_hooks_resolution_extension({
+			load_hooks: load_hooks_impl,
+			run_command_hook,
+		})(pi);
+
+		const start = events.get('session_start');
+		const tool_call = events.get('tool_call');
+		const { ctx } = create_context();
+
+		await start({}, ctx);
+		const result = await tool_call(
+			{
+				toolName: 'write',
+				toolCallId: 'call-1',
+				input: { path: 'src/file.svelte' },
+			} as any,
+			ctx,
+		);
+
+		expect(run_command_hook).toHaveBeenCalledTimes(1);
+		expect(run_command_hook.mock.calls[0][2]).toMatchObject({
+			hook_event_name: 'PreToolUse',
+			tool_name: 'Write',
+			tool_input: {
+				path: 'src/file.svelte',
+				file_path: 'src/file.svelte',
+			},
+		});
+		expect(result).toEqual({
+			block: true,
+			reason: 'Do not use $effect',
+		});
 	});
 
 	it('runs matching hooks once per unique command and notifies on success', async () => {

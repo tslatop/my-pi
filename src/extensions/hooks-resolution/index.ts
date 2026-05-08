@@ -4,6 +4,8 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 	ExtensionFactory,
+	ToolCallEvent,
+	ToolCallEventResult,
 	ToolResultEvent,
 } from '@earendil-works/pi-coding-agent';
 import {
@@ -31,7 +33,10 @@ type JsonValue =
 	| JsonValue[]
 	| { [key: string]: JsonValue };
 
-export type HookEventName = 'PostToolUse' | 'PostToolUseFailure';
+export type HookEventName =
+	| 'PreToolUse'
+	| 'PostToolUse'
+	| 'PostToolUseFailure';
 
 export interface ResolvedCommandHook {
 	event_name: HookEventName;
@@ -184,9 +189,11 @@ export function get_hook_entries(
 	event_name: HookEventName,
 ): unknown[] {
 	const keys =
-		event_name === 'PostToolUse'
-			? ['PostToolUse', 'postToolUse']
-			: ['PostToolUseFailure', 'postToolUseFailure'];
+		event_name === 'PreToolUse'
+			? ['PreToolUse', 'preToolUse']
+			: event_name === 'PostToolUse'
+				? ['PostToolUse', 'postToolUse']
+				: ['PostToolUseFailure', 'postToolUseFailure'];
 
 	for (const key of keys) {
 		const value = hooks_record[key];
@@ -206,6 +213,7 @@ export function parse_claude_settings_hooks(
 
 	const hooks: ResolvedCommandHook[] = [];
 	const events: HookEventName[] = [
+		'PreToolUse',
 		'PostToolUse',
 		'PostToolUseFailure',
 	];
@@ -253,6 +261,7 @@ export function parse_simple_hooks_file(
 
 	const hooks: ResolvedCommandHook[] = [];
 	const events: HookEventName[] = [
+		'PreToolUse',
 		'PostToolUse',
 		'PostToolUseFailure',
 	];
@@ -420,7 +429,7 @@ export function build_tool_response(
 }
 
 export function build_hook_payload(
-	event: ToolResultEvent,
+	event: ToolCallEvent | ToolResultEvent,
 	event_name: HookEventName,
 	ctx: ExtensionContext,
 	project_dir: string,
@@ -430,8 +439,7 @@ export function build_hook_payload(
 	);
 	const session_id =
 		ctx.sessionManager.getSessionFile() ?? 'ephemeral';
-
-	return {
+	const payload: Record<string, unknown> = {
 		session_id,
 		cwd: ctx.cwd,
 		claude_project_dir: project_dir,
@@ -439,8 +447,16 @@ export function build_hook_payload(
 		tool_name: to_claude_tool_name(event.toolName),
 		tool_call_id: event.toolCallId,
 		tool_input: normalized_input,
-		tool_response: build_tool_response(event, normalized_input),
 	};
+
+	if ('content' in event) {
+		payload.tool_response = build_tool_response(
+			event,
+			normalized_input,
+		);
+	}
+
+	return payload;
 }
 
 export async function run_command_hook(
@@ -516,6 +532,37 @@ export function hook_event_name_for_result(
 	event: ToolResultEvent,
 ): HookEventName {
 	return event.isError ? 'PostToolUseFailure' : 'PostToolUse';
+}
+
+export function hook_block_reason(
+	result: CommandRunResult,
+): string | undefined {
+	const parse_json = (
+		text: string,
+	): Record<string, unknown> | undefined => {
+		const trimmed = text.trim();
+		if (!trimmed) return undefined;
+		try {
+			return as_record(JSON.parse(trimmed));
+		} catch {
+			return undefined;
+		}
+	};
+
+	const json = parse_json(result.stdout) ?? parse_json(result.stderr);
+	if (json?.decision === 'block') {
+		return typeof json.reason === 'string'
+			? json.reason
+			: 'Blocked by hook';
+	}
+	if (result.code === 2) {
+		return (
+			result.stderr.trim() ||
+			result.stdout.trim() ||
+			'Blocked by hook'
+		);
+	}
+	return undefined;
 }
 
 export function format_duration(elapsed_ms: number): string {
@@ -634,6 +681,44 @@ export function create_hooks_resolution_extension(
 		pi.on('session_start', async (_event, ctx) => {
 			await refresh_hooks(ctx.cwd, ctx);
 		});
+
+		pi.on(
+			'tool_call',
+			async (
+				event,
+				ctx,
+			): Promise<ToolCallEventResult | undefined> => {
+				if (state.hooks.length === 0) return;
+
+				const matching_hooks = state.hooks.filter(
+					(hook) =>
+						hook.event_name === 'PreToolUse' &&
+						matches_hook(hook, event.toolName),
+				);
+				if (matching_hooks.length === 0) return;
+
+				const payload = build_hook_payload(
+					event,
+					'PreToolUse',
+					ctx,
+					state.project_dir,
+				);
+				const executed_commands = new Set<string>();
+
+				for (const hook of matching_hooks) {
+					if (executed_commands.has(hook.command)) continue;
+					executed_commands.add(hook.command);
+
+					const result = await run_command_hook_impl(
+						hook.command,
+						state.project_dir,
+						payload,
+					);
+					const reason = hook_block_reason(result);
+					if (reason) return { block: true, reason };
+				}
+			},
+		);
 
 		pi.on('tool_result', async (event, ctx) => {
 			if (state.hooks.length === 0) return;
