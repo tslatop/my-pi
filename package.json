@@ -73,6 +73,7 @@
 		"@spences10/pi-redact": "workspace:*",
 		"@spences10/pi-skills": "workspace:*",
 		"@spences10/pi-sqlite-tools": "workspace:*",
+		"@spences10/pi-svelte-guardrails": "workspace:*",
 		"@spences10/pi-team-mode": "workspace:*",
 		"@spences10/pi-telemetry": "workspace:*",
 		"@spences10/pi-themes": "workspace:*",

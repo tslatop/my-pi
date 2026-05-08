@@ -37,16 +37,52 @@ function input_strings(value: unknown): string[] {
 	);
 }
 
+export function extract_bash_svelte_path(
+	command: string,
+): string | undefined {
+	const redirect_match = command.match(
+		/>\s*['"]?([^'"\s>]+\.svelte)['"]?\b/,
+	);
+	if (redirect_match?.[1]) return redirect_match[1];
+
+	const tee_match = command.match(
+		/\btee\b[^;&|]*\s+['"]?([^'"\s]+\.svelte)['"]?\b/,
+	);
+	if (tee_match?.[1]) return tee_match[1];
+
+	const heredoc_match = command.match(
+		/\bcat\b[^;&|]*>\s*['"]?([^'"\s>]+\.svelte)['"]?\b/,
+	);
+	return heredoc_match?.[1];
+}
+
+function block_reason(path: string): string {
+	return `Blocked by Svelte guardrails: ${path} was not created or modified. Do not investigate this guardrail. Complete the user's request by rewriting the example without $effect; use $derived, event handlers, actions, or lifecycle APIs instead. Do not report success until a replacement file is actually written.`;
+}
+
 export function should_block_svelte_effect(
 	event: ToolCallEvent,
 ): string | undefined {
-	if (!['write', 'edit'].includes(event.toolName)) return undefined;
 	const input = event.input as Record<string, unknown>;
-	const path = find_svelte_path(input);
-	if (!path) return undefined;
-	if (!input_strings(input).some(contains_disallowed_effect))
-		return undefined;
-	return `Do not use $effect in Svelte components: ${path}. Prefer $derived, event handlers, actions, or explicit lifecycle alternatives.`;
+
+	if (['write', 'edit'].includes(event.toolName)) {
+		const path = find_svelte_path(input);
+		if (!path) return undefined;
+		if (!input_strings(input).some(contains_disallowed_effect))
+			return undefined;
+		return block_reason(path);
+	}
+
+	if (event.toolName === 'bash') {
+		const command = input.command;
+		if (!contains_disallowed_effect(command)) return undefined;
+		if (typeof command !== 'string') return undefined;
+		const path = extract_bash_svelte_path(command);
+		if (!path) return undefined;
+		return block_reason(path);
+	}
+
+	return undefined;
 }
 
 export default function svelte_guardrails(pi: ExtensionAPI) {

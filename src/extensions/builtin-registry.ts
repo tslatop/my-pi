@@ -232,7 +232,7 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 		label: 'Hooks resolution',
 		docs_label: 'Hooks resolution',
 		description:
-			'Claude Code style PostToolUse hook compatibility from .claude, .rulesync, and .pi configs',
+			'Claude Code style PreToolUse and PostToolUse hook compatibility from .claude, .rulesync, and .pi configs',
 		default_enabled: true,
 		option_name: 'hooks_resolution',
 		cli_arg: 'no-hooks',
@@ -241,6 +241,21 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 		aliases: ['hooks-resolution', 'hooks'],
 		load: async () =>
 			(await import('./hooks-resolution/index.js')).default,
+	},
+	{
+		key: 'svelte-guardrails',
+		label: 'Svelte guardrails',
+		docs_label: 'Svelte guardrails',
+		description:
+			'Blocks discouraged Svelte patterns like $effect before agents write them',
+		default_enabled: true,
+		option_name: 'svelte_guardrails',
+		cli_arg: 'no-svelte-guardrails',
+		cli_flag: '--no-svelte-guardrails',
+		cli_description: 'Disable Svelte guardrails',
+		aliases: ['svelte-guardrails', 'svelte'],
+		load: async () =>
+			(await import('@spences10/pi-svelte-guardrails')).default,
 	},
 	{
 		key: 'team-mode',

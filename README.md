@@ -755,6 +755,7 @@ pi install npm:@spences10/pi-recall
 pi install npm:@spences10/pi-nopeek
 pi install npm:@spences10/pi-omnisearch
 pi install npm:@spences10/pi-sqlite-tools
+pi install npm:@spences10/pi-svelte-guardrails
 pi install npm:@spences10/pi-team-mode
 pi install npm:@spences10/pi-themes
 ```
@@ -782,6 +783,9 @@ pi install npm:@spences10/pi-themes
   mcp-omnisearch reminder for verified web research
 - [`@spences10/pi-sqlite-tools`](./packages/pi-sqlite-tools/README.md)
   — mcp-sqlite-tools reminder for safer SQLite database work
+- [`@spences10/pi-svelte-guardrails`](./packages/pi-svelte-guardrails/README.md)
+  — Svelte pattern guardrails that block discouraged writes like
+  `$effect`
 - [`@spences10/pi-team-mode`](./packages/pi-team-mode/README.md) —
   local orchestrator/team mode with RPC teammates, tasks, and
   mailboxes
@@ -822,6 +826,7 @@ packages/
   pi-mcp/                  Installable Pi package for MCP integration
   pi-lsp/                  Installable Pi package for LSP tools
   pi-confirm-destructive/  Installable Pi package for destructive action confirmations
+  pi-svelte-guardrails/    Installable Pi package for Svelte pattern guardrails
   pi-skills/               Installable Pi package for skill management
   pi-recall/               Installable Pi package for pirecall reminders
   pi-nopeek/               Installable Pi package for nopeek reminders

@@ -63,6 +63,7 @@ describe('get_force_disabled_builtins', () => {
 		session_name: true,
 		confirm_destructive: true,
 		hooks_resolution: true,
+		svelte_guardrails: true,
 		team_mode: true,
 	} as const;
 
@@ -231,6 +232,7 @@ describe('create_my_pi environment scoping', () => {
 		session_name: false,
 		confirm_destructive: false,
 		hooks_resolution: false,
+		svelte_guardrails: false,
 		team_mode: false,
 	} as const;
 

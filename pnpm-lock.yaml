@@ -59,6 +59,9 @@ importers:
       '@spences10/pi-sqlite-tools':
         specifier: workspace:*
         version: link:packages/pi-sqlite-tools
+      '@spences10/pi-svelte-guardrails':
+        specifier: workspace:*
+        version: link:packages/pi-svelte-guardrails
       '@spences10/pi-team-mode':
         specifier: workspace:*
         version: link:packages/pi-team-mode
@@ -302,6 +305,22 @@ importers:
         version: 4.1.5(@types/node@25.6.1)(vite@8.0.8(@types/node@25.6.1)(jiti@2.7.0)(yaml@2.8.4))
 
   packages/pi-sqlite-tools:
+    dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: ^0.74.0
+        version: 0.74.0(ws@8.20.0)(zod@4.4.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^25.6.1
+        version: 25.6.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@25.6.1)(vite@8.0.8(@types/node@25.6.1)(jiti@2.7.0)(yaml@2.8.4))
+
+  packages/pi-svelte-guardrails:
     dependencies:
       '@earendil-works/pi-coding-agent':
         specifier: ^0.74.0

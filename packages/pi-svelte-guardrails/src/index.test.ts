@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	contains_disallowed_effect,
+	extract_bash_svelte_path,
 	is_svelte_path,
 	should_block_svelte_effect,
 } from './index.js';
@@ -26,7 +27,7 @@ describe('svelte guardrails', () => {
 					content: '<script>$effect(() => {})</script>',
 				},
 			} as any),
-		).toContain('Do not use $effect');
+		).toContain('was not created or modified');
 
 		expect(
 			should_block_svelte_effect({
@@ -39,5 +40,23 @@ describe('svelte guardrails', () => {
 				},
 			} as any),
 		).toBeUndefined();
+	});
+
+	it('blocks bash heredocs that create Svelte files with $effect', () => {
+		const command = `cat > ExampleEffect.svelte <<'EOF'
+<script>$effect(() => {})</script>
+EOF`;
+
+		expect(extract_bash_svelte_path(command)).toBe(
+			'ExampleEffect.svelte',
+		);
+		expect(
+			should_block_svelte_effect({
+				type: 'tool_call',
+				toolName: 'bash',
+				toolCallId: '3',
+				input: { command },
+			} as any),
+		).toContain('was not created or modified');
 	});
 });
