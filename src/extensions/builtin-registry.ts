@@ -258,6 +258,21 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 			(await import('@spences10/pi-svelte-guardrails')).default,
 	},
 	{
+		key: 'coding-preferences',
+		label: 'Coding preferences',
+		docs_label: 'Coding preferences',
+		description:
+			'Blocks configured coding workflow anti-patterns from JSON preferences',
+		default_enabled: true,
+		option_name: 'coding_preferences',
+		cli_arg: 'no-coding-preferences',
+		cli_flag: '--no-coding-preferences',
+		cli_description: 'Disable coding preferences guardrails',
+		aliases: ['coding-preferences', 'preferences', 'prefs'],
+		load: async () =>
+			(await import('@spences10/pi-coding-preferences')).default,
+	},
+	{
 		key: 'team-mode',
 		label: 'Team mode',
 		docs_label: 'Team mode',
