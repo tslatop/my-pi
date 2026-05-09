@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.39
+
+### Patch Changes
+
+- 33622bc: Register coding preferences as a built-in extension so it
+  appears in `/extensions`.
+
 ## 0.1.38
 
 ### Patch Changes
