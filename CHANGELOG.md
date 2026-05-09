@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.38
+
+### Patch Changes
+
+- 3b48e2f: Move built-in extension packages to optional dependencies
+  and gracefully skip unavailable extensions at startup.
+
 ## 0.1.37
 
 ### Patch Changes
