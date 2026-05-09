@@ -181,6 +181,18 @@ describe('create_lazy_builtin_extension_factory', () => {
 		expect(loaded).toBe(1);
 		expect(ran).toBe(1);
 	});
+
+	it('skips enabled built-ins when their package cannot load', async () => {
+		const extension = create_lazy_builtin_extension_factory(
+			'mcp',
+			async () => {
+				throw new Error('missing package');
+			},
+			new Set(),
+		);
+
+		await expect(extension({} as never)).resolves.toBeUndefined();
+	});
 });
 
 describe('apply_untrusted_repo_defaults', () => {

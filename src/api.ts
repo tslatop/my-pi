@@ -222,6 +222,18 @@ export function get_force_disabled_builtins(
 	return force_disabled;
 }
 
+function warn_builtin_extension_unavailable(
+	key: BuiltinExtensionKey,
+	error: unknown,
+): void {
+	const reason =
+		error instanceof Error ? error.message : String(error);
+	process.emitWarning(
+		`Built-in extension "${key}" is unavailable and was skipped: ${reason}`,
+		{ code: 'MY_PI_BUILTIN_EXTENSION_UNAVAILABLE' },
+	);
+}
+
 export function create_lazy_builtin_extension_factory(
 	key: BuiltinExtensionKey,
 	load_extension: BuiltinExtensionLoader,
@@ -232,8 +244,12 @@ export function create_lazy_builtin_extension_factory(
 		if (!is_builtin_extension_active(config, key, force_disabled)) {
 			return;
 		}
-		const extension = await load_extension();
-		await extension(pi);
+		try {
+			const extension = await load_extension();
+			await extension(pi);
+		} catch (error) {
+			warn_builtin_extension_unavailable(key, error);
+		}
 	};
 }
 
@@ -331,7 +347,10 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 		force_disabled,
 	);
 	const skills_package = skills_builtin_enabled
-		? await import('@spences10/pi-skills')
+		? await import('@spences10/pi-skills').catch((error) => {
+				warn_builtin_extension_unavailable('skills', error);
+				return undefined;
+			})
 		: undefined;
 
 	const managed_extension_factories: ExtensionFactory[] = [

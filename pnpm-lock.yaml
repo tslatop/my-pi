@@ -23,6 +23,26 @@ importers:
       '@earendil-works/pi-tui':
         specifier: ^0.74.0
         version: 0.74.0
+      citty:
+        specifier: ^0.2.2
+        version: 0.2.2
+      typebox:
+        specifier: ^1.1.38
+        version: 1.1.38
+    devDependencies:
+      '@changesets/cli':
+        specifier: ^2.31.0
+        version: 2.31.0(@types/node@25.6.1)
+      '@types/node':
+        specifier: ^25.6.1
+        version: 25.6.1
+      vite-plus:
+        specifier: ^0.1.20
+        version: 0.1.20(@types/node@25.6.1)(jiti@2.7.0)(typescript@6.0.3)(vite@8.0.8(@types/node@25.6.1)(jiti@2.7.0)(yaml@2.8.4))(yaml@2.8.4)
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@25.6.1)(vite@8.0.8(@types/node@25.6.1)(jiti@2.7.0)(yaml@2.8.4))
+    optionalDependencies:
       '@spences10/pi-child-env':
         specifier: workspace:*
         version: link:packages/pi-child-env
@@ -74,25 +94,6 @@ importers:
       '@spences10/pi-tui-modal':
         specifier: workspace:*
         version: link:packages/pi-tui-modal
-      citty:
-        specifier: ^0.2.2
-        version: 0.2.2
-      typebox:
-        specifier: ^1.1.38
-        version: 1.1.38
-    devDependencies:
-      '@changesets/cli':
-        specifier: ^2.31.0
-        version: 2.31.0(@types/node@25.6.1)
-      '@types/node':
-        specifier: ^25.6.1
-        version: 25.6.1
-      vite-plus:
-        specifier: ^0.1.20
-        version: 0.1.20(@types/node@25.6.1)(jiti@2.7.0)(typescript@6.0.3)(vite@8.0.8(@types/node@25.6.1)(jiti@2.7.0)(yaml@2.8.4))(yaml@2.8.4)
-      vitest:
-        specifier: ^4.1.5
-        version: 4.1.5(@types/node@25.6.1)(vite@8.0.8(@types/node@25.6.1)(jiti@2.7.0)(yaml@2.8.4))
 
   packages/pi-child-env:
     devDependencies:
