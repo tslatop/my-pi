@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.40
+
+### Patch Changes
+
+- dbff3b4: Fix pnpx installs by keeping runtime helper packages as
+  required dependencies while optional extensions remain skippable.
+
 ## 0.1.39
 
 ### Patch Changes
