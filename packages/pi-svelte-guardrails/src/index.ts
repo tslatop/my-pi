@@ -5,6 +5,11 @@ import type {
 	ToolCallEvent,
 	ToolCallEventResult,
 } from '@earendil-works/pi-coding-agent';
+import {
+	is_path_allowed,
+	load_svelte_guardrails_config,
+	type SvelteGuardrailsConfig,
+} from './config.js';
 
 const SVELTE_FILE_RE = /\.svelte(?:\.|$|\?)/;
 const EFFECT_RE = /\$effect(?:\s*\(|\s*\.)/;
@@ -62,12 +67,16 @@ function block_reason(path: string): string {
 
 export function should_block_svelte_effect(
 	event: ToolCallEvent,
+	config: SvelteGuardrailsConfig = load_svelte_guardrails_config(),
 ): string | undefined {
+	if (!config.blockEffect || config.mode === 'off') return undefined;
+
 	const input = event.input as Record<string, unknown>;
 
 	if (['write', 'edit'].includes(event.toolName)) {
 		const path = find_svelte_path(input);
-		if (!path) return undefined;
+		if (!path || is_path_allowed(path, config.allow))
+			return undefined;
 		if (!input_strings(input).some(contains_disallowed_effect))
 			return undefined;
 		return block_reason(path);
@@ -78,7 +87,8 @@ export function should_block_svelte_effect(
 		if (!contains_disallowed_effect(command)) return undefined;
 		if (typeof command !== 'string') return undefined;
 		const path = extract_bash_svelte_path(command);
-		if (!path) return undefined;
+		if (!path || is_path_allowed(path, config.allow))
+			return undefined;
 		return block_reason(path);
 	}
 
