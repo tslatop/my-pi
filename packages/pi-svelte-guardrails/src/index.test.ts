@@ -1,4 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -6,7 +11,8 @@ import {
 	is_path_allowed,
 	load_svelte_guardrails_config,
 } from './config.js';
-import {
+import svelte_guardrails, {
+	assess_svelte_effect,
 	contains_disallowed_effect,
 	extract_bash_svelte_path,
 	is_svelte_path,
@@ -123,20 +129,102 @@ EOF`;
 		).toBeUndefined();
 	});
 
-	it('loads config from the my-pi config path', () => {
+	it('supports block, warn, and off modes', () => {
+		const event = {
+			type: 'tool_call',
+			toolName: 'write',
+			toolCallId: '6',
+			input: {
+				path: 'src/App.svelte',
+				content: '<script>$effect(() => {})</script>',
+			},
+		} as any;
+
+		expect(
+			assess_svelte_effect(event, {
+				version: 1,
+				blockEffect: true,
+				allow: [],
+				mode: 'block',
+			})?.mode,
+		).toBe('block');
+		expect(
+			assess_svelte_effect(event, {
+				version: 1,
+				blockEffect: true,
+				allow: [],
+				mode: 'warn',
+			})?.mode,
+		).toBe('warn');
+		expect(
+			assess_svelte_effect(event, {
+				version: 1,
+				blockEffect: true,
+				allow: [],
+				mode: 'off',
+			}),
+		).toBeUndefined();
+	});
+
+	it('warns without blocking in warn mode', async () => {
 		const dir = mkdtempSync(join(tmpdir(), 'svelte-guardrails-'));
 		const path = join(dir, 'config.json');
+		process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG = path;
+		writeFileSync(path, JSON.stringify({ mode: 'warn' }));
+
+		const events = new Map<string, Function>();
+		svelte_guardrails({
+			on: (name: string, handler: Function) =>
+				events.set(name, handler),
+		} as any);
+
+		const notifications: string[] = [];
+		const result = await events.get('tool_call')?.(
+			{
+				type: 'tool_call',
+				toolName: 'write',
+				toolCallId: '7',
+				input: {
+					path: 'src/App.svelte',
+					content: '<script>$effect(() => {})</script>',
+				},
+			} as any,
+			{
+				ui: {
+					notify: (message: string) => notifications.push(message),
+				},
+			} as any,
+		);
+
+		expect(result).toBeUndefined();
+		expect(notifications[0]).toContain(
+			'Blocked by Svelte guardrails',
+		);
+		rmSync(dir, { recursive: true, force: true });
+	});
+
+	it('loads global config with project-local overrides', () => {
+		const dir = mkdtempSync(join(tmpdir(), 'svelte-guardrails-'));
+		const path = join(dir, 'config.json');
+		const project = join(dir, 'project');
+		const project_config = join(
+			project,
+			'.pi',
+			'svelte-guardrails.json',
+		);
+		mkdirSync(join(project, '.pi'), { recursive: true });
 		process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG = path;
 		writeFileSync(
 			path,
 			JSON.stringify({ blockEffect: false, allow: ['legacy/**'] }),
 		);
+		writeFileSync(project_config, JSON.stringify({ mode: 'warn' }));
 
-		expect(load_svelte_guardrails_config()).toEqual({
+		expect(load_svelte_guardrails_config(project)).toEqual({
 			version: 1,
 			blockEffect: false,
 			allow: ['legacy/**'],
-			mode: 'block',
+			mode: 'warn',
 		});
 		rmSync(dir, { recursive: true, force: true });
 	});

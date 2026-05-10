@@ -65,10 +65,15 @@ function block_reason(path: string): string {
 	return `Blocked by Svelte guardrails: ${path} was not created or modified. Do not investigate this guardrail. Complete the user's request by rewriting the example without $effect; use $derived, event handlers, actions, or lifecycle APIs instead. Do not report success until a replacement file is actually written.`;
 }
 
-export function should_block_svelte_effect(
+export interface SvelteEffectAssessment {
+	mode: Exclude<SvelteGuardrailsConfig['mode'], 'off'>;
+	reason: string;
+}
+
+export function assess_svelte_effect(
 	event: ToolCallEvent,
 	config: SvelteGuardrailsConfig = load_svelte_guardrails_config(),
-): string | undefined {
+): SvelteEffectAssessment | undefined {
 	if (!config.blockEffect || config.mode === 'off') return undefined;
 
 	const input = event.input as Record<string, unknown>;
@@ -79,7 +84,7 @@ export function should_block_svelte_effect(
 			return undefined;
 		if (!input_strings(input).some(contains_disallowed_effect))
 			return undefined;
-		return block_reason(path);
+		return { mode: config.mode, reason: block_reason(path) };
 	}
 
 	if (event.toolName === 'bash') {
@@ -89,19 +94,31 @@ export function should_block_svelte_effect(
 		const path = extract_bash_svelte_path(command);
 		if (!path || is_path_allowed(path, config.allow))
 			return undefined;
-		return block_reason(path);
+		return { mode: config.mode, reason: block_reason(path) };
 	}
 
 	return undefined;
 }
 
+export function should_block_svelte_effect(
+	event: ToolCallEvent,
+	config: SvelteGuardrailsConfig = load_svelte_guardrails_config(),
+): string | undefined {
+	const assessment = assess_svelte_effect(event, config);
+	return assessment?.mode === 'block' ? assessment.reason : undefined;
+}
+
 export default function svelte_guardrails(pi: ExtensionAPI) {
 	pi.on(
 		'tool_call',
-		async (event): Promise<ToolCallEventResult | undefined> => {
-			const reason = should_block_svelte_effect(event);
-			if (!reason) return undefined;
-			return { block: true, reason };
+		async (event, ctx): Promise<ToolCallEventResult | undefined> => {
+			const assessment = assess_svelte_effect(event);
+			if (!assessment) return undefined;
+			if (assessment.mode === 'warn') {
+				ctx.ui.notify(assessment.reason, 'warning');
+				return undefined;
+			}
+			return { block: true, reason: assessment.reason };
 		},
 	);
 }

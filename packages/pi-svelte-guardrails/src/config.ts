@@ -47,19 +47,39 @@ export function normalize_svelte_guardrails_config(
 	};
 }
 
-export function load_svelte_guardrails_config(): SvelteGuardrailsConfig {
-	const path = get_svelte_guardrails_config_path();
-	if (!existsSync(path))
-		return { ...DEFAULT_SVELTE_GUARDRAILS_CONFIG };
+export function get_project_svelte_guardrails_config_path(
+	cwd = process.cwd(),
+): string {
+	return join(cwd, '.pi', 'svelte-guardrails.json');
+}
+
+export function load_svelte_guardrails_config(
+	cwd = process.cwd(),
+): SvelteGuardrailsConfig {
+	const global_config = read_svelte_guardrails_config_file(
+		get_svelte_guardrails_config_path(),
+	);
+	const project_config = read_svelte_guardrails_config_file(
+		get_project_svelte_guardrails_config_path(cwd),
+	);
+
+	return normalize_svelte_guardrails_config({
+		...global_config,
+		...project_config,
+	});
+}
+
+function read_svelte_guardrails_config_file(
+	path: string,
+): Partial<SvelteGuardrailsConfig> {
+	if (!existsSync(path)) return {};
 
 	try {
-		return normalize_svelte_guardrails_config(
-			JSON.parse(
-				readFileSync(path, 'utf-8'),
-			) as Partial<SvelteGuardrailsConfig>,
-		);
+		return JSON.parse(
+			readFileSync(path, 'utf-8'),
+		) as Partial<SvelteGuardrailsConfig>;
 	} catch {
-		return { ...DEFAULT_SVELTE_GUARDRAILS_CONFIG };
+		return {};
 	}
 }
 

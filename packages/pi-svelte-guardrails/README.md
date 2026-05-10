@@ -17,18 +17,23 @@ they install the package.
 
 ## Configuration
 
-Create `~/.config/my-pi/svelte-guardrails.json` to tune the guardrail:
+Create `~/.config/my-pi/svelte-guardrails.json` to tune the guardrail
+globally, or `.pi/svelte-guardrails.json` in a project to override it
+locally:
 
 ```json
 {
 	"blockEffect": true,
-	"allow": ["examples/**", "legacy/**"]
+	"allow": ["examples/**", "legacy/**"],
+	"mode": "block"
 }
 ```
 
 - `blockEffect`: set to `false` to disable the `$effect` rule while
   keeping the extension installed.
 - `allow`: glob patterns for paths where the rule is skipped.
+- `mode`: `block` prevents the write, `warn` allows it with a warning,
+  and `off` skips the rule.
 
 Current default:
 
@@ -41,5 +46,6 @@ Current default:
 }
 ```
 
-`mode` is reserved for upcoming rule modes; the current behavior
-remains blocking by default.
+Use `block` for strict enforcement, `warn` to observe violations
+before enforcing them, and `off` for projects that intentionally allow
+the pattern. The current default remains `block`.
