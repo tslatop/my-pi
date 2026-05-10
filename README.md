@@ -45,6 +45,8 @@ directly as its own CLI.
   references, and document symbols via language servers.
 - **Managed skills** — discover, enable, disable, import, and sync
   Pi-native skills.
+- **Svelte guardrails** — default-enabled protection against writing
+  discouraged Svelte patterns like `$effect` in `.svelte` files.
 - **Prompt presets** — base presets plus additive prompt layers with
   per-project persistence.
 - **Secret redaction** — redact API keys and other sensitive output
@@ -396,11 +398,13 @@ Stack arbitrary Pi extensions via `-e`. Use `--no-builtin` to skip all
 built-in extensions.
 
 Built-in extension choices can also be saved interactively with
-`/extensions`. Startup flags like `--no-recall` and `--no-skills`
-still force-disable those extensions for the current process only. The
-built-in registry in `src/extensions/builtin-registry.ts` is the
-source of truth for built-in order, API option names, disable flags,
-labels, and runtime-mode constraints.
+`/extensions`. Startup flags like `--no-recall`, `--no-skills`, and
+`--no-svelte-guardrails` still force-disable those extensions for the
+current process only. The built-in registry in
+`src/extensions/builtin-registry.ts` is the source of truth for
+built-in order, API option names, disable flags, labels, and
+runtime-mode constraints. SDK users can disable Svelte guardrails with
+`create_my_pi({ svelte_guardrails: false })`.
 
 ### Themes
 
@@ -784,8 +788,9 @@ pi install npm:@spences10/pi-themes
 - [`@spences10/pi-sqlite-tools`](./packages/pi-sqlite-tools/README.md)
   — mcp-sqlite-tools reminder for safer SQLite database work
 - [`@spences10/pi-svelte-guardrails`](./packages/pi-svelte-guardrails/README.md)
-  — Svelte pattern guardrails that block discouraged writes like
-  `$effect`
+  — default-enabled Svelte pattern guardrails that block discouraged
+  writes like `$effect`; install separately in vanilla Pi with
+  `pi install npm:@spences10/pi-svelte-guardrails`
 - [`@spences10/pi-team-mode`](./packages/pi-team-mode/README.md) —
   local orchestrator/team mode with RPC teammates, tasks, and
   mailboxes
