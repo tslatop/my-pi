@@ -61,6 +61,9 @@
 		"@earendil-works/pi-ai": "^0.74.0",
 		"@earendil-works/pi-coding-agent": "^0.74.0",
 		"@earendil-works/pi-tui": "^0.74.0",
+		"@spences10/pi-project-trust": "workspace:*",
+		"@spences10/pi-themes": "workspace:*",
+		"@spences10/pi-tui-modal": "workspace:*",
 		"citty": "^0.2.2",
 		"typebox": "^1.1.38"
 	},
@@ -79,16 +82,13 @@
 		"@spences10/pi-mcp": "workspace:*",
 		"@spences10/pi-nopeek": "workspace:*",
 		"@spences10/pi-omnisearch": "workspace:*",
-		"@spences10/pi-project-trust": "workspace:*",
 		"@spences10/pi-recall": "workspace:*",
 		"@spences10/pi-redact": "workspace:*",
 		"@spences10/pi-skills": "workspace:*",
 		"@spences10/pi-sqlite-tools": "workspace:*",
 		"@spences10/pi-svelte-guardrails": "workspace:*",
 		"@spences10/pi-team-mode": "workspace:*",
-		"@spences10/pi-telemetry": "workspace:*",
-		"@spences10/pi-themes": "workspace:*",
-		"@spences10/pi-tui-modal": "workspace:*"
+		"@spences10/pi-telemetry": "workspace:*"
 	},
 	"engines": {
 		"node": ">=24.15.0"

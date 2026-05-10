@@ -23,6 +23,15 @@ importers:
       '@earendil-works/pi-tui':
         specifier: ^0.74.0
         version: 0.74.0
+      '@spences10/pi-project-trust':
+        specifier: workspace:*
+        version: link:packages/pi-project-trust
+      '@spences10/pi-themes':
+        specifier: workspace:*
+        version: link:packages/pi-themes
+      '@spences10/pi-tui-modal':
+        specifier: workspace:*
+        version: link:packages/pi-tui-modal
       citty:
         specifier: ^0.2.2
         version: 0.2.2
@@ -67,9 +76,6 @@ importers:
       '@spences10/pi-omnisearch':
         specifier: workspace:*
         version: link:packages/pi-omnisearch
-      '@spences10/pi-project-trust':
-        specifier: workspace:*
-        version: link:packages/pi-project-trust
       '@spences10/pi-recall':
         specifier: workspace:*
         version: link:packages/pi-recall
@@ -91,12 +97,6 @@ importers:
       '@spences10/pi-telemetry':
         specifier: workspace:*
         version: link:packages/pi-telemetry
-      '@spences10/pi-themes':
-        specifier: workspace:*
-        version: link:packages/pi-themes
-      '@spences10/pi-tui-modal':
-        specifier: workspace:*
-        version: link:packages/pi-tui-modal
 
   packages/pi-child-env:
     devDependencies:

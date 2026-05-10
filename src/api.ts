@@ -223,7 +223,7 @@ export function get_force_disabled_builtins(
 }
 
 function warn_builtin_extension_unavailable(
-	key: BuiltinExtensionKey,
+	key: BuiltinExtensionKey | 'telemetry',
 	error: unknown,
 ): void {
 	const reason =
@@ -259,9 +259,13 @@ function create_lazy_telemetry_extension(options: {
 	cwd?: string;
 }): ExtensionFactory {
 	return async (pi) => {
-		const { create_telemetry_extension } =
-			await import('@spences10/pi-telemetry');
-		await create_telemetry_extension(options)(pi);
+		try {
+			const { create_telemetry_extension } =
+				await import('@spences10/pi-telemetry');
+			await create_telemetry_extension(options)(pi);
+		} catch (error) {
+			warn_builtin_extension_unavailable('telemetry', error);
+		}
 	};
 }
 
