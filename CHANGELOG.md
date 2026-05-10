@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.41
+
+### Patch Changes
+
+- 5d8de6a: Document Svelte guardrails status, disabling options,
+  configuration, built-in behavior, and blocked-write semantics.
+
 ## 0.1.40
 
 ### Patch Changes
