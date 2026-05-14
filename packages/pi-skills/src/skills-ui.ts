@@ -5,6 +5,11 @@ import {
 	show_settings_modal,
 	show_text_modal,
 } from '@spences10/pi-tui-modal';
+import {
+	has_gh_skill,
+	run_gh_skill_install,
+	run_gh_skill_update,
+} from './gh-skill.js';
 import type { ManagedSkill, SkillsManager } from './manager.js';
 import {
 	ENABLED,
@@ -19,6 +24,10 @@ import {
 	sort_skills,
 	to_setting_item,
 } from './skill-utils.js';
+
+const IMPORT_SELECTED = '● import';
+const SYNC_SELECTED = '● sync';
+const SKIP_SELECTED = '○ skip';
 
 function importable_action_label(
 	state: ReturnType<typeof get_importable_state>,
@@ -48,7 +57,19 @@ export async function show_skills_home_modal(
 			{
 				value: 'importable',
 				label: 'Importable skills',
-				description: 'Import external skills or sync imported copies',
+				description:
+					'Batch import external skills or sync imported copies',
+			},
+			{
+				value: 'add',
+				label: 'Add GitHub skill',
+				description: 'Install a skill from owner/repo using gh skill',
+			},
+			{
+				value: 'update',
+				label: 'Update GitHub skills',
+				description:
+					'Check GitHub-installed skills and apply updates',
 			},
 			{
 				value: 'profiles',
@@ -123,87 +144,141 @@ export async function show_importable_skills_modal(
 	ctx: ExtensionCommandContext,
 	mgr: SkillsManager,
 ): Promise<boolean> {
-	while (true) {
-		const managed = sort_skills(mgr.discover());
-		const importable = sort_skills(mgr.discover_importable());
-		if (importable.length === 0) {
-			ctx.ui.notify('No importable skills found');
-			return false;
-		}
+	const managed = sort_skills(mgr.discover());
+	const importable = sort_skills(mgr.discover_importable());
+	if (importable.length === 0) {
+		ctx.ui.notify('No importable skills found');
+		return false;
+	}
 
-		const selected = await show_picker_modal(ctx, {
-			title: 'Importable skills',
-			subtitle: `${importable.length} external skills • enter imports or syncs`,
-			items: importable.map((skill) => {
-				const state = get_importable_state(managed, skill);
-				return {
-					value: skill.key,
-					label: skill.name,
-					description: `${importable_action_label(state)} • ${skill.source} • ${skill.key}`,
-				};
-			}),
-			empty_message: 'No importable skills found',
-		});
-		if (!selected) return false;
-
-		const skill = find_skill(importable, selected);
+	const selected = new Map<string, string>();
+	const metadata_by_id = new Map<string, string>();
+	const items = importable.map((skill) => {
 		const state = get_importable_state(managed, skill);
+		metadata_by_id.set(
+			skill.key,
+			[
+				`${importable_action_label(state)} • ${skill.source} • ${skill.key}`,
+				skill.description,
+				state.detail,
+				skill.baseDir,
+			].join('\n'),
+		);
+		const values =
+			state.action === 'import'
+				? [SKIP_SELECTED, IMPORT_SELECTED]
+				: state.action === 'sync'
+					? [SKIP_SELECTED, SYNC_SELECTED]
+					: [state.label];
+		return {
+			id: skill.key,
+			label: skill.name,
+			description: '',
+			currentValue: values[0]!,
+			values,
+		};
+	});
 
-		if (state.action === 'import') {
-			try {
-				const result = mgr.import_skill(skill.key);
-				ctx.ui.notify(
-					`Imported ${skill.name} to ${result.skillDir}. Reloading...`,
-					'info',
-				);
-				await ctx.reload();
-				return true;
-			} catch (error) {
-				ctx.ui.notify(
-					error instanceof Error ? error.message : String(error),
-					'warning',
-				);
-			}
-			continue;
-		}
+	await show_settings_modal(ctx, {
+		title: 'Importable skills',
+		subtitle: () => {
+			const actions = [...selected.values()].filter(
+				(value) => value !== SKIP_SELECTED,
+			).length;
+			return `${importable.length} external skills • ${actions} selected`;
+		},
+		items,
+		max_visible: Math.min(Math.max(items.length + 4, 8), 12),
+		enable_search: true,
+		metadata: (item) =>
+			item ? metadata_by_id.get(item.id)?.split('\n') : undefined,
+		on_change: (id, new_value) => {
+			if (new_value === SKIP_SELECTED) selected.delete(id);
+			else selected.set(id, new_value);
+		},
+	});
 
-		if (state.action === 'sync') {
-			const imported_skill = find_matching_imported_skill(
-				managed,
-				skill,
-			);
-			if (!imported_skill) {
-				ctx.ui.notify(
-					`Imported copy for ${skill.name} was not found`,
-					'warning',
+	let changed = false;
+	for (const [key, action] of selected) {
+		const skill = find_skill(importable, key);
+		try {
+			if (action === IMPORT_SELECTED) {
+				mgr.import_skill(skill.key);
+				changed = true;
+			} else if (action === SYNC_SELECTED) {
+				const imported_skill = find_matching_imported_skill(
+					managed,
+					skill,
 				);
-				continue;
-			}
-			try {
-				const result = mgr.sync_skill(imported_skill.key);
-				if (result.changed) {
-					ctx.ui.notify(`Synced ${skill.name}. Reloading...`, 'info');
-					await ctx.reload();
-					return true;
+				if (!imported_skill) {
+					ctx.ui.notify(
+						`Imported copy for ${skill.name} was not found`,
+						'warning',
+					);
+					continue;
 				}
-				await show_text_modal(ctx, {
-					title: 'Skill already up to date',
-					text: `${skill.name} is already up to date.`,
-				});
-			} catch (error) {
-				ctx.ui.notify(
-					error instanceof Error ? error.message : String(error),
-					'warning',
-				);
+				changed =
+					mgr.sync_skill(imported_skill.key).changed || changed;
 			}
-			continue;
+		} catch (error) {
+			ctx.ui.notify(
+				error instanceof Error ? error.message : String(error),
+				'warning',
+			);
 		}
+	}
 
-		await show_text_modal(ctx, {
-			title: skill.name,
-			subtitle: importable_action_label(state),
-			text: state.detail,
+	if (changed) {
+		ctx.ui.notify('Updated importable skills. Reloading...', 'info');
+		await ctx.reload();
+		return true;
+	}
+
+	return false;
+}
+
+export async function show_add_github_skill_modal(
+	ctx: ExtensionCommandContext,
+): Promise<boolean> {
+	if (!has_gh_skill()) {
+		ctx.ui.notify(
+			'Add GitHub skill requires gh v2.90.0+ with `gh skill` support.',
+			'warning',
+		);
+		return false;
+	}
+	const repository = await show_input_modal(ctx, {
+		title: 'Add GitHub skill',
+		subtitle: 'Example: spences10/skills',
+		label: 'Repository (owner/repo)',
+		trim: true,
+	});
+	if (!repository) return false;
+	const skill = await show_input_modal(ctx, {
+		title: 'Add GitHub skill',
+		subtitle: `${repository} • example: svelte-runes or svelte-runes@v1.0.0`,
+		label: 'Skill name, optionally @tag-or-sha',
+		trim: true,
+	});
+	if (!skill) return false;
+	try {
+		const output = run_gh_skill_install({
+			repository,
+			skill,
+			flags: [],
 		});
+		await show_text_modal(ctx, {
+			title: 'GitHub skill added',
+			text: `${output || `Installed ${skill} from ${repository}`}\n\nReloading...`,
+		});
+		await ctx.reload();
+		return true;
+	} catch (error) {
+		ctx.ui.notify(
+			error instanceof Error ? error.message : String(error),
+			'warning',
+		);
+		return false;
 	}
 }
 
@@ -259,15 +334,70 @@ export async function show_skill_list_modal(
 	}
 }
 
+export async function show_update_github_skills_modal(
+	ctx: ExtensionCommandContext,
+): Promise<boolean> {
+	if (!has_gh_skill()) {
+		ctx.ui.notify(
+			'Update GitHub skills requires gh v2.90.0+ with `gh skill` support.',
+			'warning',
+		);
+		return false;
+	}
+	try {
+		const check_output = run_gh_skill_update(['--dry-run']);
+		const selected = await show_picker_modal(ctx, {
+			title: 'Update GitHub skills',
+			subtitle: 'Dry-run result',
+			items: [
+				{
+					value: 'apply',
+					label: 'Apply updates',
+					description: 'Run gh skill update --all and reload',
+				},
+				{
+					value: 'check-only',
+					label: 'Check only',
+					description: 'Show dry-run output without modifying files',
+				},
+			],
+			footer:
+				check_output || 'No output from gh skill update --dry-run.',
+		});
+		if (!selected) return false;
+		if (selected === 'check-only') {
+			await show_text_modal(ctx, {
+				title: 'GitHub skill update check',
+				text:
+					check_output || 'No output from gh skill update --dry-run.',
+			});
+			return false;
+		}
+		const output = run_gh_skill_update(['--all']);
+		await show_text_modal(ctx, {
+			title: 'GitHub skills updated',
+			text: `${output || 'gh skill update --all completed.'}\n\nReloading...`,
+		});
+		await ctx.reload();
+		return true;
+	} catch (error) {
+		ctx.ui.notify(
+			error instanceof Error ? error.message : String(error),
+			'warning',
+		);
+		return false;
+	}
+}
+
 export async function show_refresh_summary(
 	ctx: ExtensionCommandContext,
 	mgr: SkillsManager,
 ): Promise<void> {
 	mgr.refresh();
-	await show_text_modal(ctx, {
-		title: 'Skills refreshed',
-		text: `${mgr.discover().length} managed skills\n${mgr.discover_importable().length} importable skills found`,
-	});
+	ctx.ui.notify(
+		`Skills refreshed: ${mgr.discover().length} managed, ${mgr.discover_importable().length} importable`,
+		'info',
+	);
 }
 
 export async function show_defaults_modal(

@@ -21,6 +21,7 @@ import {
 import {
 	pick_profile,
 	pick_skill,
+	show_add_github_skill_modal,
 	show_defaults_modal,
 	show_importable_skills_modal,
 	show_profiles_modal,
@@ -29,6 +30,7 @@ import {
 	show_skill_list_modal,
 	show_skills_home_modal,
 	show_skills_manager_modal,
+	show_update_github_skills_modal,
 } from './skills-ui.js';
 
 function is_resource_enabled(value: string | undefined): boolean {
@@ -57,6 +59,7 @@ export default async function skills(pi: ExtensionAPI) {
 		'show',
 		'enable',
 		'disable',
+		'add',
 		'import',
 		'sync',
 		'update',
@@ -192,6 +195,10 @@ export default async function skills(pi: ExtensionAPI) {
 						if (await show_skills_manager_modal(ctx, mgr)) return;
 					} else if (selected === 'importable') {
 						if (await show_importable_skills_modal(ctx, mgr)) return;
+					} else if (selected === 'add') {
+						if (await show_add_github_skill_modal(ctx)) return;
+					} else if (selected === 'update') {
+						if (await show_update_github_skills_modal(ctx)) return;
 					} else if (selected === 'profiles') {
 						if (await show_profiles_modal(ctx, mgr)) return;
 					} else if (selected === 'refresh') {
@@ -291,6 +298,42 @@ export default async function skills(pi: ExtensionAPI) {
 					);
 					await ctx.reload();
 					return;
+				}
+				case 'add': {
+					if (!arg && ctx.hasUI) {
+						if (await show_add_github_skill_modal(ctx)) return;
+						break;
+					}
+					const gh_request = parse_gh_skill_install_args(rest);
+					if (!gh_request) {
+						ctx.ui.notify(
+							'Usage: /skills add <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]',
+							'warning',
+						);
+						return;
+					}
+					if (!has_gh_skill()) {
+						ctx.ui.notify(
+							'GitHub skill adds require gh v2.90.0+ with `gh skill` support.',
+							'warning',
+						);
+						return;
+					}
+					try {
+						const output = run_gh_skill_install(gh_request);
+						ctx.ui.notify(
+							`${output || `Added ${gh_request.skill} from ${gh_request.repository}`}\nReloading...`,
+							'info',
+						);
+						await ctx.reload();
+						return;
+					} catch (error) {
+						ctx.ui.notify(
+							error instanceof Error ? error.message : String(error),
+							'warning',
+						);
+						return;
+					}
 				}
 				case 'import': {
 					let target = arg;

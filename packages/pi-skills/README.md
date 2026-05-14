@@ -61,6 +61,7 @@ detect local edits and upstream changes.
 /skills
 /skills enable <key|name|pattern>
 /skills disable <key|name|pattern>
+/skills add <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
 /skills import <key-or-name>
 /skills import <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
 /skills sync <key-or-name>
@@ -79,8 +80,9 @@ tracking, pinning, preview/update metadata, and tree-SHA comparison to
 `gh skill` instead of maintaining a parallel cache.
 
 With a UI available, `/skills` opens a modal home menu for managing,
-importing, syncing, refreshing, profile switching, and profile
-baseline selection. The no-arg `import`, `sync`, and `defaults`
+adding GitHub skills, batch-importing plugin skills, updating GitHub
+skills, refreshing discovery, profile switching, and profile baseline
+selection. The no-arg `add`, `import`, `sync`, and `defaults`
 subcommands use modal pickers/forms in interactive mode. In headless
 mode, use the subcommands directly.
 

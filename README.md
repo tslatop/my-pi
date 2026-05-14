@@ -556,10 +556,12 @@ In interactive mode:
   built-in extension
 - `/skills` — open the interactive skills manager (unified list with
   managed and importable sections, checkbox batch-import)
+- `/skills add <owner/repo> <skill[@ref]>` — install a GitHub-hosted
+  skill through `gh skill` when GitHub CLI support is available
 - `/skills import <key|name>` — import an external skill from the
   command line
-- `/skills import <owner/repo> <skill[@ref]>` — install a GitHub-hosted
-  skill through `gh skill` when GitHub CLI support is available
+- `/skills import <owner/repo> <skill[@ref]>` — alias GitHub-hosted
+  skill installs through `gh skill`
 - `/skills sync <key|name>` — sync an imported skill to its upstream
 - `/skills update --dry-run|--all` — check or apply GitHub skill
   updates through `gh skill update`

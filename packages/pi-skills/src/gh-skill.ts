@@ -109,7 +109,7 @@ export function run_gh_skill_install(
 	const args = [
 		'skill',
 		'install',
-		request.repository,
+		normalize_github_repo_spec(request.repository),
 		request.skill,
 		...default_flags,
 		...request.flags,
