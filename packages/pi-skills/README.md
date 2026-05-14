@@ -36,7 +36,10 @@ layer for mixed skill ecosystems:
   `.agents/skills/*/SKILL.md`, and `.pi/skills/*/SKILL.md`
 - discovers skills bundled inside installed Claude plugins
 - imports plugin skills into Pi-native skill storage
+- installs GitHub-hosted skills through `gh skill` when GitHub CLI
+  support is available
 - syncs imported skills when upstream plugin content changes
+- checks or applies GitHub skill updates through `gh skill update`
 - provides a `/skills` command and interactive picker
 
 Imported skills are copied into:
@@ -59,13 +62,21 @@ detect local edits and upstream changes.
 /skills enable <key|name|pattern>
 /skills disable <key|name|pattern>
 /skills import <key-or-name>
+/skills import <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
 /skills sync <key-or-name>
+/skills update --dry-run
+/skills update --all
 /skills profile create <name>
 /skills profile use <name>
 /skills refresh
 /skills defaults all-enabled
 /skills defaults all-disabled
 ```
+
+GitHub imports and updates require GitHub CLI `gh` v2.90.0 or newer
+with preview `gh skill` support. The extension delegates GitHub source
+tracking, pinning, preview/update metadata, and tree-SHA comparison to
+`gh skill` instead of maintaining a parallel cache.
 
 With a UI available, `/skills` opens a modal home menu for managing,
 importing, syncing, refreshing, profile switching, and profile
@@ -116,7 +127,7 @@ semantics.
 ## Using from a custom harness
 
 ```ts
-import skills, { create_skills_manager } from '@spences10/pi-skills';
+import skills, { create_skills_manager } from "@spences10/pi-skills";
 
 // pass `skills` as an ExtensionFactory to your Pi runtime
 const manager = create_skills_manager();

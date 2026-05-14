@@ -3,6 +3,12 @@ import {
 	show_input_modal,
 	show_text_modal,
 } from '@spences10/pi-tui-modal';
+import {
+	has_gh_skill,
+	parse_gh_skill_install_args,
+	run_gh_skill_install,
+	run_gh_skill_update,
+} from './gh-skill.js';
 import { create_skills_manager } from './manager.js';
 import {
 	find_skill,
@@ -53,6 +59,7 @@ export default async function skills(pi: ExtensionAPI) {
 		'disable',
 		'import',
 		'sync',
+		'update',
 		'profile',
 		'refresh',
 		'defaults',
@@ -100,6 +107,15 @@ export default async function skills(pi: ExtensionAPI) {
 					.map((s) => ({
 						value: `${parts[0]} ${s.key}`,
 						label: s.key,
+					}));
+			}
+
+			if (parts[0] === 'update') {
+				return ['--dry-run', '--all', '--force', '--unpin']
+					.filter((flag) => flag.startsWith(parts.at(-1) ?? ''))
+					.map((flag) => ({
+						value: `${parts.slice(0, -1).join(' ')} ${flag}`.trim(),
+						label: flag,
 					}));
 			}
 
@@ -283,7 +299,7 @@ export default async function skills(pi: ExtensionAPI) {
 							(await pick_skill(ctx, {
 								title: 'Import skill',
 								subtitle:
-									'Copy an external skill into Pi-native storage',
+									'Copy an external skill into Pi-native storage, or run: /skills import <owner/repo> <skill>',
 								skills: sort_skills(mgr.discover_importable()),
 								empty_message: 'No importable skills found',
 							})) ?? '';
@@ -291,11 +307,47 @@ export default async function skills(pi: ExtensionAPI) {
 					}
 					if (!target) {
 						ctx.ui.notify(
-							'Usage: /skills import <key|name>',
+							'Usage: /skills import <key|name> OR /skills import <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]',
 							'warning',
 						);
 						return;
 					}
+
+					const gh_request = parse_gh_skill_install_args(rest);
+					if (gh_request) {
+						if (!has_gh_skill()) {
+							ctx.ui.notify(
+								'GitHub skill imports require gh v2.90.0+ with `gh skill` support.',
+								'warning',
+							);
+							return;
+						}
+						try {
+							const output = run_gh_skill_install(gh_request);
+							if (ctx.hasUI) {
+								await show_text_modal(ctx, {
+									title: 'GitHub skill imported',
+									text: `${output || `Imported ${gh_request.skill} from ${gh_request.repository}`}\n\nReloading...`,
+								});
+							} else {
+								ctx.ui.notify(
+									`${output || `Imported ${gh_request.skill} from ${gh_request.repository}`}\nReloading...`,
+									'info',
+								);
+							}
+							await ctx.reload();
+							return;
+						} catch (error) {
+							ctx.ui.notify(
+								error instanceof Error
+									? error.message
+									: String(error),
+								'warning',
+							);
+							return;
+						}
+					}
+
 					try {
 						const result = mgr.import_skill(target);
 						ctx.ui.notify(
@@ -353,6 +405,41 @@ export default async function skills(pi: ExtensionAPI) {
 								`${target} is already up to date.`,
 								'info',
 							);
+						}
+						return;
+					} catch (error) {
+						ctx.ui.notify(
+							error instanceof Error ? error.message : String(error),
+							'warning',
+						);
+						return;
+					}
+				}
+				case 'update': {
+					if (!has_gh_skill()) {
+						ctx.ui.notify(
+							'GitHub skill updates require gh v2.90.0+ with `gh skill` support.',
+							'warning',
+						);
+						return;
+					}
+					try {
+						const output = run_gh_skill_update(rest);
+						const dry_run = rest.includes('--dry-run');
+						if (ctx.hasUI) {
+							await show_text_modal(ctx, {
+								title: dry_run
+									? 'GitHub skill update check'
+									: 'GitHub skills updated',
+								text: output || 'No output from gh skill update.',
+							});
+						} else {
+							ctx.ui.notify(output || 'gh skill update completed.');
+						}
+						if (!dry_run) {
+							ctx.ui.notify('Reloading skills...', 'info');
+							await ctx.reload();
+							return;
 						}
 						return;
 					} catch (error) {

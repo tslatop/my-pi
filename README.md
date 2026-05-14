@@ -558,7 +558,11 @@ In interactive mode:
   managed and importable sections, checkbox batch-import)
 - `/skills import <key|name>` — import an external skill from the
   command line
+- `/skills import <owner/repo> <skill[@ref]>` — install a GitHub-hosted
+  skill through `gh skill` when GitHub CLI support is available
 - `/skills sync <key|name>` — sync an imported skill to its upstream
+- `/skills update --dry-run|--all` — check or apply GitHub skill
+  updates through `gh skill update`
 - `/skills refresh` — rescan skill directories
 - `/skills defaults <all-enabled|all-disabled>` — set default policy
 - `/prompt-preset` — open the prompt preset manager (base presets +
