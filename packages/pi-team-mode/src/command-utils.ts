@@ -1,0 +1,129 @@
+import {
+	getAgentDir,
+	type BeforeAgentStartEvent,
+} from '@earendil-works/pi-coding-agent';
+import {
+	resolve_teammate_profile,
+	type TeammateProfile,
+} from './profiles.js';
+import { get_team_status } from './runner-orchestration.js';
+import { TeamStore, type TeamConfig } from './store.js';
+
+export function get_latest_team_for_cwd(
+	store: TeamStore,
+	cwd: string,
+): TeamConfig | undefined {
+	return store.list_teams().find((team) => team.cwd === cwd);
+}
+
+export function team_has_running_members(
+	status: Awaited<ReturnType<typeof get_team_status>>,
+): boolean {
+	return status.members.some((member) =>
+		['running', 'running_attached', 'running_orphaned'].includes(
+			member.status,
+		),
+	);
+}
+
+export function team_is_stale(
+	status: Awaited<ReturnType<typeof get_team_status>>,
+	older_than_days: number,
+): boolean {
+	if (team_has_running_members(status)) return false;
+	const timestamp = Date.parse(
+		status.team.updated_at ?? status.team.created_at,
+	);
+	if (!Number.isFinite(timestamp)) return false;
+	return Date.now() - timestamp > older_than_days * 86_400_000;
+}
+
+export function find_team_switch_target(
+	store: TeamStore,
+	target: string,
+): TeamConfig {
+	const trimmed = target.trim();
+	const teams = store.list_teams();
+	const by_id = teams.find((team) => team.id === trimmed);
+	if (by_id) return by_id;
+
+	const name_matches = teams.filter(
+		(team) => team.name.toLowerCase() === trimmed.toLowerCase(),
+	);
+	if (name_matches.length === 1) return name_matches[0]!;
+	if (name_matches.length > 1) {
+		throw new Error(
+			`Multiple teams are named ${trimmed}; use the team id instead.`,
+		);
+	}
+	throw new Error(`Unknown team: ${trimmed}`);
+}
+
+export function should_inject_team_prompt(
+	event: Pick<BeforeAgentStartEvent, 'systemPromptOptions'>,
+): boolean {
+	const selected_tools = event.systemPromptOptions?.selectedTools;
+	return !selected_tools || selected_tools.includes('team');
+}
+
+export function require_lead_for_teammate_spawn(
+	own_role: string | undefined,
+): void {
+	if (own_role?.trim().toLowerCase() !== 'teammate') return;
+	throw new Error(
+		'Only team leads can spawn teammates. Teammate sessions cannot create nested teams.',
+	);
+}
+
+export function append_team_system_prompt(
+	base_prompt: string,
+	options: {
+		active_team_id?: string;
+		ownMember: string;
+		ownRole: string;
+	},
+): string {
+	const role_text =
+		options.ownRole === 'teammate' ? 'teammate' : 'team lead';
+	const active_context = options.active_team_id
+		? `You are ${role_text} \`${options.ownMember}\` in team \`${options.active_team_id}\`.`
+		: 'No team is active yet. Create one with the `team` tool when the user asks for parallel/background teammate work.';
+
+	return (
+		base_prompt +
+		`
+
+## Team Mode
+
+${active_context}
+Use the \`team\` tool as the source of truth for team coordination.
+
+Rules:
+- The team lead should create tasks, spawn members, message teammates, and inspect status through the \`team\` tool.
+- Mailbox states are separate: delivered means queued to a session, read means reviewed, acknowledged means fully processed and safe to suppress redelivery. Teammates should use message_read after reviewing messages and message_ack after acting on them.
+- Do not create nested teams from a teammate session; teammate sessions cannot use member_spawn or /team spawn.
+- Use urgent steer/follow-up messaging for coordination instead of assuming shared context.
+- Team leads should use real RPC teammates via member_spawn for background work.
+- For mutating implementation work, prefer member_spawn with workspace_mode=worktree and mutating=true (or /team spawn --worktree --mutating) so teammates do not share the leader cwd.
+- Shared-cwd mutating teammates may be refused when another mutating teammate is already active in that cwd.`
+	);
+}
+
+export function require_arg(
+	value: string | undefined,
+	name: string,
+): string {
+	const trimmed = value?.trim();
+	if (!trimmed) throw new Error(`${name} is required`);
+	return trimmed;
+}
+
+export function teammate_profile(
+	cwd: string,
+	name: string | undefined,
+): TeammateProfile | undefined {
+	return resolve_teammate_profile(
+		{ cwd, agent_dir: getAgentDir() },
+		name,
+	);
+}
