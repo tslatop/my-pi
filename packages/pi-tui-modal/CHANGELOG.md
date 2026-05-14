@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.10
+
+### Patch Changes
+
+- 0f63525: Split oversized context, modal, and team command modules
+  into smaller focused implementation files.
+
 ## 0.0.9
 
 ### Patch Changes

@@ -91,13 +91,14 @@ export async function handle_team_command(
 ): Promise<void> {
 	const trimmed = args.trim();
 	if (!trimmed && has_modal_ui(ctx)) {
-		while (true) {
-			const selected = await show_team_home_modal(
+		let selected: string | undefined;
+		while (
+			(selected = await show_team_home_modal(
 				ctx,
 				store,
 				get_active_team_id(),
-			);
-			if (!selected) return;
+			))
+		) {
 			await handle_team_command(
 				selected,
 				ctx,
@@ -108,6 +109,7 @@ export async function handle_team_command(
 				own_role,
 			);
 		}
+		return;
 	}
 
 	const [sub = 'status', ...rest] = trimmed.split(/\s+/);

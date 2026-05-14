@@ -1,5 +1,24 @@
 # @spences10/pi-skills
 
+## 0.0.15
+
+### Patch Changes
+
+- ab0f974: Handle existing GitHub skills during install-all by letting
+  users skip or overwrite installed entries safely.
+- 8c99497: Add GitHub CLI skill import and update support to pi-skills
+  commands, tests, and package docs.
+- 44d0e3f: Add a GitHub skill install-all TUI path that discovers
+  repository skills and installs each one.
+- 21b3e03: Use GET for GitHub tree API requests when discovering
+  repository skills during install-all menu flows.
+- 1aa5a6e: Improve the skills menu with batch plugin imports, GitHub
+  skill add/update actions, and toast-only refresh.
+- a187251: Split the large skills UI module into focused files while
+  preserving the existing public exports.
+- Updated dependencies [0f63525]
+  - @spences10/pi-tui-modal@0.0.10
+
 ## 0.0.14
 
 ### Patch Changes

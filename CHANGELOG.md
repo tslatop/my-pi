@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.42
+
+### Patch Changes
+
+- Updated dependencies [0f63525]
+  - @spences10/pi-tui-modal@0.0.10
+
 ## 0.1.41
 
 ### Patch Changes

@@ -84,8 +84,8 @@ adding GitHub skills, batch-importing plugin skills, updating GitHub
 skills, refreshing discovery, profile switching, and profile baseline
 selection. The Add GitHub skill flow can install one skill or every
 `SKILL.md` found in a repository. The no-arg `add`, `import`, `sync`,
-and `defaults` subcommands use modal pickers/forms in interactive mode.
-In headless mode, use the subcommands directly.
+and `defaults` subcommands use modal pickers/forms in interactive
+mode. In headless mode, use the subcommands directly.
 
 ## Skill enablement
 
@@ -130,7 +130,7 @@ semantics.
 ## Using from a custom harness
 
 ```ts
-import skills, { create_skills_manager } from "@spences10/pi-skills";
+import skills, { create_skills_manager } from '@spences10/pi-skills';
 
 // pass `skills` as an ExtensionFactory to your Pi runtime
 const manager = create_skills_manager();

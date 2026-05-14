@@ -1,5 +1,14 @@
 # @spences10/pi-team-mode
 
+## 0.0.17
+
+### Patch Changes
+
+- 0f63525: Split oversized context, modal, and team command modules
+  into smaller focused implementation files.
+- Updated dependencies [0f63525]
+  - @spences10/pi-tui-modal@0.0.10
+
 ## 0.0.16
 
 ### Patch Changes

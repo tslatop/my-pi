@@ -180,16 +180,17 @@ export default async function skills(pi: ExtensionAPI) {
 			const trimmed = args.trim();
 
 			if (!trimmed && ctx.hasUI) {
+				let selected: string | undefined;
 				while (true) {
 					const managed_count = mgr.discover().length;
 					const importable_count = mgr.discover_importable().length;
-					const selected = await show_skills_home_modal(
+					selected = await show_skills_home_modal(
 						ctx,
 						managed_count,
 						importable_count,
 						mgr.get_active_profile(),
 					);
-					if (!selected) return;
+					if (!selected) break;
 
 					if (selected === 'manage') {
 						if (await show_skills_manager_modal(ctx, mgr)) return;
@@ -205,6 +206,7 @@ export default async function skills(pi: ExtensionAPI) {
 						await show_refresh_summary(ctx, mgr);
 					}
 				}
+				return;
 			}
 
 			const [sub, ...rest] = (trimmed || 'list').split(/\s+/);

@@ -461,11 +461,11 @@ export function create_telemetry_extension(
 			},
 			handler: async (args, ctx) => {
 				if (!args.trim() && has_modal_ui(ctx)) {
-					while (true) {
-						const selected = await show_telemetry_home_modal(ctx);
-						if (!selected) return;
+					let selected: string | undefined;
+					while ((selected = await show_telemetry_home_modal(ctx))) {
 						await handle_telemetry_home_action(ctx, selected);
 					}
+					return;
 				}
 
 				const parsed = parse_telemetry_command(args);

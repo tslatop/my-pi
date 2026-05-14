@@ -1,5 +1,13 @@
 # @spences10/pi-mcp
 
+## 0.0.21
+
+### Patch Changes
+
+- Updated dependencies [0f63525]
+  - @spences10/pi-context@0.0.11
+  - @spences10/pi-tui-modal@0.0.10
+
 ## 0.0.20
 
 ### Patch Changes

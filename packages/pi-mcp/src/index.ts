@@ -716,9 +716,8 @@ export default async function mcp(pi: ExtensionAPI) {
 			await ensure_servers(ctx.cwd, ctx);
 			const parts = args.trim().split(/\s+/).filter(Boolean);
 			if (parts.length === 0 && ctx.hasUI) {
-				while (true) {
-					const selected = await show_mcp_home_modal(ctx);
-					if (!selected) return;
+				let selected: string | undefined;
+				while ((selected = await show_mcp_home_modal(ctx))) {
 					if (selected === 'manage') {
 						await show_mcp_server_modal(ctx);
 					} else if (selected === 'list') {
@@ -744,6 +743,7 @@ export default async function mcp(pi: ExtensionAPI) {
 					}
 					await ensure_servers(ctx.cwd, ctx);
 				}
+				return;
 			}
 			const [sub, ...rest] = parts;
 			const name = rest.join(' ');
