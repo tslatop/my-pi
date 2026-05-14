@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	command_output,
 	has_gh_skill,
+	list_github_repository_skills,
 	normalize_github_repo_spec,
 	parse_gh_skill_install_args,
 	run_gh_skill_install,
@@ -108,6 +109,53 @@ describe('gh skill helpers', () => {
 			'pi',
 			'--scope',
 			'project',
+		]);
+	});
+
+	it('lists skills from a GitHub repository tree', () => {
+		const calls: Array<[string, string[]]> = [];
+		const runner: CommandRunner = (command, args) => {
+			calls.push([command, args]);
+			if (args[1] === 'repos/spences10/skills') {
+				return {
+					status: 0,
+					stdout: JSON.stringify({ default_branch: 'main' }),
+					stderr: '',
+				};
+			}
+			return {
+				status: 0,
+				stdout: JSON.stringify({
+					tree: [
+						{ path: 'svelte-runes/SKILL.md', type: 'blob' },
+						{ path: 'svelte-runes/README.md', type: 'blob' },
+						{ path: 'nested/tdd/SKILL.md', type: 'blob' },
+					],
+				}),
+				stderr: '',
+			};
+		};
+		expect(
+			list_github_repository_skills(
+				'spences10/skills',
+				undefined,
+				runner,
+			),
+		).toEqual([
+			{ name: 'tdd', path: 'nested/tdd/SKILL.md' },
+			{ name: 'svelte-runes', path: 'svelte-runes/SKILL.md' },
+		]);
+		expect(calls).toEqual([
+			['gh', ['api', 'repos/spences10/skills']],
+			[
+				'gh',
+				[
+					'api',
+					'repos/spences10/skills/git/trees/main',
+					'-f',
+					'recursive=1',
+				],
+			],
 		]);
 	});
 

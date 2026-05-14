@@ -7,6 +7,7 @@ import {
 } from '@spences10/pi-tui-modal';
 import {
 	has_gh_skill,
+	list_github_repository_skills,
 	run_gh_skill_install,
 	run_gh_skill_update,
 } from './gh-skill.js';
@@ -254,22 +255,101 @@ export async function show_add_github_skill_modal(
 		trim: true,
 	});
 	if (!repository) return false;
-	const skill = await show_input_modal(ctx, {
+
+	const action = await show_picker_modal(ctx, {
 		title: 'Add GitHub skill',
-		subtitle: `${repository} • example: svelte-runes or svelte-runes@v1.0.0`,
-		label: 'Skill name, optionally @tag-or-sha',
+		subtitle: repository,
+		items: [
+			{
+				value: 'one',
+				label: 'Choose one skill',
+				description: 'Enter a skill name or exact path to install',
+			},
+			{
+				value: 'all',
+				label: 'Install all skills from repo',
+				description:
+					'List SKILL.md files through gh api, install each one, then reload',
+			},
+			{
+				value: 'preview',
+				label: 'Preview/browse',
+				description:
+					'Coming later: preview repository skills before installing',
+			},
+		],
+	});
+	if (!action) return false;
+
+	if (action === 'preview') {
+		await show_text_modal(ctx, {
+			title: 'Preview/browse coming later',
+			text: `For now, use:\n\ngh skill preview ${repository}`,
+		});
+		return false;
+	}
+
+	if (action === 'one') {
+		const skill = await show_input_modal(ctx, {
+			title: 'Add one GitHub skill',
+			subtitle: `${repository} • example: svelte-runes or svelte-runes@v1.0.0`,
+			label: 'Skill name, optionally @tag-or-sha',
+			trim: true,
+		});
+		if (!skill) return false;
+		try {
+			const output = run_gh_skill_install({
+				repository,
+				skill,
+				flags: [],
+			});
+			await show_text_modal(ctx, {
+				title: 'GitHub skill added',
+				text: `${output || `Installed ${skill} from ${repository}`}\n\nReloading...`,
+			});
+			await ctx.reload();
+			return true;
+		} catch (error) {
+			ctx.ui.notify(
+				error instanceof Error ? error.message : String(error),
+				'warning',
+			);
+			return false;
+		}
+	}
+
+	const pin = await show_input_modal(ctx, {
+		title: 'Install all GitHub skills',
+		subtitle: `${repository} • optional; leave blank for default branch`,
+		label: 'Pin tag, branch, or commit SHA',
 		trim: true,
 	});
-	if (!skill) return false;
 	try {
-		const output = run_gh_skill_install({
+		const skills = list_github_repository_skills(
 			repository,
-			skill,
-			flags: [],
-		});
+			pin || undefined,
+		);
+		if (skills.length === 0) {
+			ctx.ui.notify(
+				`No SKILL.md files found in ${repository}`,
+				'warning',
+			);
+			return false;
+		}
+		const lines: string[] = [];
+		for (const skill of skills) {
+			const flags = pin ? ['--pin', pin] : [];
+			const output = run_gh_skill_install({
+				repository,
+				skill: skill.path,
+				flags,
+			});
+			lines.push(`✓ ${skill.name}`);
+			if (output) lines.push(output.split('\n')[0] ?? output);
+		}
 		await show_text_modal(ctx, {
-			title: 'GitHub skill added',
-			text: `${output || `Installed ${skill} from ${repository}`}\n\nReloading...`,
+			title: 'GitHub skills added',
+			text: `Installed ${skills.length} skill(s) from ${repository}.\n\n${lines.join('\n')}\n\nReloading...`,
 		});
 		await ctx.reload();
 		return true;

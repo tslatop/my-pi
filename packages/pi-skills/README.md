@@ -82,9 +82,10 @@ tracking, pinning, preview/update metadata, and tree-SHA comparison to
 With a UI available, `/skills` opens a modal home menu for managing,
 adding GitHub skills, batch-importing plugin skills, updating GitHub
 skills, refreshing discovery, profile switching, and profile baseline
-selection. The no-arg `add`, `import`, `sync`, and `defaults`
-subcommands use modal pickers/forms in interactive mode. In headless
-mode, use the subcommands directly.
+selection. The Add GitHub skill flow can install one skill or every
+`SKILL.md` found in a repository. The no-arg `add`, `import`, `sync`,
+and `defaults` subcommands use modal pickers/forms in interactive mode.
+In headless mode, use the subcommands directly.
 
 ## Skill enablement
 

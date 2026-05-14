@@ -62,6 +62,18 @@ export function normalize_github_repo_spec(value: string): string {
 		.replace(/\.git$/, '');
 }
 
+function parse_repo_parts(repository: string): {
+	owner: string;
+	repo: string;
+} {
+	const normalized = normalize_github_repo_spec(repository);
+	const [owner, repo] = normalized.split('/');
+	if (!owner || !repo) {
+		throw new Error(`Invalid GitHub repository: ${repository}`);
+	}
+	return { owner, repo };
+}
+
 export interface GhSkillInstallRequest {
 	repository: string;
 	skill: string;
@@ -118,6 +130,62 @@ export function run_gh_skill_install(
 		runner('gh', args),
 		'gh skill install failed',
 	);
+}
+
+export interface GhRepositorySkill {
+	name: string;
+	path: string;
+}
+
+interface GitHubRepositoryResponse {
+	default_branch?: string;
+}
+
+interface GitHubTreeResponse {
+	tree?: Array<{ path?: string; type?: string }>;
+}
+
+export function list_github_repository_skills(
+	repository: string,
+	ref?: string,
+	runner: CommandRunner = default_runner,
+): GhRepositorySkill[] {
+	const { owner, repo } = parse_repo_parts(repository);
+	let tree_ref = ref?.trim();
+	if (!tree_ref) {
+		const repo_output = ensure_success(
+			runner('gh', ['api', `repos/${owner}/${repo}`]),
+			'gh api failed while reading repository metadata',
+		);
+		const metadata = JSON.parse(
+			repo_output,
+		) as GitHubRepositoryResponse;
+		tree_ref = metadata.default_branch || 'HEAD';
+	}
+
+	const tree_output = ensure_success(
+		runner('gh', [
+			'api',
+			`repos/${owner}/${repo}/git/trees/${tree_ref}`,
+			'-f',
+			'recursive=1',
+		]),
+		'gh api failed while listing repository skills',
+	);
+	const tree = JSON.parse(tree_output) as GitHubTreeResponse;
+	return (tree.tree ?? [])
+		.filter(
+			(item) =>
+				item.type === 'blob' && item.path?.endsWith('/SKILL.md'),
+		)
+		.map((item) => {
+			const path = item.path!;
+			return {
+				path,
+				name: path.split('/').at(-2) ?? path,
+			};
+		})
+		.sort((a, b) => a.path.localeCompare(b.path));
 }
 
 export function run_gh_skill_update(
