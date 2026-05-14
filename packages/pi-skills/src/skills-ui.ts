@@ -318,17 +318,35 @@ export async function show_add_github_skill_modal(
 		}
 	}
 
-	const pin = await show_input_modal(ctx, {
+	const ref_mode = await show_picker_modal(ctx, {
 		title: 'Install all GitHub skills',
-		subtitle: `${repository} • optional; leave blank for default branch`,
-		label: 'Pin tag, branch, or commit SHA',
-		trim: true,
+		subtitle: repository,
+		items: [
+			{
+				value: 'default',
+				label: 'Use default branch',
+				description: 'Install current default branch without a pin',
+			},
+			{
+				value: 'pin',
+				label: 'Pin to tag, branch, or commit SHA',
+				description: 'Recommended for reviewed/reproducible installs',
+			},
+		],
 	});
+	if (!ref_mode) return false;
+	const pin =
+		ref_mode === 'pin'
+			? await show_input_modal(ctx, {
+					title: 'Install all GitHub skills',
+					subtitle: repository,
+					label: 'Pin tag, branch, or commit SHA',
+					trim: true,
+				})
+			: undefined;
+	if (ref_mode === 'pin' && !pin) return false;
 	try {
-		const skills = list_github_repository_skills(
-			repository,
-			pin || undefined,
-		);
+		const skills = list_github_repository_skills(repository, pin);
 		if (skills.length === 0) {
 			ctx.ui.notify(
 				`No SKILL.md files found in ${repository}`,

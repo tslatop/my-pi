@@ -166,6 +166,8 @@ export function list_github_repository_skills(
 	const tree_output = ensure_success(
 		runner('gh', [
 			'api',
+			'--method',
+			'GET',
 			`repos/${owner}/${repo}/git/trees/${tree_ref}`,
 			'-f',
 			'recursive=1',

@@ -151,6 +151,8 @@ describe('gh skill helpers', () => {
 				'gh',
 				[
 					'api',
+					'--method',
+					'GET',
 					'repos/spences10/skills/git/trees/main',
 					'-f',
 					'recursive=1',
