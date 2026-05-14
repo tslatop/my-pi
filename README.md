@@ -64,14 +64,13 @@ directly as its own CLI.
   through the context sidecar and telemetry packages, and uses Node's
   built-in TypeScript type stripping for small local scripts.
 - **Node 24 is used in CI.** `node:sqlite` is a release-candidate Node
-  API line, so CI runs both the minimum supported Node 24 release and
-  the current Node 24 line while the code keeps SQLite usage small and
-  synchronous.
+  API line, so CI runs the current Node 24 line while the code keeps
+  SQLite usage small and synchronous.
 - **SQLite warning policy:** the `my-pi` CLI suppresses Node's
   expected `node:sqlite` `ExperimentalWarning` before built-ins load.
   Standalone package/API consumers own their process warning policy
   until Node marks `node:sqlite` stable.
-- **pnpm 10** is used for local development. End users can run with
+- **pnpm 11** is used for local development. End users can run with
   `pnpx`, `npx`, or `bunx`.
 
 ## Get Started
@@ -81,8 +80,8 @@ pnpx my-pi@latest
 # or: npx my-pi@latest / bunx my-pi@latest
 ```
 
-With pnpm 10's build-script approval gate, use explicit build
-allowances if you want a warning-free `pnpx` install:
+With pnpm's build-script approval gate, use explicit build allowances
+if you want a warning-free `pnpx` install:
 
 ```bash
 pnpm dlx --allow-build=@google/genai --allow-build=koffi --allow-build=protobufjs my-pi@latest
