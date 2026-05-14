@@ -30,6 +30,12 @@ const IMPORT_SELECTED = '● import';
 const SYNC_SELECTED = '● sync';
 const SKIP_SELECTED = '○ skip';
 
+function is_already_installed_error(error: unknown): boolean {
+	const message =
+		error instanceof Error ? error.message : String(error);
+	return message.includes('already installed');
+}
+
 function importable_action_label(
 	state: ReturnType<typeof get_importable_state>,
 ): string {
@@ -345,6 +351,23 @@ export async function show_add_github_skill_modal(
 				})
 			: undefined;
 	if (ref_mode === 'pin' && !pin) return false;
+	const existing_mode = await show_picker_modal(ctx, {
+		title: 'Install all GitHub skills',
+		subtitle: 'When a skill is already installed',
+		items: [
+			{
+				value: 'skip',
+				label: 'Skip existing skills',
+				description: 'Leave installed skills unchanged',
+			},
+			{
+				value: 'overwrite',
+				label: 'Overwrite existing skills',
+				description: 'Pass --force to gh skill install',
+			},
+		],
+	});
+	if (!existing_mode) return false;
 	try {
 		const skills = list_github_repository_skills(repository, pin);
 		if (skills.length === 0) {
@@ -355,22 +378,47 @@ export async function show_add_github_skill_modal(
 			return false;
 		}
 		const lines: string[] = [];
+		let installed = 0;
+		let skipped = 0;
+		let failed = 0;
 		for (const skill of skills) {
-			const flags = pin ? ['--pin', pin] : [];
-			const output = run_gh_skill_install({
-				repository,
-				skill: skill.path,
-				flags,
-			});
-			lines.push(`✓ ${skill.name}`);
-			if (output) lines.push(output.split('\n')[0] ?? output);
+			const flags = [
+				...(pin ? ['--pin', pin] : []),
+				...(existing_mode === 'overwrite' ? ['--force'] : []),
+			];
+			try {
+				const output = run_gh_skill_install({
+					repository,
+					skill: skill.path,
+					flags,
+				});
+				installed += 1;
+				lines.push(`✓ ${skill.name}`);
+				if (output) lines.push(output.split('\n')[0] ?? output);
+			} catch (error) {
+				if (
+					existing_mode === 'skip' &&
+					is_already_installed_error(error)
+				) {
+					skipped += 1;
+					lines.push(`⊘ ${skill.name} already installed`);
+					continue;
+				}
+				failed += 1;
+				lines.push(
+					`! ${skill.name}: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
 		}
 		await show_text_modal(ctx, {
 			title: 'GitHub skills added',
-			text: `Installed ${skills.length} skill(s) from ${repository}.\n\n${lines.join('\n')}\n\nReloading...`,
+			text: `Installed ${installed}, skipped ${skipped}, failed ${failed} from ${repository}.\n\n${lines.join('\n')}${installed > 0 ? '\n\nReloading...' : ''}`,
 		});
-		await ctx.reload();
-		return true;
+		if (installed > 0) {
+			await ctx.reload();
+			return true;
+		}
+		return false;
 	} catch (error) {
 		ctx.ui.notify(
 			error instanceof Error ? error.message : String(error),
