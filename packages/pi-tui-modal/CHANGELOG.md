@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.11
+
+### Patch Changes
+
+- 7fcd066: Add reusable progress modal helper and use it for
+  cancellable GitHub skill operations.
+
 ## 0.0.10
 
 ### Patch Changes

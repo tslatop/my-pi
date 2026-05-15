@@ -1,5 +1,14 @@
 # my-pi
 
+## 0.1.43
+
+### Patch Changes
+
+- 2f62e0a: Remove personal wording from public docs and describe my-pi
+  as opinionated, reusable tooling instead.
+- Updated dependencies [7fcd066]
+  - @spences10/pi-tui-modal@0.0.11
+
 ## 0.1.42
 
 ### Patch Changes

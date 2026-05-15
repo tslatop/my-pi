@@ -1,5 +1,16 @@
 # @spences10/pi-skills
 
+## 0.0.16
+
+### Patch Changes
+
+- d136588: Add responsive progress overlays for GitHub skill install,
+  overwrite, update, and cancellable async gh operations.
+- 7fcd066: Add reusable progress modal helper and use it for
+  cancellable GitHub skill operations.
+- Updated dependencies [7fcd066]
+  - @spences10/pi-tui-modal@0.0.11
+
 ## 0.0.15
 
 ### Patch Changes

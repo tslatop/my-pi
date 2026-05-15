@@ -1,5 +1,12 @@
 # @spences10/pi-telemetry
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [7fcd066]
+  - @spences10/pi-tui-modal@0.0.11
+
 ## 0.0.10
 
 ### Patch Changes

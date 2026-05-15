@@ -1,5 +1,12 @@
 # @spences10/pi-omnisearch
 
+## 0.0.7
+
+### Patch Changes
+
+- 2f62e0a: Remove personal wording from public docs and describe my-pi
+  as opinionated, reusable tooling instead.
+
 ## 0.0.6
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @spences10/pi-coding-preferences
 
+## 0.0.3
+
+### Patch Changes
+
+- 2f62e0a: Remove personal wording from public docs and describe my-pi
+  as opinionated, reusable tooling instead.
+
 ## 0.0.2
 
 ### Patch Changes
