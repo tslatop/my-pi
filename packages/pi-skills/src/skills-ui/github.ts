@@ -6,10 +6,11 @@ import {
 } from '@spences10/pi-tui-modal';
 import {
 	has_gh_skill,
-	list_github_repository_skills,
-	run_gh_skill_install,
-	run_gh_skill_update,
+	list_github_repository_skills_async,
+	run_gh_skill_install_async,
+	run_gh_skill_update_async,
 } from '../gh-skill.js';
+import { run_with_skill_progress } from './progress.js';
 
 function is_already_installed_error(error: unknown): boolean {
 	const message =
@@ -77,11 +78,24 @@ export async function show_add_github_skill_modal(
 		});
 		if (!skill) return false;
 		try {
-			const output = run_gh_skill_install({
-				repository,
-				skill,
-				flags: [],
-			});
+			const output = await run_with_skill_progress(
+				ctx,
+				'Installing GitHub skill',
+				`Installing ${skill} from ${repository}`,
+				async ({ signal, update }) => {
+					update({ current: skill });
+					return await run_gh_skill_install_async(
+						{
+							repository,
+							skill,
+							flags: [],
+						},
+						undefined,
+						{ signal },
+					);
+				},
+			);
+			if (output === undefined) return false;
 			await show_text_modal(ctx, {
 				title: 'GitHub skill added',
 				text: `${output || `Installed ${skill} from ${repository}`}\n\nReloading...`,
@@ -142,46 +156,94 @@ export async function show_add_github_skill_modal(
 	});
 	if (!existing_mode) return false;
 	try {
-		const skills = list_github_repository_skills(repository, pin);
-		if (skills.length === 0) {
+		const result = await run_with_skill_progress(
+			ctx,
+			'Installing GitHub skills',
+			`Reading skills from ${repository}`,
+			async ({ signal, update }) => {
+				const skills = await list_github_repository_skills_async(
+					repository,
+					pin,
+					undefined,
+					{ signal },
+				);
+				if (skills.length === 0) {
+					return { lines: [], installed: 0, skipped: 0, failed: 0 };
+				}
+				const lines: string[] = [];
+				let installed = 0;
+				let skipped = 0;
+				let failed = 0;
+				update({
+					message:
+						existing_mode === 'overwrite'
+							? 'Overwriting existing skills...'
+							: 'Installing missing skills...',
+					completed: 0,
+					total: skills.length,
+				});
+				for (const [index, skill] of skills.entries()) {
+					const flags = [
+						...(pin ? ['--pin', pin] : []),
+						...(existing_mode === 'overwrite' ? ['--force'] : []),
+					];
+					update({
+						current: skill.name,
+						completed: index,
+						total: skills.length,
+					});
+					try {
+						const output = await run_gh_skill_install_async(
+							{
+								repository,
+								skill: skill.path,
+								flags,
+							},
+							undefined,
+							{ signal },
+						);
+						installed += 1;
+						lines.push(`✓ ${skill.name}`);
+						update({
+							completed: index + 1,
+							line: `✓ ${skill.name}`,
+						});
+						if (output) lines.push(output.split('\n')[0] ?? output);
+					} catch (error) {
+						if (signal.aborted) throw error;
+						if (
+							existing_mode === 'skip' &&
+							is_already_installed_error(error)
+						) {
+							skipped += 1;
+							lines.push(`⊘ ${skill.name} already installed`);
+							update({
+								completed: index + 1,
+								line: `⊘ ${skill.name} already installed`,
+							});
+							continue;
+						}
+						failed += 1;
+						const message =
+							error instanceof Error ? error.message : String(error);
+						lines.push(`! ${skill.name}: ${message}`);
+						update({
+							completed: index + 1,
+							line: `! ${skill.name}: ${message}`,
+						});
+					}
+				}
+				return { lines, installed, skipped, failed };
+			},
+		);
+		if (result === undefined) return false;
+		const { lines, installed, skipped, failed } = result;
+		if (lines.length === 0 && installed === 0) {
 			ctx.ui.notify(
 				`No SKILL.md files found in ${repository}`,
 				'warning',
 			);
 			return false;
-		}
-		const lines: string[] = [];
-		let installed = 0;
-		let skipped = 0;
-		let failed = 0;
-		for (const skill of skills) {
-			const flags = [
-				...(pin ? ['--pin', pin] : []),
-				...(existing_mode === 'overwrite' ? ['--force'] : []),
-			];
-			try {
-				const output = run_gh_skill_install({
-					repository,
-					skill: skill.path,
-					flags,
-				});
-				installed += 1;
-				lines.push(`✓ ${skill.name}`);
-				if (output) lines.push(output.split('\n')[0] ?? output);
-			} catch (error) {
-				if (
-					existing_mode === 'skip' &&
-					is_already_installed_error(error)
-				) {
-					skipped += 1;
-					lines.push(`⊘ ${skill.name} already installed`);
-					continue;
-				}
-				failed += 1;
-				lines.push(
-					`! ${skill.name}: ${error instanceof Error ? error.message : String(error)}`,
-				);
-			}
 		}
 		await show_text_modal(ctx, {
 			title: 'GitHub skills added',
@@ -212,7 +274,16 @@ export async function show_update_github_skills_modal(
 		return false;
 	}
 	try {
-		const check_output = run_gh_skill_update(['--dry-run']);
+		const check_output = await run_with_skill_progress(
+			ctx,
+			'Checking GitHub skill updates',
+			'Running gh skill update --dry-run',
+			async ({ signal }) =>
+				await run_gh_skill_update_async(['--dry-run'], undefined, {
+					signal,
+				}),
+		);
+		if (check_output === undefined) return false;
 		const selected = await show_picker_modal(ctx, {
 			title: 'Update GitHub skills',
 			subtitle: 'Dry-run result',
@@ -240,7 +311,16 @@ export async function show_update_github_skills_modal(
 			});
 			return false;
 		}
-		const output = run_gh_skill_update(['--all']);
+		const output = await run_with_skill_progress(
+			ctx,
+			'Updating GitHub skills',
+			'Running gh skill update --all',
+			async ({ signal }) =>
+				await run_gh_skill_update_async(['--all'], undefined, {
+					signal,
+				}),
+		);
+		if (output === undefined) return false;
 		await show_text_modal(ctx, {
 			title: 'GitHub skills updated',
 			text: `${output || 'gh skill update --all completed.'}\n\nReloading...`,

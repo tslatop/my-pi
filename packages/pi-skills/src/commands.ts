@@ -7,7 +7,9 @@ import {
 	has_gh_skill,
 	parse_gh_skill_install_args,
 	run_gh_skill_install,
+	run_gh_skill_install_async,
 	run_gh_skill_update,
+	run_gh_skill_update_async,
 } from './gh-skill.js';
 import { create_skills_manager } from './manager.js';
 import {
@@ -32,6 +34,7 @@ import {
 	show_skills_manager_modal,
 	show_update_github_skills_modal,
 } from './skills-ui.js';
+import { run_with_skill_progress } from './skills-ui/progress.js';
 
 function is_resource_enabled(value: string | undefined): boolean {
 	const normalized = value?.trim().toLowerCase();
@@ -322,7 +325,22 @@ export default async function skills(pi: ExtensionAPI) {
 						return;
 					}
 					try {
-						const output = run_gh_skill_install(gh_request);
+						const output = ctx.hasUI
+							? await run_with_skill_progress(
+									ctx,
+									'Adding GitHub skill',
+									`Installing ${gh_request.skill} from ${gh_request.repository}`,
+									async ({ signal, update }) => {
+										update({ current: gh_request.skill });
+										return await run_gh_skill_install_async(
+											gh_request,
+											undefined,
+											{ signal },
+										);
+									},
+								)
+							: run_gh_skill_install(gh_request);
+						if (output === undefined) return;
 						ctx.ui.notify(
 							`${output || `Added ${gh_request.skill} from ${gh_request.repository}`}\nReloading...`,
 							'info',
@@ -368,7 +386,22 @@ export default async function skills(pi: ExtensionAPI) {
 							return;
 						}
 						try {
-							const output = run_gh_skill_install(gh_request);
+							const output = ctx.hasUI
+								? await run_with_skill_progress(
+										ctx,
+										'Importing GitHub skill',
+										`Installing ${gh_request.skill} from ${gh_request.repository}`,
+										async ({ signal, update }) => {
+											update({ current: gh_request.skill });
+											return await run_gh_skill_install_async(
+												gh_request,
+												undefined,
+												{ signal },
+											);
+										},
+									)
+								: run_gh_skill_install(gh_request);
+							if (output === undefined) return;
 							if (ctx.hasUI) {
 								await show_text_modal(ctx, {
 									title: 'GitHub skill imported',
@@ -469,8 +502,21 @@ export default async function skills(pi: ExtensionAPI) {
 						return;
 					}
 					try {
-						const output = run_gh_skill_update(rest);
 						const dry_run = rest.includes('--dry-run');
+						const output = ctx.hasUI
+							? await run_with_skill_progress(
+									ctx,
+									dry_run
+										? 'Checking GitHub skill updates'
+										: 'Updating GitHub skills',
+									`Running gh skill update ${rest.join(' ')}`.trim(),
+									async ({ signal }) =>
+										await run_gh_skill_update_async(rest, undefined, {
+											signal,
+										}),
+								)
+							: run_gh_skill_update(rest);
+						if (output === undefined) return;
 						if (ctx.hasUI) {
 							await show_text_modal(ctx, {
 								title: dry_run

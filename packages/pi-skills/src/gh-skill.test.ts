@@ -6,7 +6,10 @@ import {
 	normalize_github_repo_spec,
 	parse_gh_skill_install_args,
 	run_gh_skill_install,
+	run_gh_skill_install_async,
 	run_gh_skill_update,
+	run_gh_skill_update_async,
+	type AsyncCommandRunner,
 	type CommandRunner,
 } from './gh-skill.js';
 
@@ -171,6 +174,61 @@ describe('gh skill helpers', () => {
 			'up to date',
 		);
 		expect(calls).toEqual([['gh', ['skill', 'update', '--dry-run']]]);
+	});
+
+	it('runs async gh skill install with defaults and abort signal', async () => {
+		const controller = new AbortController();
+		const calls: Array<
+			[string, string[], { signal?: AbortSignal } | undefined]
+		> = [];
+		const runner: AsyncCommandRunner = async (
+			command,
+			args,
+			options,
+		) => {
+			calls.push([command, args, options]);
+			return { status: 0, stdout: 'installed', stderr: '' };
+		};
+		await expect(
+			run_gh_skill_install_async(
+				{
+					repository: 'spences10/skills',
+					skill: 'svelte-runes',
+					flags: ['--force'],
+				},
+				runner,
+				{ signal: controller.signal },
+			),
+		).resolves.toBe('installed');
+		expect(calls).toEqual([
+			[
+				'gh',
+				[
+					'skill',
+					'install',
+					'spences10/skills',
+					'svelte-runes',
+					'--agent',
+					'pi',
+					'--scope',
+					'user',
+					'--force',
+				],
+				{ signal: controller.signal },
+			],
+		]);
+	});
+
+	it('runs async gh skill update with passthrough args', async () => {
+		const calls: Array<[string, string[]]> = [];
+		const runner: AsyncCommandRunner = async (command, args) => {
+			calls.push([command, args]);
+			return { status: 0, stdout: '', stderr: 'updated' };
+		};
+		await expect(
+			run_gh_skill_update_async(['--all'], runner),
+		).resolves.toBe('updated');
+		expect(calls).toEqual([['gh', ['skill', 'update', '--all']]]);
 	});
 
 	it('combines command output', () => {

@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 export interface CommandResult {
 	status: number | null;
@@ -12,6 +12,12 @@ export type CommandRunner = (
 	args: string[],
 ) => CommandResult;
 
+export type AsyncCommandRunner = (
+	command: string,
+	args: string[],
+	options?: { signal?: AbortSignal },
+) => Promise<CommandResult>;
+
 export const default_runner: CommandRunner = (command, args) => {
 	const result = spawnSync(command, args, {
 		encoding: 'utf-8',
@@ -24,6 +30,48 @@ export const default_runner: CommandRunner = (command, args) => {
 		error: result.error,
 	};
 };
+
+export const default_async_runner: AsyncCommandRunner = (
+	command,
+	args,
+	options,
+) =>
+	new Promise((resolve) => {
+		const child = spawn(command, args, {
+			windowsHide: true,
+			stdio: ['ignore', 'pipe', 'pipe'],
+		});
+		let stdout = '';
+		let stderr = '';
+		let settled = false;
+
+		const abort = () => {
+			if (!child.killed) child.kill('SIGTERM');
+		};
+		if (options?.signal?.aborted) abort();
+		options?.signal?.addEventListener('abort', abort, { once: true });
+
+		child.stdout?.setEncoding('utf-8');
+		child.stderr?.setEncoding('utf-8');
+		child.stdout?.on('data', (chunk: string) => {
+			stdout += chunk;
+		});
+		child.stderr?.on('data', (chunk: string) => {
+			stderr += chunk;
+		});
+		child.on('error', (error) => {
+			if (settled) return;
+			settled = true;
+			options?.signal?.removeEventListener('abort', abort);
+			resolve({ status: null, stdout, stderr, error });
+		});
+		child.on('close', (status) => {
+			if (settled) return;
+			settled = true;
+			options?.signal?.removeEventListener('abort', abort);
+			resolve({ status, stdout, stderr });
+		});
+	});
 
 export function command_output(result: CommandResult): string {
 	return [result.stdout.trim(), result.stderr.trim()]
@@ -41,6 +89,13 @@ export function ensure_success(
 		throw new Error(`${fallback}: ${result.error.message}`);
 	}
 	throw new Error(output || fallback);
+}
+
+export async function ensure_success_async(
+	result: Promise<CommandResult>,
+	fallback: string,
+): Promise<string> {
+	return ensure_success(await result, fallback);
 }
 
 export function has_gh_skill(
@@ -101,10 +156,9 @@ function has_flag(flags: string[], name: string): boolean {
 	);
 }
 
-export function run_gh_skill_install(
+function build_gh_skill_install_args(
 	request: GhSkillInstallRequest,
-	runner: CommandRunner = default_runner,
-): string {
+): string[] {
 	const default_flags: string[] = [];
 	if (
 		!has_flag(request.flags, '--agent') &&
@@ -118,7 +172,7 @@ export function run_gh_skill_install(
 	) {
 		default_flags.push('--scope', 'user');
 	}
-	const args = [
+	return [
 		'skill',
 		'install',
 		normalize_github_repo_spec(request.repository),
@@ -126,8 +180,25 @@ export function run_gh_skill_install(
 		...default_flags,
 		...request.flags,
 	];
+}
+
+export function run_gh_skill_install(
+	request: GhSkillInstallRequest,
+	runner: CommandRunner = default_runner,
+): string {
 	return ensure_success(
-		runner('gh', args),
+		runner('gh', build_gh_skill_install_args(request)),
+		'gh skill install failed',
+	);
+}
+
+export async function run_gh_skill_install_async(
+	request: GhSkillInstallRequest,
+	runner: AsyncCommandRunner = default_async_runner,
+	options?: { signal?: AbortSignal },
+): Promise<string> {
+	return await ensure_success_async(
+		runner('gh', build_gh_skill_install_args(request), options),
 		'gh skill install failed',
 	);
 }
@@ -143,6 +214,40 @@ interface GitHubRepositoryResponse {
 
 interface GitHubTreeResponse {
 	tree?: Array<{ path?: string; type?: string }>;
+}
+
+function parse_github_repository_skills(
+	tree_output: string,
+): GhRepositorySkill[] {
+	const tree = JSON.parse(tree_output) as GitHubTreeResponse;
+	return (tree.tree ?? [])
+		.filter(
+			(item) =>
+				item.type === 'blob' && item.path?.endsWith('/SKILL.md'),
+		)
+		.map((item) => {
+			const path = item.path!;
+			return {
+				path,
+				name: path.split('/').at(-2) ?? path,
+			};
+		})
+		.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function github_tree_args(
+	owner: string,
+	repo: string,
+	tree_ref: string,
+): string[] {
+	return [
+		'api',
+		'--method',
+		'GET',
+		`repos/${owner}/${repo}/git/trees/${tree_ref}`,
+		'-f',
+		'recursive=1',
+	];
 }
 
 export function list_github_repository_skills(
@@ -164,30 +269,36 @@ export function list_github_repository_skills(
 	}
 
 	const tree_output = ensure_success(
-		runner('gh', [
-			'api',
-			'--method',
-			'GET',
-			`repos/${owner}/${repo}/git/trees/${tree_ref}`,
-			'-f',
-			'recursive=1',
-		]),
+		runner('gh', github_tree_args(owner, repo, tree_ref)),
 		'gh api failed while listing repository skills',
 	);
-	const tree = JSON.parse(tree_output) as GitHubTreeResponse;
-	return (tree.tree ?? [])
-		.filter(
-			(item) =>
-				item.type === 'blob' && item.path?.endsWith('/SKILL.md'),
-		)
-		.map((item) => {
-			const path = item.path!;
-			return {
-				path,
-				name: path.split('/').at(-2) ?? path,
-			};
-		})
-		.sort((a, b) => a.path.localeCompare(b.path));
+	return parse_github_repository_skills(tree_output);
+}
+
+export async function list_github_repository_skills_async(
+	repository: string,
+	ref?: string,
+	runner: AsyncCommandRunner = default_async_runner,
+	options?: { signal?: AbortSignal },
+): Promise<GhRepositorySkill[]> {
+	const { owner, repo } = parse_repo_parts(repository);
+	let tree_ref = ref?.trim();
+	if (!tree_ref) {
+		const repo_output = await ensure_success_async(
+			runner('gh', ['api', `repos/${owner}/${repo}`], options),
+			'gh api failed while reading repository metadata',
+		);
+		const metadata = JSON.parse(
+			repo_output,
+		) as GitHubRepositoryResponse;
+		tree_ref = metadata.default_branch || 'HEAD';
+	}
+
+	const tree_output = await ensure_success_async(
+		runner('gh', github_tree_args(owner, repo, tree_ref), options),
+		'gh api failed while listing repository skills',
+	);
+	return parse_github_repository_skills(tree_output);
 }
 
 export function run_gh_skill_update(
@@ -196,6 +307,17 @@ export function run_gh_skill_update(
 ): string {
 	return ensure_success(
 		runner('gh', ['skill', 'update', ...args]),
+		'gh skill update failed',
+	);
+}
+
+export async function run_gh_skill_update_async(
+	args: string[],
+	runner: AsyncCommandRunner = default_async_runner,
+	options?: { signal?: AbortSignal },
+): Promise<string> {
+	return await ensure_success_async(
+		runner('gh', ['skill', 'update', ...args], options),
 		'gh skill update failed',
 	);
 }
