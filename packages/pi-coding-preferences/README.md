@@ -3,10 +3,10 @@
 Pi extension that blocks configured coding workflow anti-patterns
 before agents run them.
 
-It ships with default preferences for Scott's workflow. Add user
-preferences at `~/.pi/agent/coding-preferences.json` and project
-preferences at `.pi/coding-preferences.json`; when either file exists,
-configured rules are loaded instead of the built-in defaults.
+It ships with default workflow preferences. Add user preferences at
+`~/.pi/agent/coding-preferences.json` and project preferences at
+`.pi/coding-preferences.json`; when either file exists, configured
+rules are loaded instead of the built-in defaults.
 
 ```json
 {

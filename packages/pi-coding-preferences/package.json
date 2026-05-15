@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-coding-preferences",
 	"version": "0.0.2",
-	"description": "Pi extension that nudges agents toward Scott's coding workflow preferences",
+	"description": "Pi extension that nudges agents toward configured coding workflow preferences",
 	"keywords": [
 		"agent-guardrails",
 		"coding-preferences",

@@ -37,7 +37,7 @@ The extension injects a system reminder telling the model to use
 - compare packages, APIs, or tools
 - extract and summarize web content
 
-It encourages the verified research workflow from Scott's ecosystem
+It encourages the verified research workflow from the ecosystem guide
 skill:
 
 - use `web_search` for discovery

@@ -31,7 +31,7 @@ configuration in interactive, print, JSON, RPC, or SDK-driven flows.
 
 Do not install this with `pi install npm:my-pi`.
 
-`my-pi` is Scott's custom Pi distribution/CLI. Install the individual
+`my-pi` is an opinionated Pi distribution/CLI. Install the individual
 `@spences10/pi-*` packages as Pi packages instead, or run `my-pi`
 directly as its own CLI.
 
