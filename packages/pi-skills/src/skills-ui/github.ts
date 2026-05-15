@@ -1,5 +1,6 @@
 import type { ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
 import {
+	run_with_progress_modal,
 	show_input_modal,
 	show_picker_modal,
 	show_text_modal,
@@ -10,7 +11,6 @@ import {
 	run_gh_skill_install_async,
 	run_gh_skill_update_async,
 } from '../gh-skill.js';
-import { run_with_skill_progress } from './progress.js';
 
 function is_already_installed_error(error: unknown): boolean {
 	const message =
@@ -78,10 +78,12 @@ export async function show_add_github_skill_modal(
 		});
 		if (!skill) return false;
 		try {
-			const output = await run_with_skill_progress(
+			const output = await run_with_progress_modal(
 				ctx,
-				'Installing GitHub skill',
-				`Installing ${skill} from ${repository}`,
+				{
+					title: 'Installing GitHub skill',
+					message: `Installing ${skill} from ${repository}`,
+				},
 				async ({ signal, update }) => {
 					update({ current: skill });
 					return await run_gh_skill_install_async(
@@ -156,10 +158,12 @@ export async function show_add_github_skill_modal(
 	});
 	if (!existing_mode) return false;
 	try {
-		const result = await run_with_skill_progress(
+		const result = await run_with_progress_modal(
 			ctx,
-			'Installing GitHub skills',
-			`Reading skills from ${repository}`,
+			{
+				title: 'Installing GitHub skills',
+				message: `Reading skills from ${repository}`,
+			},
 			async ({ signal, update }) => {
 				const skills = await list_github_repository_skills_async(
 					repository,
@@ -274,10 +278,12 @@ export async function show_update_github_skills_modal(
 		return false;
 	}
 	try {
-		const check_output = await run_with_skill_progress(
+		const check_output = await run_with_progress_modal(
 			ctx,
-			'Checking GitHub skill updates',
-			'Running gh skill update --dry-run',
+			{
+				title: 'Checking GitHub skill updates',
+				message: 'Running gh skill update --dry-run',
+			},
 			async ({ signal }) =>
 				await run_gh_skill_update_async(['--dry-run'], undefined, {
 					signal,
@@ -311,10 +317,12 @@ export async function show_update_github_skills_modal(
 			});
 			return false;
 		}
-		const output = await run_with_skill_progress(
+		const output = await run_with_progress_modal(
 			ctx,
-			'Updating GitHub skills',
-			'Running gh skill update --all',
+			{
+				title: 'Updating GitHub skills',
+				message: 'Running gh skill update --all',
+			},
 			async ({ signal }) =>
 				await run_gh_skill_update_async(['--all'], undefined, {
 					signal,

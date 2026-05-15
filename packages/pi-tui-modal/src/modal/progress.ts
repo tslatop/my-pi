@@ -1,16 +1,14 @@
-import type {
-	ExtensionCommandContext,
-	Theme,
-} from '@earendil-works/pi-coding-agent';
+import type { ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
 import {
 	Key,
 	matchesKey,
 	truncateToWidth,
-	type Component,
 	type TUI,
 } from '@earendil-works/pi-tui';
+import { show_modal } from './show.js';
+import type { ModalBody, ModalOptions, ModalTheme } from './types.js';
 
-export interface SkillProgressUpdate {
+export interface ProgressModalUpdate {
 	message?: string;
 	current?: string;
 	completed?: number;
@@ -18,18 +16,23 @@ export interface SkillProgressUpdate {
 	line?: string;
 }
 
-export interface SkillProgressController {
+export interface ProgressModalController {
 	signal: AbortSignal;
-	update: (update: SkillProgressUpdate) => void;
+	update: (update: ProgressModalUpdate) => void;
 }
 
-type ProgressResult<T> =
+export interface ProgressModalOptions extends ModalOptions {
+	message: string;
+	max_activity_lines?: number;
+	cancel_label?: string;
+}
+
+type ProgressModalResult<T> =
 	| { status: 'success'; value: T }
 	| { status: 'cancelled' }
 	| { status: 'error'; error: unknown };
 
 interface ProgressState {
-	title: string;
 	message: string;
 	current?: string;
 	completed?: number;
@@ -38,7 +41,7 @@ interface ProgressState {
 	cancelled: boolean;
 }
 
-class SkillProgressOverlay implements Component {
+class ProgressModalBody implements ModalBody {
 	private frame = 0;
 	private readonly frames = [
 		'⠋',
@@ -56,9 +59,10 @@ class SkillProgressOverlay implements Component {
 
 	constructor(
 		private readonly tui: TUI,
-		private readonly theme: Theme,
+		private readonly theme: ModalTheme,
 		private readonly state: ProgressState,
 		private readonly on_cancel: () => void,
+		private readonly max_activity_lines: number,
 	) {
 		this.interval = setInterval(() => {
 			this.frame = (this.frame + 1) % this.frames.length;
@@ -79,10 +83,7 @@ class SkillProgressOverlay implements Component {
 						` ${this.state.completed}/${this.state.total}`,
 					)
 				: '';
-		const lines = [
-			this.theme.fg('accent', this.theme.bold(this.state.title)),
-			`${spinner} ${this.state.message}${count}`,
-		];
+		const lines = [`${spinner} ${this.state.message}${count}`];
 
 		if (this.state.current) {
 			lines.push(
@@ -92,10 +93,9 @@ class SkillProgressOverlay implements Component {
 
 		if (this.state.lines.length > 0) {
 			lines.push('', this.theme.fg('dim', 'Recent activity'));
-			lines.push(...this.state.lines.slice(-8));
+			lines.push(...this.state.lines.slice(-this.max_activity_lines));
 		}
 
-		lines.push('', this.theme.fg('dim', 'esc cancel'));
 		return lines.map((line) => truncateToWidth(line, width));
 	}
 
@@ -110,23 +110,33 @@ class SkillProgressOverlay implements Component {
 	}
 }
 
-export async function run_with_skill_progress<T>(
+export async function run_with_progress_modal<T>(
 	ctx: ExtensionCommandContext,
-	title: string,
-	message: string,
-	task: (controller: SkillProgressController) => Promise<T>,
+	options: ProgressModalOptions,
+	task: (controller: ProgressModalController) => Promise<T>,
 ): Promise<T | undefined> {
-	const result = await ctx.ui.custom<ProgressResult<T>>(
-		(tui, theme, _kb, done) => {
+	const result = await show_modal<ProgressModalResult<T>>(
+		ctx,
+		{
+			...options,
+			footer:
+				options.footer ?? `${options.cancel_label ?? 'esc'} cancel`,
+			overlay_options: {
+				width: '70%',
+				minWidth: 50,
+				maxHeight: '70%',
+				...options.overlay_options,
+			},
+		},
+		({ done }, theme, _layout, tui) => {
 			const abort_controller = new AbortController();
 			const state: ProgressState = {
-				title,
-				message,
+				message: options.message,
 				lines: [],
 				cancelled: false,
 			};
 
-			const update = (update: SkillProgressUpdate) => {
+			const update = (update: ProgressModalUpdate) => {
 				if (update.message !== undefined)
 					state.message = update.message;
 				if (update.current !== undefined)
@@ -138,7 +148,7 @@ export async function run_with_skill_progress<T>(
 				tui.requestRender();
 			};
 
-			const component = new SkillProgressOverlay(
+			const body = new ProgressModalBody(
 				tui,
 				theme,
 				state,
@@ -149,6 +159,7 @@ export async function run_with_skill_progress<T>(
 					abort_controller.abort();
 					tui.requestRender();
 				},
+				options.max_activity_lines ?? 8,
 			);
 
 			void task({ signal: abort_controller.signal, update })
@@ -167,15 +178,7 @@ export async function run_with_skill_progress<T>(
 					done({ status: 'error', error });
 				});
 
-			return component;
-		},
-		{
-			overlay: true,
-			overlayOptions: {
-				width: '70%',
-				minWidth: 50,
-				maxHeight: '70%',
-			},
+			return body;
 		},
 	);
 

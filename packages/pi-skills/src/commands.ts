@@ -1,5 +1,6 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import {
+	run_with_progress_modal,
 	show_input_modal,
 	show_text_modal,
 } from '@spences10/pi-tui-modal';
@@ -34,7 +35,6 @@ import {
 	show_skills_manager_modal,
 	show_update_github_skills_modal,
 } from './skills-ui.js';
-import { run_with_skill_progress } from './skills-ui/progress.js';
 
 function is_resource_enabled(value: string | undefined): boolean {
 	const normalized = value?.trim().toLowerCase();
@@ -326,10 +326,12 @@ export default async function skills(pi: ExtensionAPI) {
 					}
 					try {
 						const output = ctx.hasUI
-							? await run_with_skill_progress(
+							? await run_with_progress_modal(
 									ctx,
-									'Adding GitHub skill',
-									`Installing ${gh_request.skill} from ${gh_request.repository}`,
+									{
+										title: 'Adding GitHub skill',
+										message: `Installing ${gh_request.skill} from ${gh_request.repository}`,
+									},
 									async ({ signal, update }) => {
 										update({ current: gh_request.skill });
 										return await run_gh_skill_install_async(
@@ -387,10 +389,12 @@ export default async function skills(pi: ExtensionAPI) {
 						}
 						try {
 							const output = ctx.hasUI
-								? await run_with_skill_progress(
+								? await run_with_progress_modal(
 										ctx,
-										'Importing GitHub skill',
-										`Installing ${gh_request.skill} from ${gh_request.repository}`,
+										{
+											title: 'Importing GitHub skill',
+											message: `Installing ${gh_request.skill} from ${gh_request.repository}`,
+										},
 										async ({ signal, update }) => {
 											update({ current: gh_request.skill });
 											return await run_gh_skill_install_async(
@@ -504,12 +508,15 @@ export default async function skills(pi: ExtensionAPI) {
 					try {
 						const dry_run = rest.includes('--dry-run');
 						const output = ctx.hasUI
-							? await run_with_skill_progress(
+							? await run_with_progress_modal(
 									ctx,
-									dry_run
-										? 'Checking GitHub skill updates'
-										: 'Updating GitHub skills',
-									`Running gh skill update ${rest.join(' ')}`.trim(),
+									{
+										title: dry_run
+											? 'Checking GitHub skill updates'
+											: 'Updating GitHub skills',
+										message:
+											`Running gh skill update ${rest.join(' ')}`.trim(),
+									},
 									async ({ signal }) =>
 										await run_gh_skill_update_async(rest, undefined, {
 											signal,
