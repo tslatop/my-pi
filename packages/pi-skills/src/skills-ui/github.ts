@@ -1,6 +1,7 @@
 import type { ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
 import {
 	run_with_progress_modal,
+	show_confirm_modal,
 	show_input_modal,
 	show_picker_modal,
 	show_text_modal,
@@ -9,13 +10,161 @@ import {
 	has_gh_skill,
 	list_github_repository_skills_async,
 	run_gh_skill_install_async,
+	run_gh_skill_preview_async,
+	run_gh_skill_search_async,
 	run_gh_skill_update_async,
+	type GhSkillSearchResult,
 } from '../gh-skill.js';
 
 function is_already_installed_error(error: unknown): boolean {
 	const message =
 		error instanceof Error ? error.message : String(error);
 	return message.includes('already installed');
+}
+
+function format_search_result(result: GhSkillSearchResult): string {
+	const namespace = result.namespace ? `${result.namespace}/` : '';
+	return `${namespace}${result.skillName} — ${result.repo}`;
+}
+
+async function confirm_untrusted_install(
+	ctx: ExtensionCommandContext,
+	result: GhSkillSearchResult,
+): Promise<boolean> {
+	return await show_confirm_modal(ctx, {
+		title: 'Install unreviewed GitHub skill?',
+		message: `Skills can instruct the model to run tools and may include executable scripts. Install only after reviewing the source.\n\n${format_search_result(result)}\n${result.path}`,
+		confirm_label: 'Install anyway',
+		cancel_label: 'Cancel',
+	});
+}
+
+export async function show_search_github_skills_modal(
+	ctx: ExtensionCommandContext,
+): Promise<boolean> {
+	if (!has_gh_skill()) {
+		ctx.ui.notify(
+			'Search GitHub skills requires gh v2.90.0+ with `gh skill` support.',
+			'warning',
+		);
+		return false;
+	}
+	const query = await show_input_modal(ctx, {
+		title: 'Search GitHub skills',
+		subtitle: 'Uses gh skill search. Review before installing.',
+		label: 'Search query',
+		trim: true,
+	});
+	if (!query) return false;
+
+	try {
+		const results = await run_with_progress_modal(
+			ctx,
+			{
+				title: 'Searching GitHub skills',
+				message: `Running gh skill search ${query}`,
+			},
+			async ({ signal }) =>
+				await run_gh_skill_search_async(query, 15, undefined, {
+					signal,
+				}),
+		);
+		if (!results) return false;
+		if (results.length === 0) {
+			ctx.ui.notify(`No GitHub skills found for ${query}`, 'warning');
+			return false;
+		}
+
+		const selected_path = await show_picker_modal(ctx, {
+			title: 'GitHub skill search results',
+			subtitle: `${results.length} results for ${query}`,
+			items: results.map((result) => ({
+				value: `${result.repo}\t${result.path}`,
+				label: format_search_result(result),
+				description: `${result.stars}★ • ${result.description}`,
+			})),
+			footer:
+				'Untrusted content warning: preview and review before installing random skills.',
+		});
+		if (!selected_path) return false;
+		const [repo, path] = selected_path.split('\t');
+		const selected = results.find(
+			(result) => result.repo === repo && result.path === path,
+		);
+		if (!repo || !path || !selected) return false;
+
+		const action = await show_picker_modal(ctx, {
+			title: format_search_result(selected),
+			subtitle: selected.path,
+			items: [
+				{
+					value: 'preview',
+					label: 'Preview first',
+					description: 'Run gh skill preview without installing',
+				},
+				{
+					value: 'install',
+					label: 'Install',
+					description:
+						'Install for Pi user scope after a warning confirmation',
+				},
+			],
+			footer:
+				'Skills are executable instructions for your agent. Do not install repos you do not trust.',
+		});
+		if (!action) return false;
+
+		if (action === 'preview') {
+			const output = await run_with_progress_modal(
+				ctx,
+				{
+					title: 'Previewing GitHub skill',
+					message: `Running gh skill preview ${repo} ${path}`,
+				},
+				async ({ signal }) =>
+					await run_gh_skill_preview_async(repo, path, undefined, {
+						signal,
+					}),
+			);
+			if (output === undefined) return false;
+			await show_text_modal(ctx, {
+				title: format_search_result(selected),
+				text: output || 'No preview output.',
+			});
+			return false;
+		}
+
+		if (!(await confirm_untrusted_install(ctx, selected)))
+			return false;
+		const output = await run_with_progress_modal(
+			ctx,
+			{
+				title: 'Installing GitHub skill',
+				message: `Installing ${path} from ${repo}`,
+			},
+			async ({ signal }) =>
+				await run_gh_skill_install_async(
+					{ repository: repo, skill: path, flags: [] },
+					undefined,
+					{ signal },
+				),
+		);
+		if (output === undefined) return false;
+		await show_text_modal(ctx, {
+			title: 'GitHub skill installed',
+			text: `${output || `Installed ${path} from ${repo}`}
+
+Reloading...`,
+		});
+		await ctx.reload();
+		return true;
+	} catch (error) {
+		ctx.ui.notify(
+			error instanceof Error ? error.message : String(error),
+			'warning',
+		);
+		return false;
+	}
 }
 
 export async function show_add_github_skill_modal(

@@ -9,6 +9,7 @@ export const SKILL_SUBCOMMANDS = [
 	'enable',
 	'disable',
 	'delete',
+	'search',
 	'add',
 	'import',
 	'sync',

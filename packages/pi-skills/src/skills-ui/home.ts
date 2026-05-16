@@ -39,6 +39,12 @@ export async function show_skills_home_modal(
 					: 'Batch import external skills or sync imported copies',
 			},
 			{
+				value: 'search',
+				label: 'Search GitHub skills',
+				description:
+					'Find skills with gh skill search, preview, then install',
+			},
+			{
 				value: 'add',
 				label: 'Add GitHub skill',
 				description: 'Install a skill from owner/repo using gh skill',

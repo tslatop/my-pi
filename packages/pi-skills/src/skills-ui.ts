@@ -1,5 +1,6 @@
 export {
 	show_add_github_skill_modal,
+	show_search_github_skills_modal,
 	show_update_github_skills_modal,
 } from './skills-ui/github.js';
 export { show_skills_home_modal } from './skills-ui/home.js';

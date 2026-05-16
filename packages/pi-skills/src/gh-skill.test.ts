@@ -7,6 +7,9 @@ import {
 	parse_gh_skill_install_args,
 	run_gh_skill_install,
 	run_gh_skill_install_async,
+	run_gh_skill_preview,
+	run_gh_skill_search,
+	run_gh_skill_search_async,
 	run_gh_skill_update,
 	run_gh_skill_update_async,
 	type AsyncCommandRunner,
@@ -164,6 +167,72 @@ describe('gh skill helpers', () => {
 		]);
 	});
 
+	it('searches GitHub skills as JSON', () => {
+		const calls: Array<[string, string[]]> = [];
+		const runner: CommandRunner = (command, args) => {
+			calls.push([command, args]);
+			return {
+				status: 0,
+				stdout: JSON.stringify([
+					{
+						skillName: 'svelte',
+						description: 'Svelte skill',
+						repo: 'owner/repo',
+						path: 'skills/svelte/SKILL.md',
+						stars: 42,
+						namespace: 'web',
+					},
+				]),
+				stderr: '',
+			};
+		};
+		expect(run_gh_skill_search('svelte', 5, runner)).toEqual([
+			{
+				skillName: 'svelte',
+				description: 'Svelte skill',
+				repo: 'owner/repo',
+				path: 'skills/svelte/SKILL.md',
+				stars: 42,
+				namespace: 'web',
+			},
+		]);
+		expect(calls).toEqual([
+			[
+				'gh',
+				[
+					'skill',
+					'search',
+					'svelte',
+					'--limit',
+					'5',
+					'--json',
+					'skillName,description,repo,path,stars,namespace',
+				],
+			],
+		]);
+	});
+
+	it('previews GitHub skills', () => {
+		const calls: Array<[string, string[]]> = [];
+		const runner: CommandRunner = (command, args) => {
+			calls.push([command, args]);
+			return { status: 0, stdout: 'preview', stderr: '' };
+		};
+		expect(
+			run_gh_skill_preview(
+				'owner/repo',
+				'skills/svelte/SKILL.md',
+				runner,
+			),
+		).toBe('preview');
+		expect(calls).toEqual([
+			[
+				'gh',
+				['skill', 'preview', 'owner/repo', 'skills/svelte/SKILL.md'],
+			],
+		]);
+	});
+
 	it('runs gh skill update with passthrough args', () => {
 		const calls: Array<[string, string[]]> = [];
 		const runner: CommandRunner = (command, args) => {
@@ -216,6 +285,58 @@ describe('gh skill helpers', () => {
 				],
 				{ signal: controller.signal },
 			],
+		]);
+	});
+
+	it('runs async gh skill search with abort signal', async () => {
+		const controller = new AbortController();
+		const calls: Array<
+			[string, string[], { signal?: AbortSignal } | undefined]
+		> = [];
+		const runner: AsyncCommandRunner = async (
+			command,
+			args,
+			options,
+		) => {
+			calls.push([command, args, options]);
+			return {
+				status: 0,
+				stdout: JSON.stringify([
+					{
+						skillName: 'react',
+						repo: 'owner/repo',
+						path: 'react/SKILL.md',
+					},
+				]),
+				stderr: '',
+			};
+		};
+		await expect(
+			run_gh_skill_search_async('react', 3, runner, {
+				signal: controller.signal,
+			}),
+		).resolves.toEqual([
+			{
+				skillName: 'react',
+				description: '',
+				repo: 'owner/repo',
+				path: 'react/SKILL.md',
+				stars: 0,
+				namespace: '',
+			},
+		]);
+		expect(calls[0]).toEqual([
+			'gh',
+			[
+				'skill',
+				'search',
+				'react',
+				'--limit',
+				'3',
+				'--json',
+				'skillName,description,repo,path,stars,namespace',
+			],
+			{ signal: controller.signal },
 		]);
 	});
 

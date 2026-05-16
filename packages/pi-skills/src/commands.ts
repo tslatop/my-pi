@@ -14,6 +14,7 @@ import {
 	parse_gh_skill_install_args,
 	run_gh_skill_install,
 	run_gh_skill_install_async,
+	run_gh_skill_search,
 	run_gh_skill_update,
 	run_gh_skill_update_async,
 } from './gh-skill.js';
@@ -35,6 +36,7 @@ import {
 	show_importable_skills_modal,
 	show_profiles_modal,
 	show_refresh_summary,
+	show_search_github_skills_modal,
 	show_skill_detail_modal,
 	show_skill_list_modal,
 	show_skills_home_modal,
@@ -88,6 +90,8 @@ export default async function skills(pi: ExtensionAPI) {
 						if (await show_skills_manager_modal(ctx, mgr)) return;
 					} else if (selected === 'importable') {
 						if (await show_importable_skills_modal(ctx, mgr)) return;
+					} else if (selected === 'search') {
+						if (await show_search_github_skills_modal(ctx)) return;
 					} else if (selected === 'add') {
 						if (await show_add_github_skill_modal(ctx)) return;
 					} else if (selected === 'update') {
@@ -244,6 +248,42 @@ export default async function skills(pi: ExtensionAPI) {
 						return;
 					}
 					break;
+				}
+				case 'search': {
+					if (!arg && ctx.hasUI) {
+						if (await show_search_github_skills_modal(ctx)) return;
+						break;
+					}
+					if (!arg) {
+						ctx.ui.notify('Usage: /skills search <query>', 'warning');
+						return;
+					}
+					if (!has_gh_skill()) {
+						ctx.ui.notify(
+							'GitHub skill search requires gh v2.90.0+ with `gh skill` support.',
+							'warning',
+						);
+						return;
+					}
+					try {
+						const results = run_gh_skill_search(arg, 15);
+						const lines = results.map(
+							(result) =>
+								`${result.skillName} — ${result.repo} (${result.stars}★)\n  ${result.path}\n  ${result.description}`,
+						);
+						ctx.ui.notify(
+							lines.length
+								? `GitHub skill search results for ${arg}:\n\n${lines.join('\n\n')}\n\nReview before installing. Preview: gh skill preview <repo> <path>\nInstall: /skills add <repo> <path>`
+								: `No GitHub skills found for ${arg}`,
+							lines.length ? 'info' : 'warning',
+						);
+					} catch (error) {
+						ctx.ui.notify(
+							error instanceof Error ? error.message : String(error),
+							'warning',
+						);
+					}
+					return;
 				}
 				case 'add': {
 					if (!arg && ctx.hasUI) {

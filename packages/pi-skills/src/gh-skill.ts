@@ -208,6 +208,15 @@ export interface GhRepositorySkill {
 	path: string;
 }
 
+export interface GhSkillSearchResult {
+	skillName: string;
+	description: string;
+	repo: string;
+	path: string;
+	stars: number;
+	namespace: string;
+}
+
 interface GitHubRepositoryResponse {
 	default_branch?: string;
 }
@@ -299,6 +308,102 @@ export async function list_github_repository_skills_async(
 		'gh api failed while listing repository skills',
 	);
 	return parse_github_repository_skills(tree_output);
+}
+
+function normalize_search_result(
+	value: unknown,
+): GhSkillSearchResult | null {
+	if (!value || typeof value !== 'object') return null;
+	const item = value as Record<string, unknown>;
+	if (
+		typeof item.skillName !== 'string' ||
+		typeof item.repo !== 'string' ||
+		typeof item.path !== 'string'
+	) {
+		return null;
+	}
+	return {
+		skillName: item.skillName,
+		description:
+			typeof item.description === 'string' ? item.description : '',
+		repo: item.repo,
+		path: item.path,
+		stars: typeof item.stars === 'number' ? item.stars : 0,
+		namespace:
+			typeof item.namespace === 'string' ? item.namespace : '',
+	};
+}
+
+function search_args(query: string, limit: number): string[] {
+	return [
+		'skill',
+		'search',
+		query,
+		'--limit',
+		String(limit),
+		'--json',
+		'skillName,description,repo,path,stars,namespace',
+	];
+}
+
+export function run_gh_skill_search(
+	query: string,
+	limit = 15,
+	runner: CommandRunner = default_runner,
+): GhSkillSearchResult[] {
+	const output = ensure_success(
+		runner('gh', search_args(query, limit)),
+		'gh skill search failed',
+	);
+	const parsed = JSON.parse(output) as unknown;
+	return Array.isArray(parsed)
+		? parsed.flatMap((item) => {
+				const result = normalize_search_result(item);
+				return result ? [result] : [];
+			})
+		: [];
+}
+
+export async function run_gh_skill_search_async(
+	query: string,
+	limit = 15,
+	runner: AsyncCommandRunner = default_async_runner,
+	options?: { signal?: AbortSignal },
+): Promise<GhSkillSearchResult[]> {
+	const output = await ensure_success_async(
+		runner('gh', search_args(query, limit), options),
+		'gh skill search failed',
+	);
+	const parsed = JSON.parse(output) as unknown;
+	return Array.isArray(parsed)
+		? parsed.flatMap((item) => {
+				const result = normalize_search_result(item);
+				return result ? [result] : [];
+			})
+		: [];
+}
+
+export function run_gh_skill_preview(
+	repository: string,
+	skill: string,
+	runner: CommandRunner = default_runner,
+): string {
+	return ensure_success(
+		runner('gh', ['skill', 'preview', repository, skill]),
+		'gh skill preview failed',
+	);
+}
+
+export async function run_gh_skill_preview_async(
+	repository: string,
+	skill: string,
+	runner: AsyncCommandRunner = default_async_runner,
+	options?: { signal?: AbortSignal },
+): Promise<string> {
+	return await ensure_success_async(
+		runner('gh', ['skill', 'preview', repository, skill], options),
+		'gh skill preview failed',
+	);
 }
 
 export function run_gh_skill_update(
