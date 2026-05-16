@@ -65,12 +65,21 @@ export default async function skills(pi: ExtensionAPI) {
 			if (!trimmed && ctx.hasUI) {
 				let selected: string | undefined;
 				while (true) {
-					const managed_count = mgr.discover().length;
-					const importable_count = mgr.discover_importable().length;
+					const managed = mgr.discover();
+					const importable = mgr.discover_importable();
+					const counts = {
+						managed: managed.length,
+						pi_native: managed.filter(
+							(skill) => skill.source === 'pi-native',
+						).length,
+						claude_code_detected:
+							managed.filter((skill) => skill.source === 'user-local')
+								.length + importable.length,
+						importable: importable.length,
+					};
 					selected = await show_skills_home_modal(
 						ctx,
-						managed_count,
-						importable_count,
+						counts,
 						mgr.get_active_profile(),
 					);
 					if (!selected) break;
