@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.15
+
+### Patch Changes
+
+- 600dbac: Show selected GitHub skill source and path dynamically in
+  search result picker footer.
+
 ## 0.0.14
 
 ### Patch Changes

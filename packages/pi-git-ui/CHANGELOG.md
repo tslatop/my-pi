@@ -1,5 +1,12 @@
 # @spences10/pi-git-ui
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [600dbac]
+  - @spences10/pi-tui-modal@0.0.15
+
 ## 0.0.5
 
 ### Patch Changes

@@ -1,5 +1,22 @@
 # @spences10/pi-skills
 
+## 0.0.21
+
+### Patch Changes
+
+- dcbb483: Improve skills onboarding by highlighting detected Claude
+  Code skills and nudging first-time imports.
+- 3cb9f3c: Extract external skill importing into pi-skill-importer and
+  stop treating Claude skills as managed Pi skills.
+- f7b5717: Add GitHub skill search with preview-first workflow and
+  explicit untrusted skill install warnings.
+- 600dbac: Show selected GitHub skill source and path dynamically in
+  search result picker footer.
+- 2e275d2: Simplify pi-skills around Pi and GitHub management after
+  extracting external import functionality.
+- Updated dependencies [600dbac]
+  - @spences10/pi-tui-modal@0.0.15
+
 ## 0.0.20
 
 ### Patch Changes

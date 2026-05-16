@@ -1,5 +1,22 @@
 # my-pi
 
+## 0.1.49
+
+### Patch Changes
+
+- 11ef5c9: Add skill importer as my-pi built-in extension with slash
+  command and guarded import workflows.
+- 3cb9f3c: Extract external skill importing into pi-skill-importer and
+  stop treating Claude skills as managed Pi skills.
+- f7b5717: Add GitHub skill search with preview-first workflow and
+  explicit untrusted skill install warnings.
+- 600dbac: Show selected GitHub skill source and path dynamically in
+  search result picker footer.
+- 2e275d2: Simplify pi-skills around Pi and GitHub management after
+  extracting external import functionality.
+- Updated dependencies [600dbac]
+  - @spences10/pi-tui-modal@0.0.15
+
 ## 0.1.48
 
 ### Patch Changes
