@@ -15,6 +15,10 @@ import {
 	resolve_effective_thinking_level,
 	resolve_model_reference,
 } from './api.js';
+import {
+	BUILTIN_EXTENSIONS,
+	type BuiltinExtensionOptionName,
+} from './extensions/builtin-registry.js';
 
 const original_agent_dir = process.env.PI_CODING_AGENT_DIR;
 const original_runtime_mode = process.env.MY_PI_RUNTIME_MODE;
@@ -22,6 +26,17 @@ const original_mcp_project_config =
 	process.env.MY_PI_MCP_PROJECT_CONFIG;
 const original_project_skills = process.env.MY_PI_PROJECT_SKILLS;
 const original_xdg_config_home = process.env.XDG_CONFIG_HOME;
+
+function builtin_options(
+	enabled: boolean,
+): Partial<Record<BuiltinExtensionOptionName, boolean>> {
+	return Object.fromEntries(
+		BUILTIN_EXTENSIONS.map((extension) => [
+			extension.option_name,
+			enabled,
+		]),
+	) as Partial<Record<BuiltinExtensionOptionName, boolean>>;
+}
 
 function restore_env(): void {
 	if (original_agent_dir === undefined)
@@ -48,24 +63,7 @@ afterEach(() => {
 });
 
 describe('get_force_disabled_builtins', () => {
-	const enabled = {
-		context_sidecar: true,
-		mcp: true,
-		skills: true,
-		filter_output: true,
-		recall: true,
-		nopeek: true,
-		omnisearch: true,
-		sqlite_tools: true,
-		startup_screen: true,
-		prompt_presets: true,
-		lsp: true,
-		session_name: true,
-		confirm_destructive: true,
-		hooks_resolution: true,
-		svelte_guardrails: true,
-		team_mode: true,
-	} as const;
+	const enabled = builtin_options(true);
 
 	it('keeps UI-only built-ins enabled in interactive mode', () => {
 		const disabled = get_force_disabled_builtins({
@@ -230,23 +228,7 @@ describe('apply_untrusted_repo_defaults', () => {
 });
 
 describe('create_my_pi environment scoping', () => {
-	const disabled_builtins = {
-		context_sidecar: false,
-		mcp: false,
-		skills: false,
-		filter_output: false,
-		recall: false,
-		nopeek: false,
-		omnisearch: false,
-		sqlite_tools: false,
-		prompt_presets: false,
-		lsp: false,
-		session_name: false,
-		confirm_destructive: false,
-		hooks_resolution: false,
-		svelte_guardrails: false,
-		team_mode: false,
-	} as const;
+	const disabled_builtins = builtin_options(false);
 
 	it('restores process env overrides when the runtime is disposed', async () => {
 		const cwd = mkdtempSync(join(tmpdir(), 'my-pi-api-env-'));

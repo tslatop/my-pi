@@ -9,11 +9,14 @@ Composable [pi](https://pi.dev) coding agent for humans and agents.
 
 Built on the
 [@earendil-works/pi-coding-agent](https://github.com/badlogic/pi-mono)
-SDK. Adds MCP server support, extension stacking, LSP tools, prompt
-presets, local SQLite telemetry for evals, and a programmatic API.
+SDK. Adds MCP server support, a managed extension registry, user
+extension stacking, LSP tools, prompt presets, local SQLite telemetry
+for evals, and a programmatic API.
 
-Extension stacking patterns inspired by
-[pi-vs-claude-code](https://github.com/disler/pi-vs-claude-code).
+User extension stacking was originally inspired by
+[pi-vs-claude-code](https://github.com/disler/pi-vs-claude-code);
+my-pi now layers that pattern behind a registry-driven set of built-in
+extensions.
 
 ## What this is for
 
@@ -45,18 +48,22 @@ directly as its own CLI.
   references, and document symbols via language servers.
 - **Managed skills** — discover, enable, disable, import, and sync
   Pi-native skills.
-- **Svelte guardrails** — default-enabled protection against writing
-  discouraged Svelte patterns like `$effect` in `.svelte` files.
+- **Guardrails** — default-enabled Svelte and coding-preference checks
+  that block configured anti-patterns before agents write them.
 - **Prompt presets** — base presets plus additive prompt layers with
   per-project persistence.
 - **Secret redaction** — redact API keys and other sensitive output
   before the model sees tool results.
+- **Context sidecar** — SQLite FTS storage for oversized tool output,
+  with scoped retrieval commands.
 - **Recall** — teach the model to use `pirecall` for prior-session
   context.
+- **Git UI** — interactive source-control staging in the TUI.
 - **Local telemetry** — optional SQLite telemetry for evals, tool
   analysis, and operational debugging.
-- **Bundled themes + extension stacking** — ship defaults, then layer
-  extra project or ad-hoc extensions on top.
+- **Built-in registry + user extension stacking** — ship defaults,
+  manage built-ins with `/extensions`, and layer extra project or
+  ad-hoc extensions on top.
 
 ## Requirements
 
@@ -145,8 +152,8 @@ consumption by other agents or scripts.
 
 In non-interactive modes (`"prompt"`, `-P`, `--json`), my-pi keeps
 headless-capable built-ins like MCP, LSP, prompt presets, recall,
-hooks, and secret redaction enabled, while skipping UI-only built-ins
-like session auto-naming.
+nopeek, Omnisearch, SQLite tools, hooks, and secret redaction enabled,
+while skipping UI-only built-ins like session auto-naming.
 
 ### RPC and team mode
 
@@ -393,8 +400,11 @@ pnpx my-pi@latest -e ./ext/damage-control.ts -e ./ext/tool-counter.ts
 pnpx my-pi@latest --no-builtin -e ./ext/custom.ts "do something"
 ```
 
-Stack arbitrary Pi extensions via `-e`. Use `--no-builtin` to skip all
-built-in extensions.
+Stack arbitrary Pi extensions via repeated `-e` / `--extension`
+flags. This is the part originally inspired by `pi-vs-claude-code`'s
+simple `pi -e one.ts -e two.ts` recipes. Use `--no-builtin` to skip
+my-pi's managed built-in extensions and run only Pi defaults plus the
+extensions you pass explicitly.
 
 Built-in extension choices can also be saved interactively with
 `/extensions`. Startup flags like `--no-recall`, `--no-skills`, and
@@ -402,8 +412,8 @@ Built-in extension choices can also be saved interactively with
 current process only. The built-in registry in
 `src/extensions/builtin-registry.ts` is the source of truth for
 built-in order, API option names, disable flags, labels, and
-runtime-mode constraints. SDK users can disable Svelte guardrails with
-`create_my_pi({ svelte_guardrails: false })`.
+runtime-mode constraints. SDK users can disable built-ins with options
+such as `create_my_pi({ svelte_guardrails: false })`.
 
 ### Themes
 
@@ -758,7 +768,9 @@ pi install npm:@spences10/pi-telemetry
 pi install npm:@spences10/pi-context
 pi install npm:@spences10/pi-mcp
 pi install npm:@spences10/pi-lsp
+pi install npm:@spences10/pi-git-ui
 pi install npm:@spences10/pi-confirm-destructive
+pi install npm:@spences10/pi-coding-preferences
 pi install npm:@spences10/pi-skills
 pi install npm:@spences10/pi-recall
 pi install npm:@spences10/pi-nopeek
@@ -780,8 +792,12 @@ pi install npm:@spences10/pi-themes
   integration and `/mcp`
 - [`@spences10/pi-lsp`](./packages/pi-lsp/README.md) — LSP-backed
   diagnostics and symbol tools
+- [`@spences10/pi-git-ui`](./packages/pi-git-ui/README.md) —
+  interactive source-control staging UI
 - [`@spences10/pi-confirm-destructive`](./packages/pi-confirm-destructive/README.md)
   — destructive action confirmations
+- [`@spences10/pi-coding-preferences`](./packages/pi-coding-preferences/README.md)
+  — configurable coding-workflow guardrails
 - [`@spences10/pi-skills`](./packages/pi-skills/README.md) — skill
   management, import, and sync
 - [`@spences10/pi-recall`](./packages/pi-recall/README.md) — pirecall
@@ -835,7 +851,9 @@ packages/
   pi-context/              Installable Pi package for context sidecar
   pi-mcp/                  Installable Pi package for MCP integration
   pi-lsp/                  Installable Pi package for LSP tools
+  pi-git-ui/               Installable Pi package for source-control staging UI
   pi-confirm-destructive/  Installable Pi package for destructive action confirmations
+  pi-coding-preferences/   Installable Pi package for coding workflow guardrails
   pi-svelte-guardrails/    Installable Pi package for Svelte pattern guardrails
   pi-skills/               Installable Pi package for skill management
   pi-recall/               Installable Pi package for pirecall reminders

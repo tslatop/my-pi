@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 // CLI for my-pi — composable pi coding agent
-// Extension stacking patterns inspired by https://github.com/disler/pi-vs-claude-code
+// User extension stacking started from https://github.com/disler/pi-vs-claude-code;
+// built-ins are now managed through my-pi's registry.
 
 import { defineCommand, renderUsage, runMain } from 'citty';
 import { existsSync, readFileSync } from 'node:fs';
