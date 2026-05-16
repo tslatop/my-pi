@@ -1,0 +1,56 @@
+{
+	"name": "@spences10/pi-git-ui",
+	"version": "0.0.0",
+	"description": "Interactive Git staging UI for Pi",
+	"keywords": [
+		"git",
+		"pi",
+		"pi-package",
+		"tui"
+	],
+	"license": "MIT",
+	"author": "Scott Spence <me@scottspence.com>",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/spences10/my-pi.git",
+		"directory": "packages/pi-git-ui"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run build:self",
+		"build:self": "tsc -p tsconfig.build.json",
+		"check": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run check:self",
+		"check:self": "tsc --noEmit",
+		"test": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run test:self",
+		"test:self": "node -e \"process.exit(0)\""
+	},
+	"dependencies": {
+		"@earendil-works/pi-coding-agent": "^0.74.0",
+		"@earendil-works/pi-tui": "^0.74.0",
+		"@spences10/pi-tui-modal": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^25.8.0",
+		"typescript": "^6.0.3"
+	},
+	"engines": {
+		"node": ">=24.15.0"
+	},
+	"pi": {
+		"extensions": [
+			"./dist/index.js"
+		]
+	}
+}

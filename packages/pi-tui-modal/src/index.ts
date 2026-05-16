@@ -23,6 +23,7 @@ export type {
 	ModalOptions,
 	ModalStyle,
 	ModalText,
+	ModalTheme,
 	PickerModalOptions,
 	SettingsModalOptions,
 	TextModalOptions,

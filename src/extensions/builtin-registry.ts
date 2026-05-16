@@ -179,6 +179,23 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 			(await import('./prompt-presets/index.js')).default,
 	},
 	{
+		key: 'git-ui',
+		label: 'Git UI',
+		docs_label: 'Git staging UI',
+		description: 'Interactive source control staging panel',
+		default_enabled: true,
+		option_name: 'git_ui',
+		cli_arg: 'no-git-ui',
+		cli_flag: '--no-git-ui',
+		cli_description: 'Disable built-in Git staging UI',
+		aliases: ['git-ui', 'git', 'source-control', 'scm'],
+		mode_constraints: {
+			disabled_in: ['print', 'json', 'rpc'],
+			reason: 'Git UI is only useful in interactive mode',
+		},
+		load: async () => (await import('@spences10/pi-git-ui')).default,
+	},
+	{
 		key: 'lsp',
 		label: 'LSP',
 		docs_label: 'LSP',
