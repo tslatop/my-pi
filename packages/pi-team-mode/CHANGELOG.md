@@ -1,5 +1,12 @@
 # @spences10/pi-team-mode
 
+## 0.0.19
+
+### Patch Changes
+
+- Updated dependencies [c771d16]
+  - @spences10/pi-tui-modal@0.0.12
+
 ## 0.0.18
 
 ### Patch Changes

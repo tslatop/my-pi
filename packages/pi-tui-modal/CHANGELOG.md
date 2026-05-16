@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.12
+
+### Patch Changes
+
+- c771d16: Add VS Code-style Git staging UI with selectable files and
+  pi-tui primitive-based modal controls.
+
 ## 0.0.11
 
 ### Patch Changes
