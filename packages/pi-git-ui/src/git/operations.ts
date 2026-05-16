@@ -48,9 +48,23 @@ export async function unstage_all(cwd: string): Promise<void> {
 	await git(['restore', '--staged', '--', ':/'], cwd);
 }
 
+export async function discard_file(
+	cwd: string,
+	file: GitFile,
+): Promise<void> {
+	const path = git_path(file);
+	if (file.state === 'untracked')
+		await git(['clean', '-f', '--', path], cwd);
+	else await git(['restore', '--worktree', '--', path], cwd);
+}
+
 export async function commit(
 	cwd: string,
 	message: string,
+	options: { amend?: boolean } = {},
 ): Promise<void> {
-	await git(['commit', '-m', message], cwd);
+	const args = ['commit'];
+	if (options.amend) args.push('--amend');
+	args.push('-m', message);
+	await git(args, cwd);
 }

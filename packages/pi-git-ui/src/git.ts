@@ -11,6 +11,7 @@ export {
 export { format_git_error } from './git/errors.js';
 export {
 	commit,
+	discard_file,
 	git_path,
 	stage_all,
 	stage_file,

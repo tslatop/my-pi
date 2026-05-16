@@ -4,6 +4,7 @@ import { CommitComposer } from './commit-composer.js';
 import {
 	changed_line_indexes,
 	commit,
+	discard_file,
 	EMPTY_STATUS,
 	format_git_error,
 	has_staged_changes,
@@ -176,6 +177,7 @@ export class GitStageBody implements ModalBody, Focusable {
 			);
 		else if (data === 'g') void this.open_repo_overview();
 		else if (data === 'c') this.open_commit_composer();
+		else if (data === 'm') this.open_commit_composer(true);
 		else if (data === '\r' || data === '\n') this.open_action_menu();
 		else if (data === '?') this.show_help = true;
 		else if (data === '/') this.start_filter();
@@ -476,9 +478,20 @@ export class GitStageBody implements ModalBody, Focusable {
 				run: () => void this.unstage_selected_line(),
 			},
 			{
+				action_label: 'discard file',
+				action_description:
+					'Discard unstaged worktree changes for this file',
+				run: () => this.open_discard_confirmation(file),
+			},
+			{
 				action_label: 'commit',
 				action_description: 'Commit currently staged changes',
 				run: () => this.open_commit_composer(),
+			},
+			{
+				action_label: 'amend commit',
+				action_description: 'Amend HEAD with staged changes',
+				run: () => this.open_commit_composer(true),
 			},
 			{
 				action_label: 'repository',
@@ -544,27 +557,59 @@ export class GitStageBody implements ModalBody, Focusable {
 		}
 	}
 
-	private open_commit_composer(): void {
+	private open_discard_confirmation(file: GitFile): void {
+		this.actions = [
+			{
+				action_label: 'confirm discard',
+				action_description:
+					'Permanently remove unstaged worktree changes',
+				run: () => void this.discard_file(file),
+			},
+			{
+				action_label: 'cancel',
+				action_description: 'Keep changes',
+				run: () => {
+					this.actions = undefined;
+				},
+			},
+		];
+		this.selected_action = 1;
+	}
+
+	private async discard_file(file: GitFile): Promise<void> {
+		await this.run(
+			() => discard_file(this.cwd, file),
+			`Discarded unstaged changes in ${file.path}`,
+		);
+	}
+
+	private open_commit_composer(amend = false): void {
 		if (!has_staged_changes(this.status.files)) {
-			this.message = 'No staged changes to commit.';
+			this.message = amend
+				? 'No staged changes to amend.'
+				: 'No staged changes to commit.';
 			return;
 		}
 		this.composer = new CommitComposer(
 			this.theme,
 			staged_file_count(this.status.files),
-			(message) => void this.commit_staged(message),
+			(message) => void this.commit_staged(message, amend),
 			() => {
 				this.composer = undefined;
 			},
+			amend,
 		);
 		this.composer.focused = this.focused;
 	}
 
-	private async commit_staged(message: string): Promise<void> {
+	private async commit_staged(
+		message: string,
+		amend = false,
+	): Promise<void> {
 		this.composer = undefined;
 		await this.run(
-			() => commit(this.cwd, message),
-			`Committed ${message}`,
+			() => commit(this.cwd, message, { amend }),
+			amend ? `Amended ${message}` : `Committed ${message}`,
 		);
 	}
 

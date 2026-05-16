@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	build_line_patch,
 	changed_line_indexes,
+	commit as commit_changes,
+	discard_file,
 	git_path,
 	has_staged_changes,
 	parse_diff_hunks,
@@ -273,6 +275,67 @@ index 1111111..2222222 100644
 			]);
 			expect(staged).toContain('+const two = 2;');
 			expect(staged).not.toContain('+const four = 4;');
+		});
+	});
+});
+
+describe('git operations', () => {
+	it('discards unstaged tracked file changes without touching staged changes', async () => {
+		await with_repo(async (cwd) => {
+			await writeFile(join(cwd, 'app.ts'), 'one\n');
+			await git(cwd, ['add', 'app.ts']);
+			await git(cwd, ['commit', '-m', 'initial']);
+			await writeFile(join(cwd, 'app.ts'), 'two\n');
+			await git(cwd, ['add', 'app.ts']);
+			await writeFile(join(cwd, 'app.ts'), 'three\n');
+			const [file] = parse_porcelain_z(
+				await git(cwd, ['status', '--porcelain=v1', '-z']),
+			);
+
+			await discard_file(cwd, file!);
+
+			expect(await git(cwd, ['diff', '--', 'app.ts'])).toBe('');
+			expect(
+				await git(cwd, ['diff', '--cached', '--', 'app.ts']),
+			).toContain('+two');
+		});
+	});
+
+	it('removes untracked files when discarding them', async () => {
+		await with_repo(async (cwd) => {
+			await writeFile(join(cwd, 'scratch.ts'), 'temporary\n');
+			const [file] = parse_porcelain_z(
+				await git(cwd, ['status', '--porcelain=v1', '-z']),
+			);
+
+			await discard_file(cwd, file!);
+
+			expect(await git(cwd, ['status', '--porcelain=v1', '-z'])).toBe(
+				'',
+			);
+		});
+	});
+
+	it('can amend HEAD with staged changes', async () => {
+		await with_repo(async (cwd) => {
+			await writeFile(join(cwd, 'app.ts'), 'one\n');
+			await git(cwd, ['add', 'app.ts']);
+			await git(cwd, ['commit', '-m', 'initial']);
+			const before = await git(cwd, ['rev-list', '--count', 'HEAD']);
+			await writeFile(join(cwd, 'app.ts'), 'two\n');
+			await git(cwd, ['add', 'app.ts']);
+
+			await commit_changes(cwd, 'amended', { amend: true });
+
+			expect(await git(cwd, ['rev-list', '--count', 'HEAD'])).toBe(
+				before,
+			);
+			expect(await git(cwd, ['log', '-1', '--pretty=%s'])).toBe(
+				'amended\n',
+			);
+			expect(
+				await git(cwd, ['show', '--pretty=', '--name-only', 'HEAD']),
+			).toContain('app.ts');
 		});
 	});
 });

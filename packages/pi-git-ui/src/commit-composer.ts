@@ -24,6 +24,7 @@ export class CommitComposer implements Focusable {
 		private readonly staged_count: number,
 		private readonly on_commit: (message: string) => void,
 		private readonly on_cancel: () => void,
+		private readonly amend = false,
 	) {
 		this.input.onSubmit = (summary) => this.submit(summary);
 		this.input.onEscape = () => this.on_cancel();
@@ -70,7 +71,9 @@ export class CommitComposer implements Focusable {
 
 	private render_type_picker(width: number): string[] {
 		const lines = [
-			this.theme.bold('Commit staged changes'),
+			this.theme.bold(
+				this.amend ? 'Amend last commit' : 'Commit staged changes',
+			),
 			this.theme.fg(
 				'muted',
 				`${this.staged_count} staged file${this.staged_count === 1 ? '' : 's'}`,
@@ -96,7 +99,9 @@ export class CommitComposer implements Focusable {
 	private render_summary(width: number): string[] {
 		const preview = this.build_message(this.input.getValue().trim());
 		const lines = [
-			this.theme.bold('Commit message'),
+			this.theme.bold(
+				this.amend ? 'Amend message' : 'Commit message',
+			),
 			this.theme.fg(
 				'muted',
 				`${this.staged_count} staged file${this.staged_count === 1 ? '' : 's'}`,
@@ -110,7 +115,12 @@ export class CommitComposer implements Focusable {
 			'Summary:',
 			...this.input.render(width),
 			'',
-			this.theme.fg('dim', 'enter commit • esc cancel'),
+			this.theme.fg(
+				'dim',
+				this.amend
+					? 'enter amend • esc cancel'
+					: 'enter commit • esc cancel',
+			),
 		];
 		return lines;
 	}

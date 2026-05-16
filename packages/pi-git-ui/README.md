@@ -1,6 +1,6 @@
 # @spences10/pi-git-ui
 
-Interactive Git staging, diff review, and commit UI for Pi.
+Focused Git staging, diff review, and commit modal for Pi.
 
 ## Usage
 
@@ -19,6 +19,7 @@ Controls:
 - `↑`/`↓` or `j`/`k` — move file selection
 - `/` — filter files by path, state, or status code
 - `enter` — open contextual actions for the selected file
+- `?` — show grouped keyboard help
 - `←`/`→` or `h`/`l` — scroll the diff preview
 - `n`/`p` — move between diff hunks
 - `[`/`]` — move between changed lines
@@ -32,10 +33,13 @@ Controls:
 - `-` — unstage selected changed line
 - `c` — commit staged changes with a Conventional Commit helper or raw
   message
+- `m` — amend the last commit with staged changes
 - `g` — show repository overview with branches, recent commits,
   stashes, and remotes
 - `a` — safely stage all; blocked if partial/conflicted files exist
 - `A` — force stage all
 - `u` — unstage all
+- actions menu → `discard file` — confirm and discard unstaged file
+  changes
 - `r` — refresh
 - `esc`/`q` — close
