@@ -1,14 +1,7 @@
 import type {
-	AgentEndEvent,
 	ExtensionAPI,
 	ExtensionCommandContext,
-	ExtensionContext,
-	SessionShutdownEvent,
 } from '@earendil-works/pi-coding-agent';
-import {
-	show_picker_modal,
-	show_text_modal,
-} from '@spences10/pi-tui-modal';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -27,10 +20,16 @@ import {
 	save_telemetry_config,
 	type TelemetryConfig,
 } from './config.js';
-import type {
-	TelemetryDatabase,
-	TelemetryQueryFilters,
-} from './db.js';
+import {
+	describe_session_shutdown,
+	get_eval_metadata,
+	get_model_identity,
+	get_session_file,
+	get_stop_reason,
+	infer_run_outcome,
+} from './context.js';
+import type { TelemetryQueryFilters } from './db.js';
+import { default_load_store } from './store-loader.js';
 import {
 	safe_json_stringify,
 	summarize_headers,
@@ -39,6 +38,17 @@ import {
 	summarize_tool_result,
 	summarize_value,
 } from './summaries.js';
+import type {
+	ActiveRun,
+	ActiveTurn,
+	CreateTelemetryExtensionOptions,
+	TelemetryStore,
+} from './types.js';
+import {
+	get_default_telemetry_export_path,
+	show_telemetry_home_modal,
+	show_telemetry_text_modal,
+} from './ui.js';
 export {
 	format_telemetry_query_results,
 	format_telemetry_stats,
@@ -46,144 +56,11 @@ export {
 	parse_telemetry_command,
 	type ParsedTelemetryCommand,
 } from './commands.js';
-
-interface TelemetryStore {
-	insert_run: TelemetryDatabase['insert_run'];
-	finish_run: TelemetryDatabase['finish_run'];
-	insert_turn: TelemetryDatabase['insert_turn'];
-	finish_turn: TelemetryDatabase['finish_turn'];
-	insert_tool_call: TelemetryDatabase['insert_tool_call'];
-	note_tool_update: TelemetryDatabase['note_tool_update'];
-	finish_tool_call: TelemetryDatabase['finish_tool_call'];
-	insert_provider_request: TelemetryDatabase['insert_provider_request'];
-	finish_provider_request: TelemetryDatabase['finish_provider_request'];
-	get_stats: TelemetryDatabase['get_stats'];
-	query_runs: TelemetryDatabase['query_runs'];
-	close: TelemetryDatabase['close'];
-}
-
-export interface CreateTelemetryExtensionOptions {
-	enabled?: boolean;
-	db_path?: string;
-	cwd?: string;
-	load_store?: (db_path: string) => Promise<TelemetryStore>;
-	now?: () => number;
-}
-
-interface EvalMetadata {
-	run_id: string | null;
-	case_id: string | null;
-	attempt: number | null;
-	suite: string | null;
-}
-
-interface ActiveRun {
-	id: string;
-}
-
-interface ActiveTurn {
-	id: string;
-}
-
-function parse_int(value: string | undefined): number | null {
-	if (!value) return null;
-	const parsed = Number.parseInt(value, 10);
-	return Number.isFinite(parsed) ? parsed : null;
-}
-
-function get_eval_metadata(): EvalMetadata {
-	return {
-		run_id: process.env.MY_PI_EVAL_RUN_ID ?? null,
-		case_id: process.env.MY_PI_EVAL_CASE_ID ?? null,
-		attempt: parse_int(process.env.MY_PI_EVAL_ATTEMPT),
-		suite: process.env.MY_PI_EVAL_SUITE ?? null,
-	};
-}
-
-function get_model_identity(model: ExtensionContext['model']): {
-	provider: string | null;
-	id: string | null;
-} {
-	if (!model) {
-		return { provider: null, id: null };
-	}
-	return {
-		provider:
-			typeof model.provider === 'string' ? model.provider : null,
-		id: typeof model.id === 'string' ? model.id : null,
-	};
-}
-
-function get_session_file(ctx: ExtensionContext): string | null {
-	const session_manager = ctx.sessionManager as {
-		getSessionFile?: () => string | undefined;
-	};
-	return session_manager.getSessionFile?.() ?? null;
-}
-
-function get_stop_reason(message: unknown): string | null {
-	if (!message || typeof message !== 'object') return null;
-	const stop_reason = (message as { stopReason?: unknown })
-		.stopReason;
-	return typeof stop_reason === 'string' ? stop_reason : null;
-}
-
-function get_error_message(message: unknown): string | null {
-	if (!message || typeof message !== 'object') return null;
-	const error_message = (message as { errorMessage?: unknown })
-		.errorMessage;
-	return typeof error_message === 'string' ? error_message : null;
-}
-
-export function infer_run_outcome(event: AgentEndEvent): {
-	success: boolean | null;
-	error_message: string | null;
-} {
-	const assistant_messages = event.messages.filter(
-		(message) => message.role === 'assistant',
-	);
-	const last_assistant = assistant_messages.at(-1);
-	const stop_reason = get_stop_reason(last_assistant);
-	if (stop_reason === 'error') {
-		return {
-			success: false,
-			error_message:
-				get_error_message(last_assistant) ?? 'agent error',
-		};
-	}
-	if (stop_reason === 'aborted') {
-		return {
-			success: false,
-			error_message:
-				get_error_message(last_assistant) ?? 'agent aborted',
-		};
-	}
-	return {
-		success: true,
-		error_message: null,
-	};
-}
-
-export function describe_session_shutdown(
-	event: Pick<SessionShutdownEvent, 'reason' | 'targetSessionFile'>,
-): string {
-	const base = `session shutdown (${event.reason})`;
-	return event.targetSessionFile
-		? `${base} → ${event.targetSessionFile}`
-		: base;
-}
-
-function get_default_telemetry_export_path(cwd: string): string {
-	const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-	return resolve(cwd, `telemetry-export-${stamp}.json`);
-}
-
-async function default_load_store(
-	db_path: string,
-): Promise<TelemetryStore> {
-	const { TelemetryDatabase } = await import('./db.js');
-	return TelemetryDatabase.open(db_path);
-}
+export {
+	describe_session_shutdown,
+	infer_run_outcome,
+} from './context.js';
+export type { CreateTelemetryExtensionOptions } from './types.js';
 
 export function create_telemetry_extension(
 	options: CreateTelemetryExtensionOptions = {},
@@ -247,63 +124,6 @@ export function create_telemetry_extension(
 
 		function has_modal_ui(ctx: ExtensionCommandContext): boolean {
 			return ctx.hasUI && typeof ctx.ui.custom === 'function';
-		}
-
-		async function show_telemetry_text_modal(
-			ctx: ExtensionCommandContext,
-			title: string,
-			text: string,
-		): Promise<void> {
-			await show_text_modal(ctx, {
-				title,
-				text,
-				max_visible_lines: 20,
-				overlay_options: { width: '90%', minWidth: 72 },
-			});
-		}
-
-		async function show_telemetry_home_modal(
-			ctx: ExtensionCommandContext,
-		): Promise<string | undefined> {
-			return await show_picker_modal(ctx, {
-				title: 'Telemetry',
-				subtitle: `${effective_enabled ? 'enabled' : 'disabled'} • ${db_path}`,
-				items: [
-					{
-						value: 'status',
-						label: 'Status',
-						description:
-							'Effective state, saved default, override, and database path',
-					},
-					{
-						value: 'stats',
-						label: 'Stats',
-						description:
-							'Aggregate runs, turns, tools, and database size',
-					},
-					{
-						value: 'query',
-						label: 'Query runs',
-						description: `Latest ${DEFAULT_QUERY_LIMIT} runs`,
-					},
-					{
-						value: 'export',
-						label: 'Export runs',
-						description: 'Write latest matching runs to JSON',
-					},
-					{
-						value: 'on',
-						label: 'Enable',
-						description: 'Save telemetry enabled as default',
-					},
-					{
-						value: 'off',
-						label: 'Disable',
-						description: 'Save telemetry disabled as default',
-					},
-				],
-				footer: 'enter runs action • esc close/back',
-			});
 		}
 
 		async function open_readonly_store(
@@ -462,7 +282,12 @@ export function create_telemetry_extension(
 			handler: async (args, ctx) => {
 				if (!args.trim() && has_modal_ui(ctx)) {
 					let selected: string | undefined;
-					while ((selected = await show_telemetry_home_modal(ctx))) {
+					while (
+						(selected = await show_telemetry_home_modal(
+							ctx,
+							effective_enabled,
+						))
+					) {
 						await handle_telemetry_home_action(ctx, selected);
 					}
 					return;
