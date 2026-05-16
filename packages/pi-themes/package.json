@@ -25,7 +25,9 @@
 		"check": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run check:self",
 		"check:self": "node -e \"process.exit(0)\"",
 		"test": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run test:self",
-		"test:self": "node -e \"process.exit(0)\""
+		"test:self": "node -e \"process.exit(0)\"",
+		"coverage:self": "node -e \"process.exit(0)\"",
+		"coverage": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run coverage:self"
 	},
 	"engines": {
 		"node": ">=24.15.0"

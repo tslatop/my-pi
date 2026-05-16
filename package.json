@@ -55,7 +55,8 @@
 		"eval:suite": "node scripts/run-eval-suite.ts",
 		"changeset": "changeset",
 		"version": "changeset version",
-		"release": "git diff --quiet && git diff --cached --quiet && pnpm run build && changeset publish"
+		"release": "git diff --quiet && git diff --cached --quiet && pnpm run build && changeset publish",
+		"coverage": "pnpm --filter \"./packages/*\" run build:self && vp pack && sh -c 'vp test --coverage && pnpm --filter \"./packages/*\" --if-present run coverage:self' --"
 	},
 	"dependencies": {
 		"@earendil-works/pi-ai": "^0.74.0",
@@ -70,6 +71,7 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.31.0",
 		"@types/node": "^25.8.0",
+		"@vitest/coverage-v8": "^4.1.6",
 		"vite-plus": "^0.1.21",
 		"vitest": "^4.1.6"
 	},
