@@ -20,7 +20,7 @@ async function show_git_ui(
 			subtitle:
 				'Review diffs, safely stage files, and commit staged changes',
 			footer:
-				'↑↓/jk files • enter actions • n/p hunks • S/X stage/unstage hunk • ←→/hl scroll diff • space safe toggle • s/x file • c commit • a/A stage all • u unstage all • r refresh • esc/q close',
+				'↑↓/jk files • / filter • enter actions • g overview • n/p hunks • S/X hunk • ←→/hl diff • space safe toggle • s/x file • c commit • a/A stage all • u unstage all • r refresh • esc/q close',
 			overlay_options: {
 				width: '92%',
 				minWidth: 80,

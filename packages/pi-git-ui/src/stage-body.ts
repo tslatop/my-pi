@@ -7,6 +7,7 @@ import {
 	format_git_error,
 	has_staged_changes,
 	read_diff,
+	read_repo_overview,
 	read_status,
 	stage_all,
 	stage_file,
@@ -21,6 +22,7 @@ import {
 	type FileState,
 	type GitFile,
 	type GitStatus,
+	type RepoOverview,
 } from './git.js';
 import {
 	key_is_down,
@@ -33,6 +35,14 @@ import {
 	status_code,
 	truncate_plain,
 } from './render.js';
+
+function render_section(
+	items: string[],
+	empty_text: string,
+): string[] {
+	if (items.length === 0) return [`  ${empty_text}`];
+	return items.map((item) => `  ${item}`);
+}
 
 interface ActionItem {
 	action_label: string;
@@ -49,8 +59,11 @@ export class GitStageBody implements ModalBody, Focusable {
 	private diff_for_path = '';
 	private busy = false;
 	private message = '';
+	private filter_text = '';
+	private capturing_filter = false;
 	private actions?: ActionItem[];
 	private selected_action = 0;
+	private repo_overview?: RepoOverview;
 	private composer?: CommitComposer;
 	private _focused = false;
 
@@ -93,6 +106,7 @@ export class GitStageBody implements ModalBody, Focusable {
 	render(width: number): string[] {
 		if (this.composer) return this.composer.render(width);
 		if (this.actions) return this.render_action_menu(width);
+		if (this.repo_overview) return this.render_repo_overview(width);
 		const lines = this.render_header(width);
 		if (this.message) lines.push(...this.render_message(width));
 		if (this.status.files.length === 0) return lines;
@@ -107,6 +121,17 @@ export class GitStageBody implements ModalBody, Focusable {
 		}
 		if (this.actions) {
 			this.handle_action_input(data);
+			this.request_render();
+			return;
+		}
+		if (this.repo_overview) {
+			if (data === '\x1B' || data === 'q')
+				this.repo_overview = undefined;
+			this.request_render();
+			return;
+		}
+		if (this.capturing_filter) {
+			this.handle_filter_input(data);
 			this.request_render();
 			return;
 		}
@@ -137,8 +162,10 @@ export class GitStageBody implements ModalBody, Focusable {
 				() => unstage_all(this.cwd),
 				'Unstaged all changes',
 			);
+		else if (data === 'g') void this.open_repo_overview();
 		else if (data === 'c') this.open_commit_composer();
 		else if (data === '\r' || data === '\n') this.open_action_menu();
+		else if (data === '/') this.start_filter();
 		else if (data === 'r') void this.load(this.selected_file()?.path);
 		this.request_render();
 	}
@@ -165,7 +192,10 @@ export class GitStageBody implements ModalBody, Focusable {
 			: '';
 		const counts = state_counts(this.status.files);
 		const staged = staged_file_count(this.status.files);
-		const text = `branch ${this.status.branch}${upstream} • ${this.status.files.length} files • staged ${staged}${counts ? ` • ${counts}` : ''}`;
+		const filter_status = this.filter_text
+			? ` • filter "${this.filter_text}" ${this.visible_files().length}/${this.status.files.length}`
+			: '';
+		const text = `branch ${this.status.branch}${upstream} • ${this.status.files.length} files • staged ${staged}${filter_status}${counts ? ` • ${counts}` : ''}`;
 		return new Text(this.theme.fg('muted', text), 0, 0).render(width);
 	}
 
@@ -179,6 +209,30 @@ export class GitStageBody implements ModalBody, Focusable {
 				: 'dim';
 		return new Text(this.theme.fg(color, this.message), 0, 0).render(
 			width,
+		);
+	}
+
+	private render_repo_overview(width: number): string[] {
+		const overview = this.repo_overview;
+		if (!overview) return [];
+		const lines = [
+			this.theme.bold('Repository'),
+			this.theme.fg('dim', 'q/esc back'),
+			'',
+			this.theme.fg('accent', this.theme.bold('Branches')),
+			...render_section(overview.branches, 'No branches found'),
+			'',
+			this.theme.fg('accent', this.theme.bold('Recent commits')),
+			...render_section(overview.log, 'No commits found'),
+			'',
+			this.theme.fg('accent', this.theme.bold('Stashes')),
+			...render_section(overview.stashes, 'No stashes'),
+			'',
+			this.theme.fg('accent', this.theme.bold('Remotes')),
+			...render_section(overview.remotes, 'No remotes'),
+		];
+		return lines.flatMap((line) =>
+			new Text(truncate_plain(line, width), 0, 0).render(width),
 		);
 	}
 
@@ -322,7 +376,12 @@ export class GitStageBody implements ModalBody, Focusable {
 	}
 
 	private visible_files(): GitFile[] {
-		return this.status.files;
+		const query = this.filter_text.trim().toLowerCase();
+		if (!query) return this.status.files;
+		return this.status.files.filter((file) => {
+			const searchable_text = `${file.path} ${state_label(file.state)} ${status_code(file)}`;
+			return searchable_text.toLowerCase().includes(query);
+		});
 	}
 
 	private selected_file(): GitFile | undefined {
@@ -344,6 +403,37 @@ export class GitStageBody implements ModalBody, Focusable {
 
 	private scroll_diff(delta: number): void {
 		this.diff_scroll = Math.max(0, this.diff_scroll + delta);
+	}
+
+	private start_filter(): void {
+		this.capturing_filter = true;
+		this.message = this.filter_text
+			? `Filter: ${this.filter_text}`
+			: 'Filter: type to narrow files';
+	}
+
+	private handle_filter_input(data: string): void {
+		if (data === '\r' || data === '\n' || data === '\x1B') {
+			this.capturing_filter = false;
+			this.message = this.filter_text
+				? `Filtered by ${this.filter_text}`
+				: '';
+			return;
+		}
+		if (data === '\x7F' || data === '\b') {
+			this.filter_text = this.filter_text.slice(0, -1);
+		} else if (data === '\x15') {
+			this.filter_text = '';
+		} else if (data.length === 1 && data >= ' ') {
+			this.filter_text += data;
+		}
+		this.selected = 0;
+		this.diff_scroll = 0;
+		this.selected_hunk = 0;
+		this.message = this.filter_text
+			? `Filter: ${this.filter_text}`
+			: 'Filter cleared';
+		void this.load_diff();
 	}
 
 	private move_hunk(delta: number): void {
@@ -484,6 +574,12 @@ export class GitStageBody implements ModalBody, Focusable {
 				run: () => this.open_commit_composer(),
 			},
 			{
+				action_label: 'repository',
+				action_description:
+					'Show branches, log, stashes, and remotes',
+				run: () => void this.open_repo_overview(),
+			},
+			{
 				action_label: 'refresh',
 				action_description: 'Reload git status and diff',
 				run: () => void this.load(file.path),
@@ -525,6 +621,20 @@ export class GitStageBody implements ModalBody, Focusable {
 	private show_conflict_help(file: GitFile): void {
 		this.actions = undefined;
 		this.message = `Resolve ${file.path} in your editor, then stage it with s when conflict markers are gone.`;
+	}
+
+	private async open_repo_overview(): Promise<void> {
+		this.busy = true;
+		this.message = 'Loading repository overview…';
+		this.request_render();
+		try {
+			this.repo_overview = await read_repo_overview(this.cwd);
+		} catch (error) {
+			this.message = format_git_error(error);
+		} finally {
+			this.busy = false;
+			this.request_render();
+		}
 	}
 
 	private open_commit_composer(): void {

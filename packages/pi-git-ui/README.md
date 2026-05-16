@@ -17,6 +17,7 @@ Then run:
 Controls:
 
 - `↑`/`↓` or `j`/`k` — move file selection
+- `/` — filter files by path, state, or status code
 - `enter` — open contextual actions for the selected file
 - `←`/`→` or `h`/`l` — scroll the diff preview
 - `n`/`p` — move between diff hunks
@@ -28,6 +29,8 @@ Controls:
 - `X` — unstage selected hunk
 - `c` — commit staged changes with a Conventional Commit helper or raw
   message
+- `g` — show repository overview with branches, recent commits,
+  stashes, and remotes
 - `a` — safely stage all; blocked if partial/conflicted files exist
 - `A` — force stage all
 - `u` — unstage all
