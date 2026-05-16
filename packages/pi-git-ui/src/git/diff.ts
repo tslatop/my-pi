@@ -65,7 +65,9 @@ export function parse_diff_hunks(
 	raw: string,
 	section: DiffSection,
 ): DiffHunk[] {
-	const lines = raw.split('\n');
+	const lines = raw.endsWith('\n')
+		? raw.slice(0, -1).split('\n')
+		: raw.split('\n');
 	const hunks: DiffHunk[] = [];
 	let file_header: string[] = [];
 	let current_hunk: { start: number; lines: string[] } | undefined;
