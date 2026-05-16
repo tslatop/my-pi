@@ -1,6 +1,11 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -478,6 +483,139 @@ describe('confirm-destructive extension', () => {
 				toolCallId: 'bash-1',
 				toolName: 'bash',
 				input: { command: 'rm draft.md' },
+			},
+			ctx,
+		);
+
+		expect(select).not.toHaveBeenCalled();
+		expect(result).toBeUndefined();
+	});
+
+	it('does not prompt when deleting a temp directory created by bash', async () => {
+		const cwd = tmp_dir();
+		const path = join(tmpdir(), 'pi-created-by-bash');
+		const { pi, events } = create_test_pi();
+		await confirm_destructive(pi);
+
+		const tool_call = events.get('tool_call');
+		const tool_result = events.get('tool_result');
+		const { ctx, select } = create_context({ cwd });
+
+		dirs.push(path);
+		rmSync(path, { recursive: true, force: true });
+		await tool_call(
+			{
+				type: 'tool_call',
+				toolCallId: 'bash-create-1',
+				toolName: 'bash',
+				input: { command: `mkdir -p ${path}` },
+			},
+			ctx,
+		);
+		mkdirSync(path, { recursive: true });
+		writeFileSync(join(path, 'artifact.txt'), 'temporary');
+		await tool_result({
+			type: 'tool_result',
+			toolCallId: 'bash-create-1',
+			toolName: 'bash',
+			isError: false,
+			content: [],
+		});
+
+		const result = await tool_call(
+			{
+				type: 'tool_call',
+				toolCallId: 'bash-rm-1',
+				toolName: 'bash',
+				input: { command: `rm -rf ${path}` },
+			},
+			ctx,
+		);
+
+		expect(select).not.toHaveBeenCalled();
+		expect(result).toBeUndefined();
+	});
+
+	it('does not prompt when deleting a temp path returned by mktemp', async () => {
+		const cwd = tmp_dir();
+		const path = join(tmpdir(), 'pi-mktemp-output');
+		const { pi, events } = create_test_pi();
+		await confirm_destructive(pi);
+
+		const tool_call = events.get('tool_call');
+		const tool_result = events.get('tool_result');
+		const { ctx, select } = create_context({ cwd });
+
+		dirs.push(path);
+		rmSync(path, { recursive: true, force: true });
+		await tool_call(
+			{
+				type: 'tool_call',
+				toolCallId: 'bash-mktemp-1',
+				toolName: 'bash',
+				input: { command: 'mktemp' },
+			},
+			ctx,
+		);
+		writeFileSync(path, 'temporary');
+		await tool_result({
+			type: 'tool_result',
+			toolCallId: 'bash-mktemp-1',
+			toolName: 'bash',
+			isError: false,
+			content: [{ type: 'text', text: `${path}\n` }],
+		});
+
+		const result = await tool_call(
+			{
+				type: 'tool_call',
+				toolCallId: 'bash-rm-1',
+				toolName: 'bash',
+				input: { command: `rm ${path}` },
+			},
+			ctx,
+		);
+
+		expect(select).not.toHaveBeenCalled();
+		expect(result).toBeUndefined();
+	});
+
+	it('does not prompt when deleting a temp file created by bash redirection', async () => {
+		const cwd = tmp_dir();
+		const path = join(tmpdir(), 'pi-created-by-redirection');
+		const { pi, events } = create_test_pi();
+		await confirm_destructive(pi);
+
+		const tool_call = events.get('tool_call');
+		const tool_result = events.get('tool_result');
+		const { ctx, select } = create_context({ cwd });
+
+		dirs.push(path);
+		rmSync(path, { recursive: true, force: true });
+		await tool_call(
+			{
+				type: 'tool_call',
+				toolCallId: 'bash-redirect-1',
+				toolName: 'bash',
+				input: { command: `printf temporary > ${path}` },
+			},
+			ctx,
+		);
+		writeFileSync(path, 'temporary');
+		await tool_result({
+			type: 'tool_result',
+			toolCallId: 'bash-redirect-1',
+			toolName: 'bash',
+			isError: false,
+			content: [],
+		});
+
+		const result = await tool_call(
+			{
+				type: 'tool_call',
+				toolCallId: 'bash-rm-1',
+				toolName: 'bash',
+				input: { command: `rm ${path}` },
 			},
 			ctx,
 		);

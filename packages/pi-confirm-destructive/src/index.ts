@@ -140,14 +140,23 @@ function is_path_within(parent: string, child: string): boolean {
 	return Boolean(rel) && !rel.startsWith('..') && !isAbsolute(rel);
 }
 
-function is_agent_temp_path(path: string): boolean {
+function is_temp_path(path: string): boolean {
 	const temp_root = resolve(tmpdir());
 	const absolute = resolve(path);
-	if (!is_path_within(temp_root, absolute)) return false;
-	const first_segment = relative(temp_root, absolute).split(
+	return (
+		absolute === temp_root || is_path_within(temp_root, absolute)
+	);
+}
+
+function is_agent_temp_path(path: string): boolean {
+	if (!is_temp_path(path)) return false;
+	const temp_root = resolve(tmpdir());
+	const first_segment = relative(temp_root, resolve(path)).split(
 		/[\\/]+/,
 	)[0];
-	return /^my-pi-(audit|sandbox|temp|tmp|work)-/.test(first_segment);
+	return /^my-pi-(audit|sandbox|temp|tmp|work|session)-/.test(
+		first_segment,
+	);
 }
 
 function parse_shell_words(command: string): string[] {
@@ -180,6 +189,97 @@ function extract_command_paths(
 	return words
 		.slice(command_index + 1)
 		.filter((word) => word !== '--' && !word.startsWith('-'));
+}
+
+function option_takes_value(
+	command_name: string,
+	option: string,
+): boolean {
+	const value_options: Record<string, string[]> = {
+		mkdir: ['-m', '--mode', '-Z', '--context'],
+		touch: ['-r', '--reference', '-d', '--date', '-t'],
+	};
+	return value_options[command_name]?.includes(option) ?? false;
+}
+
+function extract_simple_create_paths(
+	command: string,
+	cwd: string,
+): string[] {
+	if (/[;&|`$()<>]/.test(command)) return [];
+	const words = parse_shell_words(command);
+	const command_name = words[0];
+	if (!['mkdir', 'touch'].includes(command_name)) return [];
+
+	const paths: string[] = [];
+	for (let index = 1; index < words.length; index += 1) {
+		const word = words[index];
+		if (!word || word === '--') continue;
+		if (word.startsWith('-')) {
+			if (option_takes_value(command_name, word)) index += 1;
+			continue;
+		}
+
+		const absolute = resolve(cwd, word);
+		if (is_temp_path(absolute) && !existsSync(absolute)) {
+			paths.push(absolute);
+		}
+	}
+	return paths;
+}
+
+function extract_redirect_create_paths(
+	command: string,
+	cwd: string,
+): string[] {
+	const paths: string[] = [];
+	const pattern =
+		/(?:^|\s)(?:[12]>>|>>|&>|[12]?>)(?:\s*)("[^"]+"|'[^']+'|\S+)/g;
+	let match: RegExpExecArray | null;
+	while ((match = pattern.exec(command))) {
+		const raw = match[1];
+		const path = raw.replace(/^(['"])(.*)\1$/, '$2');
+		const absolute = resolve(cwd, path);
+		if (is_temp_path(absolute) && !existsSync(absolute)) {
+			paths.push(absolute);
+		}
+	}
+	return paths;
+}
+
+function extract_bash_create_paths(
+	command: string,
+	cwd: string,
+): string[] {
+	return [
+		...extract_simple_create_paths(command, cwd),
+		...extract_redirect_create_paths(command, cwd),
+	];
+}
+
+function command_may_create_temp_path(command: string): boolean {
+	return /^\s*mktemp\b/.test(command);
+}
+
+function text_content(event: ToolResultEvent): string {
+	return event.content
+		.map((part) => {
+			if ('text' in part && typeof part.text === 'string') {
+				return part.text;
+			}
+			return '';
+		})
+		.join('');
+}
+
+function extract_created_temp_paths_from_result(
+	event: ToolResultEvent,
+): string[] {
+	return text_content(event)
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line && is_temp_path(line) && existsSync(line))
+		.map((line) => resolve(line));
 }
 
 function describe_path_risk(cwd: string, paths: string[]): string {
@@ -463,6 +563,8 @@ function blocked_bash_result(action: DestructiveAction) {
 export default async function confirm_destructive(pi: ExtensionAPI) {
 	const allowed_for_session = new Set<string>();
 	const pending_created_files = new Map<string, string>();
+	const pending_bash_created_paths = new Map<string, string[]>();
+	const bash_may_create_temp_path = new Set<string>();
 	const session_created_files = new Set<string>();
 
 	function is_allowed(action: DestructiveAction): boolean {
@@ -499,6 +601,19 @@ export default async function confirm_destructive(pi: ExtensionAPI) {
 				}
 			}
 
+			if (event.toolName === 'bash') {
+				const command = event.input.command;
+				if (typeof command === 'string') {
+					const paths = extract_bash_create_paths(command, ctx.cwd);
+					if (paths.length > 0) {
+						pending_bash_created_paths.set(event.toolCallId, paths);
+					}
+					if (command_may_create_temp_path(command)) {
+						bash_may_create_temp_path.add(event.toolCallId);
+					}
+				}
+			}
+
 			const action = assess_tool_call(
 				event,
 				ctx.cwd,
@@ -519,10 +634,34 @@ export default async function confirm_destructive(pi: ExtensionAPI) {
 		'tool_result',
 		async (event: ToolResultEvent): Promise<void> => {
 			const absolute = pending_created_files.get(event.toolCallId);
-			if (!absolute) return;
-			pending_created_files.delete(event.toolCallId);
-			if (event.toolName === 'write' && !event.isError) {
-				session_created_files.add(absolute);
+			if (absolute) {
+				pending_created_files.delete(event.toolCallId);
+				if (event.toolName === 'write' && !event.isError) {
+					session_created_files.add(absolute);
+				}
+			}
+
+			const bash_paths = pending_bash_created_paths.get(
+				event.toolCallId,
+			);
+			if (bash_paths) {
+				pending_bash_created_paths.delete(event.toolCallId);
+				if (event.toolName === 'bash' && !event.isError) {
+					for (const path of bash_paths) {
+						if (existsSync(path)) session_created_files.add(path);
+					}
+				}
+			}
+
+			if (bash_may_create_temp_path.has(event.toolCallId)) {
+				bash_may_create_temp_path.delete(event.toolCallId);
+				if (event.toolName === 'bash' && !event.isError) {
+					for (const path of extract_created_temp_paths_from_result(
+						event,
+					)) {
+						session_created_files.add(path);
+					}
+				}
 			}
 		},
 	);
