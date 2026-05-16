@@ -1,4 +1,4 @@
-import { Text, type Focusable } from '@earendil-works/pi-tui';
+import type { Focusable } from '@earendil-works/pi-tui';
 import type { ModalBody, ModalTheme } from '@spences10/pi-tui-modal';
 import { CommitComposer } from './commit-composer.js';
 import {
@@ -19,7 +19,6 @@ import {
 	unstage_hunk,
 	type DiffHunk,
 	type DiffView,
-	type FileState,
 	type GitFile,
 	type GitStatus,
 	type RepoOverview,
@@ -27,28 +26,11 @@ import {
 import {
 	key_is_down,
 	key_is_up,
-	pad_ansi,
-	pad_plain,
-	state_counts,
-	state_icon,
 	state_label,
 	status_code,
-	truncate_plain,
 } from './render.js';
-
-function render_section(
-	items: string[],
-	empty_text: string,
-): string[] {
-	if (items.length === 0) return [`  ${empty_text}`];
-	return items.map((item) => `  ${item}`);
-}
-
-interface ActionItem {
-	action_label: string;
-	action_description: string;
-	run: () => void;
-}
+import { render_stage } from './stage-render.js';
+import type { ActionItem } from './stage-types.js';
 
 export class GitStageBody implements ModalBody, Focusable {
 	private selected = 0;
@@ -105,12 +87,24 @@ export class GitStageBody implements ModalBody, Focusable {
 
 	render(width: number): string[] {
 		if (this.composer) return this.composer.render(width);
-		if (this.actions) return this.render_action_menu(width);
-		if (this.repo_overview) return this.render_repo_overview(width);
-		const lines = this.render_header(width);
-		if (this.message) lines.push(...this.render_message(width));
-		if (this.status.files.length === 0) return lines;
-		return [...lines, ...this.render_workbench(width)];
+		return render_stage(
+			{
+				theme: this.theme,
+				status: this.status,
+				message: this.message,
+				busy: this.busy,
+				visible_files: this.visible_files(),
+				selected: this.selected,
+				diff: this.diff,
+				diff_for_path: this.diff_for_path,
+				diff_scroll: this.diff_scroll,
+				selected_hunk: this.selected_hunk,
+				actions: this.actions,
+				selected_action: this.selected_action,
+				repo_overview: this.repo_overview,
+			},
+			width,
+		);
 	}
 
 	handleInput(data: string): void {
@@ -174,207 +168,6 @@ export class GitStageBody implements ModalBody, Focusable {
 		this.composer?.invalidate();
 	}
 
-	private restore_selection(preferred_path?: string): void {
-		const files = this.visible_files();
-		const path = preferred_path ?? files[this.selected]?.path;
-		const index = path
-			? files.findIndex((file) => file.path === path)
-			: -1;
-		this.selected =
-			index >= 0
-				? index
-				: Math.min(this.selected, Math.max(0, files.length - 1));
-	}
-
-	private render_header(width: number): string[] {
-		const upstream = this.status.upstream
-			? ` • ${this.status.upstream} ↑${this.status.ahead} ↓${this.status.behind}`
-			: '';
-		const counts = state_counts(this.status.files);
-		const staged = staged_file_count(this.status.files);
-		const filter_status = this.filter_text
-			? ` • filter "${this.filter_text}" ${this.visible_files().length}/${this.status.files.length}`
-			: '';
-		const text = `branch ${this.status.branch}${upstream} • ${this.status.files.length} files • staged ${staged}${filter_status}${counts ? ` • ${counts}` : ''}`;
-		return new Text(this.theme.fg('muted', text), 0, 0).render(width);
-	}
-
-	private render_message(width: number): string[] {
-		const color = this.busy
-			? 'accent'
-			: this.message.includes('disabled') ||
-				  this.message.includes('conflict') ||
-				  this.message.includes('blocked')
-				? 'warning'
-				: 'dim';
-		return new Text(this.theme.fg(color, this.message), 0, 0).render(
-			width,
-		);
-	}
-
-	private render_repo_overview(width: number): string[] {
-		const overview = this.repo_overview;
-		if (!overview) return [];
-		const lines = [
-			this.theme.bold('Repository'),
-			this.theme.fg('dim', 'q/esc back'),
-			'',
-			this.theme.fg('accent', this.theme.bold('Branches')),
-			...render_section(overview.branches, 'No branches found'),
-			'',
-			this.theme.fg('accent', this.theme.bold('Recent commits')),
-			...render_section(overview.log, 'No commits found'),
-			'',
-			this.theme.fg('accent', this.theme.bold('Stashes')),
-			...render_section(overview.stashes, 'No stashes'),
-			'',
-			this.theme.fg('accent', this.theme.bold('Remotes')),
-			...render_section(overview.remotes, 'No remotes'),
-		];
-		return lines.flatMap((line) =>
-			new Text(truncate_plain(line, width), 0, 0).render(width),
-		);
-	}
-
-	private render_action_menu(width: number): string[] {
-		const file = this.selected_file();
-		const lines = [
-			this.theme.bold('Actions'),
-			this.theme.fg('muted', file?.path ?? 'No file selected'),
-			'',
-		];
-		for (
-			let index = 0;
-			index < (this.actions?.length ?? 0);
-			index++
-		) {
-			const action = this.actions![index]!;
-			const prefix = index === this.selected_action ? '› ' : '  ';
-			const line = `${prefix}${action.action_label.padEnd(18)} ${this.theme.fg('dim', action.action_description)}`;
-			lines.push(
-				index === this.selected_action
-					? this.theme.fg('accent', this.theme.bold(line))
-					: line,
-			);
-		}
-		lines.push(
-			'',
-			this.theme.fg('dim', '↑↓/jk move • enter run • esc cancel'),
-		);
-		return lines.flatMap((line) =>
-			new Text(line, 0, 0).render(width),
-		);
-	}
-
-	private render_workbench(width: number): string[] {
-		const gap = width >= 96 ? 3 : 1;
-		const list_width = Math.min(
-			42,
-			Math.max(28, Math.floor(width * 0.42)),
-		);
-		const diff_width = Math.max(20, width - list_width - gap);
-		const list = this.render_file_list(list_width);
-		const diff = this.render_diff(diff_width, list.length);
-		const height = Math.max(list.length, diff.length);
-		const lines: string[] = [];
-		for (let i = 0; i < height; i++) {
-			const left = pad_ansi(list[i] ?? '', list_width);
-			lines.push(`${left}${' '.repeat(gap)}${diff[i] ?? ''}`);
-		}
-		return lines;
-	}
-
-	private render_file_list(width: number): string[] {
-		const lines = [this.theme.bold('Files')];
-		let last_state: FileState | undefined;
-		const files = this.visible_files();
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i]!;
-			if (file.state !== last_state) {
-				lines.push(
-					this.theme.fg('dim', state_label(file.state).toUpperCase()),
-				);
-				last_state = file.state;
-			}
-			const selected = i === this.selected;
-			const prefix = selected ? '› ' : '  ';
-			const label_width = Math.max(8, width - 14);
-			const label = truncate_plain(file.path, label_width);
-			const meta = `${state_icon(file.state)} ${status_code(file)}`;
-			const line = `${prefix}${pad_plain(label, label_width)} ${meta}`;
-			lines.push(
-				selected
-					? this.theme.fg('accent', this.theme.bold(line))
-					: line,
-			);
-		}
-		return lines;
-	}
-
-	private render_diff(width: number, height: number): string[] {
-		const selected = this.selected_file();
-		const title = selected
-			? `Diff: ${truncate_plain(selected.path, Math.max(0, width - 6))}`
-			: 'Diff';
-		const lines = [this.theme.bold(title)];
-		if (selected?.state === 'conflicted') {
-			lines.push(
-				this.theme.fg(
-					'warning',
-					'Conflict: resolve markers in your editor, then stage the file.',
-				),
-				'',
-			);
-		}
-		if (!this.diff || this.diff.path !== this.diff_for_path) {
-			lines.push(this.theme.fg('dim', 'Loading diff…'));
-			return lines;
-		}
-
-		const visible = Math.max(1, height - 1);
-		const max_scroll = Math.max(0, this.diff.lines.length - visible);
-		this.diff_scroll = Math.min(this.diff_scroll, max_scroll);
-		const body = this.diff.lines.slice(
-			this.diff_scroll,
-			this.diff_scroll + visible,
-		);
-		for (let index = 0; index < body.length; index++) {
-			const line_index = this.diff_scroll + index;
-			const selected_hunk = this.selected_diff_hunk();
-			lines.push(
-				this.format_diff_line(
-					body[index]!,
-					width,
-					selected_hunk?.line_index === line_index,
-				),
-			);
-		}
-		if (max_scroll > 0) {
-			lines[0] = `${lines[0]} ${this.theme.fg('dim', `${this.diff_scroll + 1}-${Math.min(this.diff_scroll + visible, this.diff.lines.length)}/${this.diff.lines.length}`)}`;
-		}
-		return lines;
-	}
-
-	private format_diff_line(
-		raw: string,
-		width: number,
-		selected = false,
-	): string {
-		const marker = selected ? '› ' : '';
-		const text = truncate_plain(
-			`${marker}${raw.replace(/\t/g, '  ')}`,
-			width,
-		);
-		if (raw === 'STAGED' || raw === 'UNSTAGED')
-			return this.theme.fg('accent', this.theme.bold(text));
-		if (raw.startsWith('+++') || raw.startsWith('---'))
-			return this.theme.fg('muted', text);
-		if (raw.startsWith('@@')) return this.theme.fg('accent', text);
-		if (raw.startsWith('+')) return this.theme.fg('success', text);
-		if (raw.startsWith('-')) return this.theme.fg('warning', text);
-		return text;
-	}
-
 	private visible_files(): GitFile[] {
 		const query = this.filter_text.trim().toLowerCase();
 		if (!query) return this.status.files;
@@ -386,6 +179,18 @@ export class GitStageBody implements ModalBody, Focusable {
 
 	private selected_file(): GitFile | undefined {
 		return this.visible_files()[this.selected];
+	}
+
+	private restore_selection(preferred_path?: string): void {
+		const files = this.visible_files();
+		const path = preferred_path ?? files[this.selected]?.path;
+		const index = path
+			? files.findIndex((file) => file.path === path)
+			: -1;
+		this.selected =
+			index >= 0
+				? index
+				: Math.min(this.selected, Math.max(0, files.length - 1));
 	}
 
 	private move_selection(delta: number): void {
@@ -495,6 +300,15 @@ export class GitStageBody implements ModalBody, Focusable {
 		);
 	}
 
+	private async unstage_selected(): Promise<void> {
+		const file = this.selected_file();
+		if (!file) return;
+		await this.run(
+			() => unstage_file(this.cwd, file),
+			`Unstaged ${file.path}`,
+		);
+	}
+
 	private selected_diff_hunk(): DiffHunk | undefined {
 		return this.diff?.hunks[this.selected_hunk];
 	}
@@ -529,15 +343,6 @@ export class GitStageBody implements ModalBody, Focusable {
 			return;
 		}
 		await this.run(() => stage_all(this.cwd), 'Staged all changes');
-	}
-
-	private async unstage_selected(): Promise<void> {
-		const file = this.selected_file();
-		if (!file) return;
-		await this.run(
-			() => unstage_file(this.cwd, file),
-			`Unstaged ${file.path}`,
-		);
 	}
 
 	private open_action_menu(): void {
