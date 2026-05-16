@@ -9,6 +9,7 @@
 		"sqlite",
 		"telemetry"
 	],
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-telemetry#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {

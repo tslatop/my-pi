@@ -9,6 +9,7 @@
 		"recall",
 		"sessions"
 	],
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-recall#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {

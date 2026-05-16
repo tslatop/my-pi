@@ -9,6 +9,7 @@
 		"pi-package",
 		"team"
 	],
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-team-mode#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {

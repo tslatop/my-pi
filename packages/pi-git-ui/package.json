@@ -8,6 +8,7 @@
 		"pi-package",
 		"tui"
 	],
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-git-ui#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {

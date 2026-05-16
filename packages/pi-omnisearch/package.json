@@ -11,6 +11,7 @@
 		"search",
 		"web"
 	],
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-omnisearch#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {

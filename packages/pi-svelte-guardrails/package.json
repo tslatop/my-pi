@@ -9,6 +9,7 @@
 		"svelte",
 		"svelte5"
 	],
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-svelte-guardrails#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {
