@@ -330,88 +330,38 @@ describe('skills importing and syncing', () => {
 		).toThrow(/single safe path segment/i);
 	});
 
-	it('deletes a managed skill and removes profile rules', async () => {
-		const skill_dir = join(
-			home_dir,
-			'.pi',
-			'agent',
-			'skills',
-			'old-skill',
-		);
-		write_skill(skill_dir, 'old-skill', 'Old stale skill');
-
-		const { create_skills_manager } = await import('./manager.js');
-		const mgr = create_skills_manager();
-
-		mgr.enable('old-skill@pi-native');
-		expect(mgr.discover().map((skill) => skill.name)).toContain(
-			'old-skill',
-		);
-
-		const result = mgr.delete_skill('old-skill');
-
-		expect(result.skillDir).toBe(skill_dir);
-		expect(existsSync(skill_dir)).toBe(false);
-		expect(mgr.discover().map((skill) => skill.name)).not.toContain(
-			'old-skill',
-		);
-		expect(mgr.get_enabled_skill_paths()).not.toContain(
-			join(skill_dir, 'SKILL.md'),
-		);
-	});
-
-	it('manager separates managed and importable skills and enables imported skills', async () => {
-		write_skill(
-			join(home_dir, '.claude', 'skills', 'github-prs'),
-			'github-prs',
-			'Local managed GitHub PR skill',
-		);
-
+	it('deletes an imported managed copy from disk', async () => {
 		const install_path = join(
 			home_dir,
 			'plugin-cache',
-			'frontend-design',
-			'3.0.0',
+			'old-skill',
+			'1.0.0',
 		);
 		write_skill(
-			join(install_path, 'skills', 'frontend-design'),
-			'frontend-design',
-			'Plugin frontend design skill',
+			join(install_path, 'skills', 'old-skill'),
+			'old-skill',
+			'Old imported skill',
 		);
 		write_plugin_registry(home_dir, {
-			'frontend-design@claude-plugins-official': {
+			'old-skill@vendor': {
 				installPath: install_path,
-				version: '3.0.0',
+				version: '1.0.0',
 			},
 		});
 
-		const { create_skills_manager } = await import('./manager.js');
-		const mgr = create_skills_manager();
+		const scanner = await import('./scanner.js');
+		const importer = await import('./importer.js');
+		const external = scanner
+			.scan_importable_skills()
+			.find((skill) => skill.name === 'old-skill');
+		const imported = importer.import_external_skill(external!);
+		const managed = scanner
+			.scan_managed_skills()
+			.find((skill) => skill.name === 'old-skill');
 
-		expect(mgr.discover().map((skill) => skill.name)).toEqual([
-			'github-prs',
-		]);
-		expect(
-			mgr.discover_importable().map((skill) => skill.name),
-		).toEqual(['frontend-design']);
+		const result = importer.delete_managed_skill(managed!);
 
-		const imported = mgr.import_skill('frontend-design');
-		expect(imported.key).toBe('frontend-design@pi-native');
-
-		const managed_names = mgr
-			.discover()
-			.map((skill) => skill.name)
-			.sort();
-		expect(managed_names).toEqual(['frontend-design', 'github-prs']);
-		expect(
-			mgr.discover().find((skill) => skill.name === 'frontend-design')
-				?.enabled,
-		).toBe(true);
-		expect(
-			mgr.is_enabled_by_skill(
-				'frontend-design',
-				join(imported.skillDir, 'SKILL.md'),
-			),
-		).toBe(true);
+		expect(result.skillDir).toBe(imported.skillDir);
+		expect(existsSync(imported.skillDir)).toBe(false);
 	});
 });

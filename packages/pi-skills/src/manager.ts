@@ -14,13 +14,13 @@ import {
 	type DeleteSkillResult,
 	type ImportSkillResult,
 	type SyncSkillResult,
-	delete_managed_skill,
+	delete_imported_skill,
 	import_external_skill,
+	scan_importable_skills,
 	sync_imported_skill,
-} from './importer.js';
+} from '@spences10/pi-skill-importer';
 import {
 	type DiscoveredSkill,
-	scan_importable_skills,
 	scan_managed_skills,
 	scan_project_skills,
 } from './scanner.js';
@@ -504,7 +504,7 @@ export function create_skills_manager(
 				key_or_name,
 			);
 			const key = resolve_skill_key(skill);
-			const result = delete_managed_skill(skill);
+			const result = delete_imported_skill(skill);
 			for (const profile of Object.values(config.profiles)) {
 				profile.include = remove_value(profile.include, key);
 				profile.exclude = remove_value(profile.exclude, key);

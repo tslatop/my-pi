@@ -1,20 +1,21 @@
 {
-	"name": "@spences10/pi-skills",
-	"version": "0.0.20",
-	"description": "Pi extension for managing and importing Agent Skills from Pi, Claude, and plugin sources",
+	"name": "@spences10/pi-skill-importer",
+	"version": "0.0.1",
+	"description": "Pi extension helpers for importing external Agent Skills into Pi-native storage",
 	"keywords": [
 		"agent-skills",
+		"importer",
 		"pi",
 		"pi-package",
 		"skills"
 	],
-	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-skills#readme",
+	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-skill-importer#readme",
 	"license": "MIT",
 	"author": "Scott Spence <me@scottspence.com>",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/spences10/my-pi.git",
-		"directory": "packages/pi-skills"
+		"directory": "packages/pi-skill-importer"
 	},
 	"files": [
 		"dist",
@@ -42,26 +43,15 @@
 		"coverage:self": "vitest run --coverage",
 		"coverage": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run coverage:self"
 	},
-	"dependencies": {
-		"@spences10/pi-skill-importer": "workspace:*",
-		"@spences10/pi-tui-modal": "workspace:*"
-	},
 	"devDependencies": {
 		"@types/node": "^25.8.0",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.6"
 	},
 	"peerDependencies": {
-		"@earendil-works/pi-coding-agent": "*",
-		"@earendil-works/pi-tui": "*"
+		"@earendil-works/pi-coding-agent": "*"
 	},
 	"engines": {
 		"node": ">=24.15.0"
-	},
-	"pi": {
-		"extensions": [
-			"./dist/index.js"
-		],
-		"image": "https://raw.githubusercontent.com/spences10/my-pi/main/assets/pi-package-preview.png"
 	}
 }

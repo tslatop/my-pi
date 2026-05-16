@@ -4,8 +4,8 @@
 [![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
 [![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
 
-Pi extension for managing and importing Agent Skills from Pi, Claude,
-and plugin sources.
+Pi extension for managing, discovering, and installing Agent Skills
+for Pi.
 
 Maintained in the `my-pi` Vite+ workspace and tested with Vitest.
 
@@ -27,19 +27,19 @@ pi -e ./packages/pi-skills
 ## What it does
 
 Pi already has native skill discovery. This package adds a management
-layer for mixed skill ecosystems:
+layer for Pi skill ecosystems:
 
 - discovers Pi-native skills in `$PI_CODING_AGENT_DIR/skills`
   (default: `~/.pi/agent/skills`)
-- discovers user-local Claude skills in `~/.claude/skills`
 - discovers project skills in `.agents/*/SKILL.md`,
   `.agents/skills/*/SKILL.md`, and `.pi/skills/*/SKILL.md`
-- discovers skills bundled inside installed Claude plugins
-- imports plugin skills into Pi-native skill storage
+- searches public GitHub `SKILL.md` files through `gh skill search`
+- previews GitHub-hosted skills through `gh skill preview`
 - installs GitHub-hosted skills through `gh skill` when GitHub CLI
   support is available
-- syncs imported skills when upstream plugin content changes
 - checks or applies GitHub skill updates through `gh skill update`
+- integrates with `@spences10/pi-skill-importer` for external Agent
+  Skills-compatible sources such as Claude Code/plugin skills
 - provides a `/skills` command and interactive picker
 
 Imported skills are copied into:
@@ -48,12 +48,14 @@ Imported skills are copied into:
 $PI_CODING_AGENT_DIR/skills/<skill-name>
 ```
 
-The `~/.claude` locations are intentional upstream discovery sources,
-not Pi-managed state. Use `--no-skills` or `--untrusted` when sandbox
-runs must not read user-local Claude skills/plugins.
+External source import/sync behavior lives in
+`@spences10/pi-skill-importer`. The `~/.claude` locations are treated
+as upstream discovery sources, not Pi-managed state. Use `--no-skills`
+or `--untrusted` when sandbox runs must not read user-local Claude
+skills/plugins.
 
-Import metadata is stored beside each imported skill so sync can
-detect local edits and upstream changes.
+Import metadata is stored beside each imported copy so sync can detect
+local edits and upstream changes.
 
 ## Commands
 
@@ -61,6 +63,7 @@ detect local edits and upstream changes.
 /skills
 /skills enable <key|name|pattern>
 /skills disable <key|name|pattern>
+/skills search <query>
 /skills add <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
 /skills import <key-or-name>
 /skills import <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
@@ -83,9 +86,9 @@ With a UI available, `/skills` opens a modal home menu for managing,
 adding GitHub skills, batch-importing plugin skills, updating GitHub
 skills, refreshing discovery, profile switching, and profile baseline
 selection. The Add GitHub skill flow can install one skill or every
-`SKILL.md` found in a repository. The no-arg `add`, `import`, `sync`,
-and `defaults` subcommands use modal pickers/forms in interactive
-mode. In headless mode, use the subcommands directly.
+`SKILL.md` found in a repository. The no-arg `search`, `add`,
+`import`, `sync`, and `defaults` subcommands use modal pickers/forms
+in interactive mode. In headless mode, use the subcommands directly.
 
 ## Skill enablement
 
