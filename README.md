@@ -400,10 +400,10 @@ pnpx my-pi@latest -e ./ext/damage-control.ts -e ./ext/tool-counter.ts
 pnpx my-pi@latest --no-builtin -e ./ext/custom.ts "do something"
 ```
 
-Stack arbitrary Pi extensions via repeated `-e` / `--extension`
-flags. This is the part originally inspired by `pi-vs-claude-code`'s
-simple `pi -e one.ts -e two.ts` recipes. Use `--no-builtin` to skip
-my-pi's managed built-in extensions and run only Pi defaults plus the
+Stack arbitrary Pi extensions via repeated `-e` / `--extension` flags.
+This is the part originally inspired by `pi-vs-claude-code`'s simple
+`pi -e one.ts -e two.ts` recipes. Use `--no-builtin` to skip my-pi's
+managed built-in extensions and run only Pi defaults plus the
 extensions you pass explicitly.
 
 Built-in extension choices can also be saved interactively with
