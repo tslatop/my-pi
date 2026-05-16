@@ -1,5 +1,13 @@
 # my-pi
 
+## 0.1.47
+
+### Patch Changes
+
+- Updated dependencies [bea8707]
+- Updated dependencies [3e91b90]
+  - @spences10/pi-themes@0.0.5
+
 ## 0.1.46
 
 ## 0.1.45

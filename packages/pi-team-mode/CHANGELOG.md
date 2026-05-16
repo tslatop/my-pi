@@ -1,5 +1,17 @@
 # @spences10/pi-team-mode
 
+## 0.0.21
+
+### Patch Changes
+
+- bea8707: Add package-specific homepage links so Pi gallery pages
+  point to each package README.
+- 3e91b90: Add shared package gallery preview image to all Pi package
+  manifests.
+- Updated dependencies [bea8707]
+- Updated dependencies [3e91b90]
+  - @spences10/pi-redact@0.0.8
+
 ## 0.0.20
 
 ### Patch Changes

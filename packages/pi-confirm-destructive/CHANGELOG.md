@@ -1,5 +1,14 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.10
+
+### Patch Changes
+
+- bea8707: Add package-specific homepage links so Pi gallery pages
+  point to each package README.
+- 3e91b90: Add shared package gallery preview image to all Pi package
+  manifests.
+
 ## 0.0.9
 
 ### Patch Changes
