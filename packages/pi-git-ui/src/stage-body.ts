@@ -51,6 +51,7 @@ export class GitStageBody implements ModalBody, Focusable {
 	private selected_action = 0;
 	private repo_overview?: RepoOverview;
 	private composer?: CommitComposer;
+	private diff_request_id = 0;
 	private _focused = false;
 
 	constructor(
@@ -310,21 +311,26 @@ export class GitStageBody implements ModalBody, Focusable {
 	}
 
 	private async load_diff(): Promise<void> {
+		const request_id = ++this.diff_request_id;
 		const file = this.selected_file();
 		if (!file) {
 			this.diff = undefined;
+			this.diff_for_path = '';
 			return;
 		}
 		const path = file.path;
 		this.diff_for_path = path;
 		try {
-			this.diff = await read_diff(this.cwd, file);
+			const diff = await read_diff(this.cwd, file);
+			if (request_id !== this.diff_request_id) return;
+			this.diff = diff;
 			this.selected_hunk = Math.min(
 				this.selected_hunk,
 				Math.max(0, this.diff.hunks.length - 1),
 			);
 			this.selected_line_index ??= this.stageable_line_indexes()[0];
 		} catch (error) {
+			if (request_id !== this.diff_request_id) return;
 			this.diff = {
 				path,
 				lines: [format_git_error(error)],
