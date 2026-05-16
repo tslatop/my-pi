@@ -6,7 +6,6 @@
 		"agent-skills",
 		"importer",
 		"pi",
-		"pi-package",
 		"skills"
 	],
 	"homepage": "https://github.com/spences10/my-pi/tree/main/packages/pi-skill-importer#readme",
