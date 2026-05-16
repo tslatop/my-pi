@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { should_inject_nopeek_prompt } from './index.js';
+import { describe, expect, it, vi } from 'vitest';
+import nopeek, { should_inject_nopeek_prompt } from './index.js';
 
 describe('should_inject_nopeek_prompt', () => {
 	it('injects when selected tools are unavailable', () => {
@@ -22,5 +22,24 @@ describe('should_inject_nopeek_prompt', () => {
 				systemPromptOptions: { selectedTools: ['read', 'write'] },
 			} as any),
 		).toBe(false);
+	});
+
+	it('registers a before_agent_start hook that appends guidance', async () => {
+		const on = vi.fn();
+		await nopeek({ on } as any);
+		const handler = on.mock.calls[0]?.[1];
+		await expect(
+			handler({ systemPrompt: 'base', systemPromptOptions: {} }),
+		).resolves.toEqual({
+			systemPrompt: expect.stringContaining(
+				'Secret-safe environment loading via nopeek',
+			),
+		});
+		await expect(
+			handler({
+				systemPrompt: 'base',
+				systemPromptOptions: { selectedTools: ['read'] },
+			}),
+		).resolves.toEqual({});
 	});
 });

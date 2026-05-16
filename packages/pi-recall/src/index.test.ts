@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { should_inject_recall_prompt } from './index.js';
+import { describe, expect, it, vi } from 'vitest';
+import recall, { should_inject_recall_prompt } from './index.js';
 
 describe('should_inject_recall_prompt', () => {
 	it('injects when selected tools are unavailable', () => {
@@ -22,5 +22,40 @@ describe('should_inject_recall_prompt', () => {
 				systemPromptOptions: { selectedTools: ['read', 'write'] },
 			} as any),
 		).toBe(false);
+	});
+
+	it('registers lifecycle and prompt hooks', async () => {
+		const handlers = new Map<string, Function>();
+		const on = vi.fn((name: string, handler: Function) => {
+			handlers.set(name, handler);
+		});
+		await recall({ on } as any);
+		expect(on).toHaveBeenCalledWith(
+			'session_start',
+			expect.any(Function),
+		);
+		expect(on).toHaveBeenCalledWith(
+			'session_shutdown',
+			expect.any(Function),
+		);
+		expect(on).toHaveBeenCalledWith(
+			'before_agent_start',
+			expect.any(Function),
+		);
+
+		await expect(
+			handlers.get('session_start')?.(),
+		).resolves.toBeUndefined();
+		await expect(
+			handlers.get('session_shutdown')?.(),
+		).resolves.toBeUndefined();
+		await expect(
+			handlers.get('before_agent_start')?.({
+				systemPrompt: 'base',
+				systemPromptOptions: {},
+			}),
+		).resolves.toEqual({
+			systemPrompt: expect.stringContaining('Session Recall'),
+		});
 	});
 });
