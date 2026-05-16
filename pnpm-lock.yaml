@@ -110,7 +110,7 @@ importers:
   packages/pi-coding-preferences:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -126,7 +126,7 @@ importers:
   packages/pi-confirm-destructive:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -142,7 +142,7 @@ importers:
   packages/pi-context:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@spences10/pi-redact':
         specifier: workspace:*
@@ -151,7 +151,7 @@ importers:
         specifier: workspace:*
         version: link:../pi-tui-modal
       typebox:
-        specifier: ^1.1.38
+        specifier: '*'
         version: 1.1.38
     devDependencies:
       '@types/node':
@@ -167,10 +167,10 @@ importers:
   packages/pi-git-ui:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0
       '@spences10/pi-tui-modal':
         specifier: workspace:*
@@ -186,7 +186,7 @@ importers:
   packages/pi-lsp:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@spences10/pi-child-env':
         specifier: workspace:*
@@ -198,7 +198,7 @@ importers:
         specifier: workspace:*
         version: link:../pi-tui-modal
       typebox:
-        specifier: ^1.1.38
+        specifier: '*'
         version: 1.1.38
     devDependencies:
       '@types/node':
@@ -214,7 +214,7 @@ importers:
   packages/pi-mcp:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@spences10/pi-child-env':
         specifier: workspace:*
@@ -242,7 +242,7 @@ importers:
   packages/pi-nopeek:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -258,7 +258,7 @@ importers:
   packages/pi-omnisearch:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -286,7 +286,7 @@ importers:
   packages/pi-recall:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -302,10 +302,10 @@ importers:
   packages/pi-redact:
     dependencies:
       '@earendil-works/pi-ai':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -321,10 +321,10 @@ importers:
   packages/pi-skills:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0
       '@spences10/pi-tui-modal':
         specifier: workspace:*
@@ -343,7 +343,7 @@ importers:
   packages/pi-sqlite-tools:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -359,7 +359,7 @@ importers:
   packages/pi-svelte-guardrails:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
     devDependencies:
       '@types/node':
@@ -375,11 +375,14 @@ importers:
   packages/pi-team-mode:
     dependencies:
       '@earendil-works/pi-ai':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
+      '@earendil-works/pi-tui':
+        specifier: '*'
+        version: 0.74.0
       '@spences10/pi-child-env':
         specifier: workspace:*
         version: link:../pi-child-env
@@ -390,7 +393,7 @@ importers:
         specifier: workspace:*
         version: link:../pi-tui-modal
       typebox:
-        specifier: ^1.1.38
+        specifier: '*'
         version: 1.1.38
     devDependencies:
       '@types/node':
@@ -406,7 +409,7 @@ importers:
   packages/pi-telemetry:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@spences10/pi-tui-modal':
         specifier: workspace:*
@@ -427,10 +430,10 @@ importers:
   packages/pi-tui-modal:
     dependencies:
       '@earendil-works/pi-coding-agent':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
-        specifier: ^0.74.0
+        specifier: '*'
         version: 0.74.0
     devDependencies:
       '@types/node':

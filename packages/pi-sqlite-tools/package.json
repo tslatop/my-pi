@@ -36,13 +36,13 @@
 		"test": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run test:self",
 		"test:self": "vitest run"
 	},
-	"dependencies": {
-		"@earendil-works/pi-coding-agent": "^0.74.0"
-	},
 	"devDependencies": {
 		"@types/node": "^25.8.0",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.6"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": "*"
 	},
 	"engines": {
 		"node": ">=24.15.0"
