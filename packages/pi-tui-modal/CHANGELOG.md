@@ -1,5 +1,14 @@
 # @spences10/pi-tui-modal
 
+## 0.0.14
+
+### Patch Changes
+
+- 2305de8: Improve targeted test coverage for modal, Git UI, skills,
+  recall, and nopeek behavior flows
+- e58b031: Add missing per-file smoke tests across packages and enable
+  full test runs for weakly covered modules
+
 ## 0.0.13
 
 ### Patch Changes

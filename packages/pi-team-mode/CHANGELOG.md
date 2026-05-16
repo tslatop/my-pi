@@ -1,5 +1,19 @@
 # @spences10/pi-team-mode
 
+## 0.0.22
+
+### Patch Changes
+
+- cd89be0: Add bulk team shutdown commands and warnings for completed
+  teams with lingering teammate processes.
+- e58b031: Add missing per-file smoke tests across packages and enable
+  full test runs for weakly covered modules
+- f32f879: Refactor team command handler into semantic command modules
+  with focused tests for new files.
+- Updated dependencies [2305de8]
+- Updated dependencies [e58b031]
+  - @spences10/pi-tui-modal@0.0.14
+
 ## 0.0.21
 
 ### Patch Changes

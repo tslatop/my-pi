@@ -1,5 +1,12 @@
 # @spences10/pi-svelte-guardrails
 
+## 0.0.6
+
+### Patch Changes
+
+- e58b031: Add missing per-file smoke tests across packages and enable
+  full test runs for weakly covered modules
+
 ## 0.0.5
 
 ### Patch Changes

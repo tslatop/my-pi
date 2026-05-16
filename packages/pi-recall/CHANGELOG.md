@@ -1,5 +1,12 @@
 # @spences10/pi-recall
 
+## 0.0.9
+
+### Patch Changes
+
+- 2305de8: Improve targeted test coverage for modal, Git UI, skills,
+  recall, and nopeek behavior flows
+
 ## 0.0.8
 
 ### Patch Changes

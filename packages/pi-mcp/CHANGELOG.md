@@ -1,5 +1,18 @@
 # @spences10/pi-mcp
 
+## 0.0.26
+
+### Patch Changes
+
+- e58b031: Add missing per-file smoke tests across packages and enable
+  full test runs for weakly covered modules
+- 8aa7681: Refactor MCP, prompt presets, and skills modules into
+  semantic files with focused tests.
+- Updated dependencies [2305de8]
+- Updated dependencies [e58b031]
+  - @spences10/pi-tui-modal@0.0.14
+  - @spences10/pi-context@0.0.16
+
 ## 0.0.25
 
 ### Patch Changes

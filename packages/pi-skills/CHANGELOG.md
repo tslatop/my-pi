@@ -1,5 +1,19 @@
 # @spences10/pi-skills
 
+## 0.0.20
+
+### Patch Changes
+
+- 2305de8: Improve targeted test coverage for modal, Git UI, skills,
+  recall, and nopeek behavior flows
+- e58b031: Add missing per-file smoke tests across packages and enable
+  full test runs for weakly covered modules
+- 8aa7681: Refactor MCP, prompt presets, and skills modules into
+  semantic files with focused tests.
+- Updated dependencies [2305de8]
+- Updated dependencies [e58b031]
+  - @spences10/pi-tui-modal@0.0.14
+
 ## 0.0.19
 
 ### Patch Changes

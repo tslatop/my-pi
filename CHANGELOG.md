@@ -1,5 +1,17 @@
 # my-pi
 
+## 0.1.48
+
+### Patch Changes
+
+- 3f1eff0: Refactor hooks resolution into semantic modules for config
+  parsing, payloads, execution, trust, and types.
+- 8aa7681: Refactor MCP, prompt presets, and skills modules into
+  semantic files with focused tests.
+- Updated dependencies [2305de8]
+- Updated dependencies [e58b031]
+  - @spences10/pi-tui-modal@0.0.14
+
 ## 0.1.47
 
 ### Patch Changes

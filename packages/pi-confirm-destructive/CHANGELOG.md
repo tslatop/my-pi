@@ -1,5 +1,12 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.11
+
+### Patch Changes
+
+- 0a41f55: Track agent-created temp files and avoid confirmation
+  prompts when safely deleting session-owned temporary artifacts.
+
 ## 0.0.10
 
 ### Patch Changes

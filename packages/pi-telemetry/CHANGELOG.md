@@ -1,5 +1,15 @@
 # @spences10/pi-telemetry
 
+## 0.0.15
+
+### Patch Changes
+
+- c28975d: Refactor telemetry extension into semantic modules for
+  context helpers, UI, types, and store loading.
+- Updated dependencies [2305de8]
+- Updated dependencies [e58b031]
+  - @spences10/pi-tui-modal@0.0.14
+
 ## 0.0.14
 
 ### Patch Changes
