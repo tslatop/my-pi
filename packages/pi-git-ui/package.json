@@ -34,7 +34,7 @@
 		"check": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run check:self",
 		"check:self": "tsc --noEmit",
 		"test": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run test:self",
-		"test:self": "node -e \"process.exit(0)\""
+		"test:self": "vitest run src/git.test.ts"
 	},
 	"dependencies": {
 		"@spences10/pi-tui-modal": "workspace:*"

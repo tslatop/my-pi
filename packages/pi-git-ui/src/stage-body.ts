@@ -10,10 +10,13 @@ import {
 	read_status,
 	stage_all,
 	stage_file,
+	stage_hunk,
 	staged_file_count,
 	toggle_file,
 	unstage_all,
 	unstage_file,
+	unstage_hunk,
+	type DiffHunk,
 	type DiffView,
 	type FileState,
 	type GitFile,
@@ -34,6 +37,7 @@ import {
 export class GitStageBody implements ModalBody, Focusable {
 	private selected = 0;
 	private diff_scroll = 0;
+	private selected_hunk = 0;
 	private status: GitStatus = EMPTY_STATUS;
 	private diff?: DiffView;
 	private diff_for_path = '';
@@ -104,6 +108,10 @@ export class GitStageBody implements ModalBody, Focusable {
 		else if (data === ' ') void this.toggle_selected();
 		else if (data === 's') void this.stage_selected();
 		else if (data === 'x') void this.unstage_selected();
+		else if (data === 'S') void this.stage_selected_hunk();
+		else if (data === 'X') void this.unstage_selected_hunk();
+		else if (data === 'n') this.move_hunk(1);
+		else if (data === 'p') this.move_hunk(-1);
 		else if (data === 'a') void this.stage_all_safely();
 		else if (data === 'A')
 			void this.run(
@@ -224,16 +232,33 @@ export class GitStageBody implements ModalBody, Focusable {
 			this.diff_scroll,
 			this.diff_scroll + visible,
 		);
-		for (const raw of body)
-			lines.push(this.format_diff_line(raw, width));
+		for (let index = 0; index < body.length; index++) {
+			const line_index = this.diff_scroll + index;
+			const selected_hunk = this.selected_diff_hunk();
+			lines.push(
+				this.format_diff_line(
+					body[index]!,
+					width,
+					selected_hunk?.line_index === line_index,
+				),
+			);
+		}
 		if (max_scroll > 0) {
 			lines[0] = `${lines[0]} ${this.theme.fg('dim', `${this.diff_scroll + 1}-${Math.min(this.diff_scroll + visible, this.diff.lines.length)}/${this.diff.lines.length}`)}`;
 		}
 		return lines;
 	}
 
-	private format_diff_line(raw: string, width: number): string {
-		const text = truncate_plain(raw.replace(/\t/g, '  '), width);
+	private format_diff_line(
+		raw: string,
+		width: number,
+		selected = false,
+	): string {
+		const marker = selected ? '› ' : '';
+		const text = truncate_plain(
+			`${marker}${raw.replace(/\t/g, '  ')}`,
+			width,
+		);
 		if (raw === 'STAGED' || raw === 'UNSTAGED')
 			return this.theme.fg('accent', this.theme.bold(text));
 		if (raw.startsWith('+++') || raw.startsWith('---'))
@@ -256,11 +281,28 @@ export class GitStageBody implements ModalBody, Focusable {
 		if (next === this.selected) return;
 		this.selected = next;
 		this.diff_scroll = 0;
+		this.selected_hunk = 0;
 		void this.load_diff();
 	}
 
 	private scroll_diff(delta: number): void {
 		this.diff_scroll = Math.max(0, this.diff_scroll + delta);
+	}
+
+	private move_hunk(delta: number): void {
+		if (!this.diff || this.diff.hunks.length === 0) {
+			this.message = 'No hunks in selected diff.';
+			return;
+		}
+		this.selected_hunk = Math.max(
+			0,
+			Math.min(
+				this.diff.hunks.length - 1,
+				this.selected_hunk + delta,
+			),
+		);
+		const hunk = this.selected_diff_hunk();
+		if (hunk) this.diff_scroll = hunk.line_index;
 	}
 
 	private async load_diff(): Promise<void> {
@@ -273,8 +315,16 @@ export class GitStageBody implements ModalBody, Focusable {
 		this.diff_for_path = path;
 		try {
 			this.diff = await read_diff(this.cwd, file);
+			this.selected_hunk = Math.min(
+				this.selected_hunk,
+				Math.max(0, this.diff.hunks.length - 1),
+			);
 		} catch (error) {
-			this.diff = { path, lines: [format_git_error(error)] };
+			this.diff = {
+				path,
+				lines: [format_git_error(error)],
+				hunks: [],
+			};
 		}
 		this.request_render();
 	}
@@ -295,6 +345,31 @@ export class GitStageBody implements ModalBody, Focusable {
 		await this.run(
 			() => stage_file(this.cwd, file),
 			`Staged ${file.path}`,
+		);
+	}
+
+	private selected_diff_hunk(): DiffHunk | undefined {
+		return this.diff?.hunks[this.selected_hunk];
+	}
+
+	private async stage_selected_hunk(): Promise<void> {
+		const hunk = this.selected_diff_hunk();
+		if (!hunk) {
+			this.message = 'No hunk selected.';
+			return;
+		}
+		await this.run(() => stage_hunk(this.cwd, hunk), 'Staged hunk');
+	}
+
+	private async unstage_selected_hunk(): Promise<void> {
+		const hunk = this.selected_diff_hunk();
+		if (!hunk) {
+			this.message = 'No hunk selected.';
+			return;
+		}
+		await this.run(
+			() => unstage_hunk(this.cwd, hunk),
+			'Unstaged hunk',
 		);
 	}
 

@@ -18,10 +18,13 @@ Controls:
 
 - `↑`/`↓` or `j`/`k` — move file selection
 - `←`/`→` or `h`/`l` — scroll the diff preview
+- `n`/`p` — move between diff hunks
 - `space` — safely stage/unstage selected file; disabled for
   partial/conflicted files
 - `s` — stage selected file explicitly
 - `x` — unstage selected file explicitly
+- `S` — stage selected hunk
+- `X` — unstage selected hunk
 - `c` — commit staged changes with a Conventional Commit helper or raw
   message
 - `a` — safely stage all; blocked if partial/conflicted files exist

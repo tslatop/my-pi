@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const exec_file = promisify(execFile);
@@ -25,9 +25,19 @@ export interface GitStatus {
 	files: GitFile[];
 }
 
+export type DiffSection = 'staged' | 'unstaged';
+
+export interface DiffHunk {
+	section: DiffSection;
+	line_index: number;
+	header: string;
+	patch: string;
+}
+
 export interface DiffView {
 	path: string;
 	lines: string[];
+	hunks: DiffHunk[];
 }
 
 export const EMPTY_STATUS: GitStatus = {
@@ -44,6 +54,33 @@ async function git(args: string[], cwd: string): Promise<string> {
 		maxBuffer: 1024 * 1024 * 8,
 	});
 	return stdout;
+}
+
+async function git_with_input(
+	args: string[],
+	cwd: string,
+	input: string,
+): Promise<string> {
+	return await new Promise((resolve, reject) => {
+		const child = spawn('git', args, { cwd, stdio: 'pipe' });
+		let stdout = '';
+		let stderr = '';
+		child.stdout.setEncoding('utf8');
+		child.stderr.setEncoding('utf8');
+		child.stdout.on('data', (chunk) => {
+			stdout += chunk;
+		});
+		child.stderr.on('data', (chunk) => {
+			stderr += chunk;
+		});
+		child.on('error', reject);
+		child.on('close', (code) => {
+			if (code === 0) resolve(stdout);
+			else
+				reject(new Error(stderr || `git exited with status ${code}`));
+		});
+		child.stdin.end(input);
+	});
 }
 
 export async function read_status(cwd: string): Promise<GitStatus> {
@@ -213,10 +250,12 @@ export async function read_diff(
 				'Press space or s to stage it.',
 				'No diff is available until Git starts tracking the path.',
 			],
+			hunks: [],
 		};
 	}
 
-	const sections: string[] = [];
+	const lines: string[] = [];
+	const hunks: DiffHunk[] = [];
 	const staged = await git(
 		['diff', '--cached', '--', path],
 		cwd,
@@ -225,15 +264,96 @@ export async function read_diff(
 		(error) => format_git_error(error),
 	);
 
-	if (staged.trim())
-		sections.push('STAGED', '', ...staged.split('\n'));
-	if (staged.trim() && unstaged.trim()) sections.push('', '');
-	if (unstaged.trim())
-		sections.push('UNSTAGED', '', ...unstaged.split('\n'));
-	if (sections.length === 0)
-		sections.push('No textual diff for this file.');
+	append_diff_section(lines, hunks, 'staged', staged);
+	if (staged.trim() && unstaged.trim()) lines.push('', '');
+	append_diff_section(lines, hunks, 'unstaged', unstaged);
+	if (lines.length === 0)
+		lines.push('No textual diff for this file.');
 
-	return { path: file.path, lines: sections };
+	return { path: file.path, lines, hunks };
+}
+
+function append_diff_section(
+	lines: string[],
+	hunks: DiffHunk[],
+	section: DiffSection,
+	raw: string,
+): void {
+	if (!raw.trim()) return;
+	lines.push(section.toUpperCase(), '');
+	const offset = lines.length;
+	const parsed = parse_diff_hunks(raw, section);
+	for (const hunk of parsed) {
+		hunks.push({ ...hunk, line_index: offset + hunk.line_index });
+	}
+	lines.push(...raw.split('\n'));
+}
+
+export function parse_diff_hunks(
+	raw: string,
+	section: DiffSection,
+): DiffHunk[] {
+	const lines = raw.split('\n');
+	const hunks: DiffHunk[] = [];
+	let file_header: string[] = [];
+	let current_hunk: { start: number; lines: string[] } | undefined;
+
+	const flush_hunk = (): void => {
+		if (!current_hunk) return;
+		hunks.push({
+			section,
+			line_index: current_hunk.start,
+			header: current_hunk.lines[0] ?? '@@',
+			patch: [...file_header, ...current_hunk.lines].join('\n'),
+		});
+		current_hunk = undefined;
+	};
+
+	for (let index = 0; index < lines.length; index++) {
+		const line = lines[index]!;
+		if (line.startsWith('diff --git ')) {
+			flush_hunk();
+			file_header = [line];
+			continue;
+		}
+		if (line.startsWith('@@')) {
+			flush_hunk();
+			current_hunk = { start: index, lines: [line] };
+			continue;
+		}
+		if (current_hunk) current_hunk.lines.push(line);
+		else if (file_header.length > 0) file_header.push(line);
+	}
+	flush_hunk();
+	return hunks;
+}
+
+export async function stage_hunk(
+	cwd: string,
+	hunk: DiffHunk,
+): Promise<void> {
+	if (hunk.section !== 'unstaged') {
+		throw new Error('Selected hunk is already staged.');
+	}
+	await git_with_input(
+		['apply', '--cached', '--whitespace=nowarn', '-'],
+		cwd,
+		`${hunk.patch}\n`,
+	);
+}
+
+export async function unstage_hunk(
+	cwd: string,
+	hunk: DiffHunk,
+): Promise<void> {
+	if (hunk.section !== 'staged') {
+		throw new Error('Selected hunk is not staged.');
+	}
+	await git_with_input(
+		['apply', '--cached', '--reverse', '--whitespace=nowarn', '-'],
+		cwd,
+		`${hunk.patch}\n`,
+	);
 }
 
 export function format_git_error(error: unknown): string {
