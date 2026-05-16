@@ -68,6 +68,21 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 		load: async () => (await import('@spences10/pi-skills')).default,
 	},
 	{
+		key: 'skill-importer',
+		label: 'Skill importer',
+		docs_label: 'Skill importer',
+		description:
+			'Import external Claude/plugin skills into Pi-native storage',
+		default_enabled: true,
+		option_name: 'skill_importer',
+		cli_arg: 'no-skill-importer',
+		cli_flag: '--no-skill-importer',
+		cli_description: 'Disable external skill importer extension',
+		aliases: ['skill-importer', 'import-skills', 'skill-import'],
+		load: async () =>
+			(await import('@spences10/pi-skill-importer')).default,
+	},
+	{
 		key: 'filter-output',
 		label: 'Secret redaction',
 		docs_label: 'Secret redaction',

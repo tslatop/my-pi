@@ -1,6 +1,9 @@
+export { default } from './extension.js';
+
 export {
 	IMPORT_METADATA_FILE,
 	scan_importable_skills,
+	scan_managed_skills,
 	type DiscoveredSkill,
 	type ImportedSkillMetadata,
 	type InstalledPlugin,
@@ -10,10 +13,12 @@ export {
 
 export {
 	delete_managed_skill as delete_imported_skill,
+	get_imported_skill_sync_status,
 	import_external_skill,
 	sync_imported_skill,
 	validate_imported_skill_name,
 	type DeleteSkillResult,
+	type ImportedSkillSyncStatus,
 	type ImportSkillResult,
 	type SyncSkillResult,
 } from './importer.js';

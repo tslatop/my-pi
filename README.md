@@ -563,17 +563,20 @@ In interactive mode:
   interactive toggle list
 - `/extensions enable <key>` / `/extensions disable <key>` — toggle a
   built-in extension
-- `/skills` — open the interactive skills manager (unified list with
-  managed and importable sections, checkbox batch-import)
+- `/skills` — open the interactive Pi/GitHub skills manager
 - `/skills add <owner/repo> <skill[@ref]>` — install a GitHub-hosted
   skill through `gh skill` when GitHub CLI support is available
-- `/skills import <key|name>` — import an external skill from the
-  command line
-- `/skills import <owner/repo> <skill[@ref]>` — alias GitHub-hosted
-  skill installs through `gh skill`
-- `/skills sync <key|name>` — sync an imported skill to its upstream
 - `/skills update --dry-run|--all` — check or apply GitHub skill
   updates through `gh skill update`
+- `/skill-importer` — open the external Claude/plugin skill importer
+- `/skill-importer list` — show importable external skills and
+  imported copies with sync status
+- `/skill-importer import <key|name>` — copy an external skill into
+  Pi-native storage
+- `/skill-importer sync <key|name>` — sync an imported copy to
+  upstream
+- `/skill-importer delete <key|name>` — delete only an imported copy
+  with importer metadata
 - `/skills refresh` — rescan skill directories
 - `/skills defaults <all-enabled|all-disabled>` — set default policy
 - `/prompt-preset` — open the prompt preset manager (base presets +

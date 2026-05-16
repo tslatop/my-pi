@@ -330,6 +330,28 @@ describe('skills importing and syncing', () => {
 		).toThrow(/single safe path segment/i);
 	});
 
+	it('refuses to delete managed skills without importer metadata', async () => {
+		const skill_dir = join(
+			home_dir,
+			'.pi',
+			'agent',
+			'skills',
+			'native',
+		);
+		write_skill(skill_dir, 'native', 'Native Pi skill');
+
+		const scanner = await import('./scanner.js');
+		const importer = await import('./importer.js');
+		const managed = scanner
+			.scan_managed_skills()
+			.find((skill) => skill.name === 'native');
+
+		expect(() => importer.delete_managed_skill(managed!)).toThrow(
+			/imported Pi-native copy/i,
+		);
+		expect(existsSync(skill_dir)).toBe(true);
+	});
+
 	it('deletes an imported managed copy from disk', async () => {
 		const install_path = join(
 			home_dir,

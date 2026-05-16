@@ -56,6 +56,9 @@ describe('find_builtin_extension', () => {
 			'filter-output',
 		);
 		expect(find_builtin_extension('skill')?.key).toBe('skills');
+		expect(find_builtin_extension('import-skills')?.key).toBe(
+			'skill-importer',
+		);
 		expect(find_builtin_extension('startup')?.key).toBe(
 			'startup-screen',
 		);

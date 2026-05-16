@@ -229,16 +229,74 @@ export interface SyncSkillResult {
 	changed: boolean;
 }
 
+export interface ImportedSkillSyncStatus {
+	status:
+		| 'up-to-date'
+		| 'update-available'
+		| 'local-changes'
+		| 'missing-upstream';
+	detail: string;
+	currentHash?: string;
+	upstreamHash?: string;
+}
+
 export interface DeleteSkillResult {
 	skillDir: string;
+}
+
+function assert_imported_skill(
+	skill: DiscoveredSkill,
+): ImportedSkillMetadata {
+	if (skill.kind !== 'managed' || !skill.import_meta) {
+		throw new Error(
+			`Skill ${skill.name} is not an imported Pi-native copy`,
+		);
+	}
+	return skill.import_meta;
+}
+
+export function get_imported_skill_sync_status(
+	skill: DiscoveredSkill,
+): ImportedSkillSyncStatus {
+	const metadata = assert_imported_skill(skill);
+	if (!existsSync(metadata.upstream_base_dir)) {
+		return {
+			status: 'missing-upstream',
+			detail: `Upstream source no longer exists: ${metadata.upstream_base_dir}`,
+		};
+	}
+
+	const current_hash = hash_directory(skill.baseDir);
+	if (current_hash !== metadata.imported_hash) {
+		return {
+			status: 'local-changes',
+			detail: `Local changes detected in ${skill.baseDir}`,
+			currentHash: current_hash,
+		};
+	}
+
+	const upstream_hash = hash_directory(metadata.upstream_base_dir);
+	if (upstream_hash !== metadata.upstream_hash) {
+		return {
+			status: 'update-available',
+			detail: `Upstream changed since ${metadata.last_synced_at}`,
+			currentHash: current_hash,
+			upstreamHash: upstream_hash,
+		};
+	}
+
+	return {
+		status: 'up-to-date',
+		detail: `Last synced ${metadata.last_synced_at}`,
+		currentHash: current_hash,
+		upstreamHash: upstream_hash,
+	};
 }
 
 export function delete_managed_skill(
 	skill: DiscoveredSkill,
 ): DeleteSkillResult {
-	if (skill.kind !== 'managed') {
-		throw new Error(`Skill ${skill.name} is not managed`);
-	}
+	assert_imported_skill(skill);
 	if (!existsSync(skill.baseDir)) {
 		throw new Error(
 			`Skill directory no longer exists: ${skill.baseDir}`,
@@ -269,13 +327,7 @@ export function delete_managed_skill(
 export function sync_imported_skill(
 	skill: DiscoveredSkill,
 ): SyncSkillResult {
-	if (skill.kind !== 'managed' || !skill.import_meta) {
-		throw new Error(
-			`Skill ${skill.name} is not managed by my-pi sync`,
-		);
-	}
-
-	const metadata = skill.import_meta;
+	const metadata = assert_imported_skill(skill);
 	if (!existsSync(metadata.upstream_base_dir)) {
 		throw new Error(
 			`Upstream source no longer exists: ${metadata.upstream_base_dir}`,
