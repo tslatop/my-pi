@@ -2,9 +2,11 @@ import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
 } from '@earendil-works/pi-coding-agent';
+import type { SettingItem } from '@earendil-works/pi-tui';
 import {
 	show_confirm_modal,
 	show_picker_modal,
+	show_settings_modal,
 	show_text_modal,
 } from '@spences10/pi-tui-modal';
 import {
@@ -21,6 +23,10 @@ import {
 
 const WARNING =
 	'External skills can instruct agent behavior and tool use. Import copies only after reviewing their source.';
+const selected_label = '● selected';
+const skipped_label = '○ skip';
+const delete_label = '✕ delete';
+const keep_label = '○ keep';
 
 function skill_key(skill: DiscoveredSkill): string {
 	return `${skill.source}/${skill.name}`;
@@ -120,28 +126,6 @@ function notify_error(
 	);
 }
 
-async function pick_external(
-	ctx: ExtensionCommandContext,
-): Promise<DiscoveredSkill | undefined> {
-	const skills = sort_skills(scan_importable_skills());
-	const selected = await show_picker_modal(ctx, {
-		title: 'Import external skill',
-		subtitle: WARNING,
-		items: skills.map((skill) => ({
-			value: skill_key(skill),
-			label: skill.name,
-			description: `${skill.source} • ${skill.baseDir}`,
-		})),
-		selected_footer: (item) => {
-			const skill = item ? find_skill(skills, item.value) : undefined;
-			return skill ? format_external(skill).split('\n') : undefined;
-		},
-		empty_message: 'No importable external skills found',
-		max_visible: 12,
-	});
-	return selected ? find_skill(skills, selected) : undefined;
-}
-
 async function pick_imported(
 	ctx: ExtensionCommandContext,
 	title: string,
@@ -214,22 +198,124 @@ async function show_list(
 ): Promise<void> {
 	const external = sort_skills(scan_importable_skills());
 	const imported = sort_skills(imported_skills());
-	const text = [
-		WARNING,
-		'',
-		'Importable external skills',
-		external.length
-			? external.map(format_external).join('\n\n')
-			: 'None found.',
-		'',
-		'Imported copies',
-		imported.length
-			? imported.map(format_imported).join('\n\n')
-			: 'None found.',
-	].join('\n');
-	if (ctx.hasUI)
-		await show_text_modal(ctx, { title: 'Skill importer', text });
-	else ctx.ui.notify(text);
+	if (!ctx.hasUI) {
+		const text = [
+			WARNING,
+			'',
+			'Importable external skills',
+			external.length
+				? external.map(format_external).join('\n\n')
+				: 'None found.',
+			'',
+			'Imported copies',
+			imported.length
+				? imported.map(format_imported).join('\n\n')
+				: 'None found.',
+		].join('\n');
+		ctx.ui.notify(text);
+		return;
+	}
+
+	const list_items = [
+		...external.map((skill) => ({
+			kind: 'external' as const,
+			value: `external:${skill_key(skill)}`,
+			skill,
+		})),
+		...imported.map((skill) => ({
+			kind: 'imported' as const,
+			value: `imported:${skill_key(skill)}`,
+			skill,
+		})),
+	];
+	const by_value = new Map(
+		list_items.map((item) => [item.value, item]),
+	);
+	while (true) {
+		const selected = await show_picker_modal(ctx, {
+			title: 'Browse importable skills',
+			subtitle: `${external.length} external • ${imported.length} imported`,
+			items: list_items.map(({ kind, value, skill }) => ({
+				value,
+				label: skill.name,
+				description:
+					kind === 'external'
+						? `external • ${skill.source}`
+						: `imported • ${get_imported_skill_sync_status(skill).status}`,
+			})),
+			selected_footer: (item) => {
+				const match = item ? by_value.get(item.value) : undefined;
+				if (!match) return undefined;
+				return (
+					match.kind === 'external'
+						? format_external(match.skill)
+						: format_imported(match.skill)
+				).split('\n');
+			},
+			empty_message: 'No external or imported skills found',
+			max_visible: 12,
+		});
+		if (!selected) return;
+		const match = by_value.get(selected);
+		if (!match) continue;
+		await show_text_modal(ctx, {
+			title: match.skill.name,
+			text:
+				match.kind === 'external'
+					? format_external(match.skill)
+					: format_imported(match.skill),
+		});
+	}
+}
+
+function selectable_skill_items(
+	skills: DiscoveredSkill[],
+	selected_value: string,
+	unselected_value: string,
+): SettingItem[] {
+	return skills.map((skill) => {
+		return {
+			id: skill_key(skill),
+			label: skill.name,
+			description:
+				skill.kind === 'external'
+					? format_external(skill)
+					: format_imported(skill),
+			currentValue: unselected_value,
+			values: [unselected_value, selected_value],
+		};
+	});
+}
+
+async function pick_external_many(
+	ctx: ExtensionCommandContext,
+): Promise<DiscoveredSkill[]> {
+	const skills = sort_skills(scan_importable_skills());
+	if (skills.length === 0) {
+		ctx.ui.notify('No importable external skills found');
+		return [];
+	}
+	const items = selectable_skill_items(
+		skills,
+		selected_label,
+		skipped_label,
+	);
+	await show_settings_modal(ctx, {
+		title: 'Import external skills',
+		subtitle: `${skills.length} importable • toggle any skills to import`,
+		footer: 'enter toggles',
+		items,
+		max_visible: 12,
+		enable_search: true,
+		metadata: (item) => item?.description?.split('\n'),
+		on_change: () => undefined,
+	});
+	const selected = new Set(
+		items
+			.filter((item) => item.currentValue === selected_label)
+			.map((item) => item.id),
+	);
+	return skills.filter((skill) => selected.has(skill_key(skill)));
 }
 
 async function import_command(
@@ -237,12 +323,12 @@ async function import_command(
 	ctx: ExtensionCommandContext,
 ): Promise<void> {
 	try {
-		const skill = target
-			? find_skill(scan_importable_skills(), target)
+		const skills = target
+			? [find_skill(scan_importable_skills(), target)]
 			: ctx.hasUI
-				? await pick_external(ctx)
-				: undefined;
-		if (!skill) {
+				? await pick_external_many(ctx)
+				: [];
+		if (skills.length === 0) {
 			ctx.ui.notify(
 				'Usage: /skill-importer import <key|name>',
 				'warning',
@@ -251,16 +337,16 @@ async function import_command(
 		}
 		if (ctx.hasUI) {
 			const ok = await show_confirm_modal(ctx, {
-				title: 'Import external skill?',
-				message: `${WARNING}\n\n${format_external(skill)}`,
-				confirm_label: 'Import copy',
+				title: `Import ${skills.length} skill${skills.length === 1 ? '' : 's'}?`,
+				message: `${WARNING}\n\n${skills.map(format_external).join('\n\n')}`,
+				confirm_label: 'Import selected',
 				cancel_label: 'Cancel',
 			});
 			if (!ok) return;
 		}
-		const result = import_external_skill(skill);
+		for (const skill of skills) import_external_skill(skill);
 		ctx.ui.notify(
-			`Imported ${skill.name} to ${result.skillDir}. Reloading...`,
+			`Imported ${skills.length} skill${skills.length === 1 ? '' : 's'}. Reloading...`,
 			'info',
 		);
 		await ctx.reload();
@@ -299,17 +385,48 @@ async function sync_command(
 	}
 }
 
+async function pick_imported_for_delete(
+	ctx: ExtensionCommandContext,
+): Promise<DiscoveredSkill[]> {
+	const skills = sort_skills(imported_skills());
+	if (skills.length === 0) {
+		ctx.ui.notify('No imported skill copies found');
+		return [];
+	}
+	const items = selectable_skill_items(
+		skills,
+		delete_label,
+		keep_label,
+	);
+	await show_settings_modal(ctx, {
+		title: 'Delete imported skill copies',
+		subtitle: `${skills.length} imported • toggle copies to delete`,
+		footer: 'enter toggles',
+		items,
+		max_visible: 12,
+		enable_search: true,
+		metadata: (item) => item?.description?.split('\n'),
+		on_change: () => undefined,
+	});
+	const selected = new Set(
+		items
+			.filter((item) => item.currentValue === delete_label)
+			.map((item) => item.id),
+	);
+	return skills.filter((skill) => selected.has(skill_key(skill)));
+}
+
 async function delete_command(
 	target: string,
 	ctx: ExtensionCommandContext,
 ): Promise<void> {
 	try {
-		const skill = target
-			? find_skill(imported_skills(), target)
+		const skills = target
+			? [find_skill(imported_skills(), target)]
 			: ctx.hasUI
-				? await pick_imported(ctx, 'Delete imported skill copy')
-				: undefined;
-		if (!skill) {
+				? await pick_imported_for_delete(ctx)
+				: [];
+		if (skills.length === 0) {
 			ctx.ui.notify(
 				'Usage: /skill-importer delete <key|name>',
 				'warning',
@@ -318,16 +435,16 @@ async function delete_command(
 		}
 		if (ctx.hasUI) {
 			const ok = await show_confirm_modal(ctx, {
-				title: 'Delete imported copy?',
-				message: `Delete copied Pi skill ${skill.name}? Upstream external sources are never deleted.`,
-				confirm_label: 'Delete copy',
-				cancel_label: 'Keep copy',
+				title: `Delete ${skills.length} imported cop${skills.length === 1 ? 'y' : 'ies'}?`,
+				message: `Delete ${skills.map((skill) => skill.name).join(', ')}? Upstream external sources are never deleted.`,
+				confirm_label: 'Delete selected',
+				cancel_label: 'Keep copies',
 			});
 			if (!ok) return;
 		}
-		const result = delete_imported_skill(skill);
+		for (const skill of skills) delete_imported_skill(skill);
 		ctx.ui.notify(
-			`Deleted imported copy at ${result.skillDir}. Reloading...`,
+			`Deleted ${skills.length} imported cop${skills.length === 1 ? 'y' : 'ies'}. Reloading...`,
 			'info',
 		);
 		await ctx.reload();
