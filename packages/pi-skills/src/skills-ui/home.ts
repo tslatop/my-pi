@@ -14,7 +14,8 @@ export async function show_skills_home_modal(
 			{
 				value: 'manage',
 				label: 'Manage skills',
-				description: 'Search and enable/disable managed skills',
+				description:
+					'Search, enable/disable, sync imported copies, or delete skills',
 			},
 			{
 				value: 'importable',

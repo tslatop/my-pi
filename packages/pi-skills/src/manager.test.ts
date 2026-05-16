@@ -79,6 +79,26 @@ describe('create_skills_manager', () => {
 		);
 	});
 
+	it('does not return default pi-native skills as explicit skill paths', async () => {
+		write_skill(
+			join(root, 'agent', 'skills', 'local-tooling'),
+			'local-tooling',
+			'Use local tooling.',
+		);
+
+		const { create_skills_manager } = await import('./manager.js');
+		const mgr = create_skills_manager();
+		mgr.enable('local-tooling@pi-native');
+
+		expect(
+			mgr.discover().find((skill) => skill.name === 'local-tooling')
+				?.enabled,
+		).toBe(true);
+		expect(mgr.get_enabled_skill_paths()).not.toContain(
+			join(root, 'agent', 'skills', 'local-tooling', 'SKILL.md'),
+		);
+	});
+
 	it('uses context profiles to enable global skills without hardcoding project names', async () => {
 		const project = join(root, 'repos', 'cloud-lobsters', 'jupiter');
 		write_skill(

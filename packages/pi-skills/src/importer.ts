@@ -229,6 +229,43 @@ export interface SyncSkillResult {
 	changed: boolean;
 }
 
+export interface DeleteSkillResult {
+	skillDir: string;
+}
+
+export function delete_managed_skill(
+	skill: DiscoveredSkill,
+): DeleteSkillResult {
+	if (skill.kind !== 'managed') {
+		throw new Error(`Skill ${skill.name} is not managed`);
+	}
+	if (!existsSync(skill.baseDir)) {
+		throw new Error(
+			`Skill directory no longer exists: ${skill.baseDir}`,
+		);
+	}
+	if (!existsSync(skill.skillPath)) {
+		throw new Error(
+			`Skill file no longer exists: ${skill.skillPath}`,
+		);
+	}
+	const skill_dir = resolve(skill.baseDir);
+	const skill_file = resolve(skill.skillPath);
+	const relative_skill_path = relative(skill_dir, skill_file);
+	if (
+		!relative_skill_path ||
+		relative_skill_path.startsWith('..') ||
+		isAbsolute(relative_skill_path)
+	) {
+		throw new Error(
+			`Refusing to delete unsafe skill path: ${skill.baseDir}`,
+		);
+	}
+
+	rmSync(skill_dir, { recursive: true, force: true });
+	return { skillDir: skill_dir };
+}
+
 export function sync_imported_skill(
 	skill: DiscoveredSkill,
 ): SyncSkillResult {

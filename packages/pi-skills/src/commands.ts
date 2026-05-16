@@ -1,6 +1,7 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import {
 	run_with_progress_modal,
+	show_confirm_modal,
 	show_input_modal,
 	show_text_modal,
 } from '@spences10/pi-tui-modal';
@@ -182,6 +183,58 @@ export default async function skills(pi: ExtensionAPI) {
 					);
 					await ctx.reload();
 					return;
+				}
+				case 'delete': {
+					let targets = rest;
+					if (!targets.length && ctx.hasUI) {
+						const target = await pick_skill(ctx, {
+							title: 'Delete skill',
+							subtitle: 'Remove a managed skill directory from disk',
+							skills: sort_skills(mgr.discover()),
+							empty_message: 'No managed skills found',
+						});
+						if (!target) return;
+						targets = [target];
+					}
+					if (!targets.length) {
+						ctx.ui.notify(
+							'Usage: /skills delete <key|name> [key|name...]',
+							'warning',
+						);
+						return;
+					}
+					if (ctx.hasUI) {
+						const ok = await show_confirm_modal(ctx, {
+							title: 'Delete skills?',
+							message: `Delete ${targets.length} skill${targets.length === 1 ? '' : 's'} from disk? This cannot be undone.`,
+							confirm_label: 'Delete',
+							cancel_label: 'Keep skills',
+						});
+						if (!ok) return;
+					}
+					let deleted = 0;
+					for (const target of targets) {
+						try {
+							mgr.delete_skill(target);
+							deleted += 1;
+						} catch (error) {
+							ctx.ui.notify(
+								error instanceof Error
+									? error.message
+									: String(error),
+								'warning',
+							);
+						}
+					}
+					if (deleted) {
+						ctx.ui.notify(
+							`Deleted ${deleted} skill${deleted === 1 ? '' : 's'}. Reloading...`,
+							'info',
+						);
+						await ctx.reload();
+						return;
+					}
+					break;
 				}
 				case 'add': {
 					if (!arg && ctx.hasUI) {

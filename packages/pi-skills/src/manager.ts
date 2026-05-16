@@ -11,8 +11,10 @@ import {
 	save_skills_config,
 } from './config.js';
 import {
+	type DeleteSkillResult,
 	type ImportSkillResult,
 	type SyncSkillResult,
+	delete_managed_skill,
 	import_external_skill,
 	sync_imported_skill,
 } from './importer.js';
@@ -65,6 +67,9 @@ export interface SkillsManager {
 		key_or_name: string,
 	): ImportSkillResult & { key: string };
 	sync_skill(key_or_name: string): SyncSkillResult & { key: string };
+	delete_skill(
+		key_or_name: string,
+	): DeleteSkillResult & { key: string };
 	refresh(): void;
 }
 
@@ -295,6 +300,16 @@ export function create_skills_manager(
 		};
 	}
 
+	function needs_explicit_skill_path(
+		skill: DiscoveredSkill,
+	): boolean {
+		return (
+			skill.source === 'user-local' ||
+			skill.source === 'project:.agents' ||
+			skill.source === 'project:.agents/skills'
+		);
+	}
+
 	function get_enabled_managed_skills(): ManagedSkill[] {
 		return get_managed()
 			.filter(is_effectively_enabled)
@@ -339,9 +354,9 @@ export function create_skills_manager(
 		},
 
 		get_enabled_skill_paths(): string[] {
-			return get_enabled_managed_skills().map(
-				(skill) => skill.skillPath,
-			);
+			return get_enabled_managed_skills()
+				.filter(needs_explicit_skill_path)
+				.map((skill) => skill.skillPath);
 		},
 
 		enable(key: string): boolean {
@@ -480,6 +495,25 @@ export function create_skills_manager(
 			return {
 				...result,
 				key: resolve_skill_key(skill),
+			};
+		},
+
+		delete_skill(key_or_name: string) {
+			const skill = match_skill_by_key_or_name(
+				get_managed(),
+				key_or_name,
+			);
+			const key = resolve_skill_key(skill);
+			const result = delete_managed_skill(skill);
+			for (const profile of Object.values(config.profiles)) {
+				profile.include = remove_value(profile.include, key);
+				profile.exclude = remove_value(profile.exclude, key);
+			}
+			save_skills_config(config);
+			this.refresh();
+			return {
+				...result,
+				key,
 			};
 		},
 

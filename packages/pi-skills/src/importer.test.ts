@@ -330,6 +330,36 @@ describe('skills importing and syncing', () => {
 		).toThrow(/single safe path segment/i);
 	});
 
+	it('deletes a managed skill and removes profile rules', async () => {
+		const skill_dir = join(
+			home_dir,
+			'.pi',
+			'agent',
+			'skills',
+			'old-skill',
+		);
+		write_skill(skill_dir, 'old-skill', 'Old stale skill');
+
+		const { create_skills_manager } = await import('./manager.js');
+		const mgr = create_skills_manager();
+
+		mgr.enable('old-skill@pi-native');
+		expect(mgr.discover().map((skill) => skill.name)).toContain(
+			'old-skill',
+		);
+
+		const result = mgr.delete_skill('old-skill');
+
+		expect(result.skillDir).toBe(skill_dir);
+		expect(existsSync(skill_dir)).toBe(false);
+		expect(mgr.discover().map((skill) => skill.name)).not.toContain(
+			'old-skill',
+		);
+		expect(mgr.get_enabled_skill_paths()).not.toContain(
+			join(skill_dir, 'SKILL.md'),
+		);
+	});
+
 	it('manager separates managed and importable skills and enables imported skills', async () => {
 		write_skill(
 			join(home_dir, '.claude', 'skills', 'github-prs'),
@@ -373,9 +403,10 @@ describe('skills importing and syncing', () => {
 			.map((skill) => skill.name)
 			.sort();
 		expect(managed_names).toEqual(['frontend-design', 'github-prs']);
-		expect(mgr.get_enabled_skill_paths()).toContain(
-			join(imported.skillDir, 'SKILL.md'),
-		);
+		expect(
+			mgr.discover().find((skill) => skill.name === 'frontend-design')
+				?.enabled,
+		).toBe(true);
 		expect(
 			mgr.is_enabled_by_skill(
 				'frontend-design',

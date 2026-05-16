@@ -8,6 +8,7 @@ export const SKILL_SUBCOMMANDS = [
 	'show',
 	'enable',
 	'disable',
+	'delete',
 	'add',
 	'import',
 	'sync',
@@ -29,7 +30,9 @@ export function get_skill_argument_completions(
 		).map((s) => ({ value: s, label: s }));
 	}
 
-	if (['show', 'enable', 'disable'].includes(parts[0] ?? '')) {
+	if (
+		['show', 'enable', 'disable', 'delete'].includes(parts[0] ?? '')
+	) {
 		const q = parts.slice(1).join(' ').toLowerCase();
 		const skills =
 			parts[0] === 'show'
