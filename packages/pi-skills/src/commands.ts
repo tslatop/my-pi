@@ -5,6 +5,10 @@ import {
 	show_text_modal,
 } from '@spences10/pi-tui-modal';
 import {
+	get_skill_argument_completions,
+	SKILL_SUBCOMMANDS,
+} from './commands/completions.js';
+import {
 	has_gh_skill,
 	parse_gh_skill_install_args,
 	run_gh_skill_install,
@@ -13,6 +17,7 @@ import {
 	run_gh_skill_update_async,
 } from './gh-skill.js';
 import { create_skills_manager } from './manager.js';
+import { is_resource_enabled } from './resource-discovery.js';
 import {
 	find_skill,
 	format_profile_detail,
@@ -36,14 +41,6 @@ import {
 	show_update_github_skills_modal,
 } from './skills-ui.js';
 
-function is_resource_enabled(value: string | undefined): boolean {
-	const normalized = value?.trim().toLowerCase();
-	if (!normalized) return true;
-	return !['0', 'false', 'no', 'skip', 'disable'].includes(
-		normalized,
-	);
-}
-
 export default async function skills(pi: ExtensionAPI) {
 	const mgr = create_skills_manager();
 
@@ -57,128 +54,10 @@ export default async function skills(pi: ExtensionAPI) {
 		return { skillPaths: resource_mgr.get_enabled_skill_paths() };
 	});
 
-	const subs = [
-		'list',
-		'show',
-		'enable',
-		'disable',
-		'add',
-		'import',
-		'sync',
-		'update',
-		'profile',
-		'refresh',
-		'defaults',
-	];
-
 	pi.registerCommand('skills', {
 		description: 'Manage pi-native skills and import external skills',
-		getArgumentCompletions: (prefix) => {
-			const parts = prefix.trimStart().split(/\s+/);
-			const has_trailing_space = /\s$/.test(prefix);
-			if (parts.length <= 1 && !has_trailing_space) {
-				return subs
-					.filter((s) => s.startsWith(parts[0] || ''))
-					.map((s) => ({ value: s, label: s }));
-			}
-
-			if (['show', 'enable', 'disable'].includes(parts[0] ?? '')) {
-				const q = parts.slice(1).join(' ').toLowerCase();
-				const skills =
-					parts[0] === 'show'
-						? [...mgr.discover(), ...mgr.discover_importable()]
-						: mgr.discover();
-				return sort_skills(skills)
-					.filter(
-						(s) =>
-							s.key.toLowerCase().includes(q) ||
-							s.name.toLowerCase().includes(q),
-					)
-					.slice(0, 20)
-					.map((s) => ({
-						value: `${parts[0]} ${s.key}`,
-						label: s.key,
-					}));
-			}
-
-			if (parts[0] === 'import') {
-				const q = parts.slice(1).join(' ').toLowerCase();
-				return sort_skills(mgr.discover_importable())
-					.filter(
-						(s) =>
-							s.key.toLowerCase().includes(q) ||
-							s.name.toLowerCase().includes(q),
-					)
-					.slice(0, 20)
-					.map((s) => ({
-						value: `${parts[0]} ${s.key}`,
-						label: s.key,
-					}));
-			}
-
-			if (parts[0] === 'update') {
-				return ['--dry-run', '--all', '--force', '--unpin']
-					.filter((flag) => flag.startsWith(parts.at(-1) ?? ''))
-					.map((flag) => ({
-						value: `${parts.slice(0, -1).join(' ')} ${flag}`.trim(),
-						label: flag,
-					}));
-			}
-
-			if (parts[0] === 'sync') {
-				const q = parts.slice(1).join(' ').toLowerCase();
-				return sort_skills(
-					mgr
-						.discover()
-						.filter((skill) => Boolean(skill.import_meta)),
-				)
-					.filter(
-						(s) =>
-							s.key.toLowerCase().includes(q) ||
-							s.name.toLowerCase().includes(q),
-					)
-					.slice(0, 20)
-					.map((s) => ({
-						value: `${parts[0]} ${s.key}`,
-						label: s.key,
-					}));
-			}
-
-			if (parts[0] === 'profile') {
-				const profile_subs = [
-					'list',
-					'show',
-					'use',
-					'create',
-					'include',
-					'exclude',
-				];
-				if (parts.length <= 2 && !has_trailing_space) {
-					return profile_subs
-						.filter((s) => s.startsWith(parts[1] || ''))
-						.map((s) => ({ value: `profile ${s}`, label: s }));
-				}
-				if (
-					['show', 'use', 'include', 'exclude'].includes(
-						parts[1] ?? '',
-					)
-				) {
-					const q = parts.slice(2).join(' ').toLowerCase();
-					return mgr
-						.list_profiles()
-						.filter((profile) =>
-							profile.name.toLowerCase().includes(q),
-						)
-						.slice(0, 20)
-						.map((profile) => ({
-							value: `profile ${parts[1]} ${profile.name}`,
-							label: profile.name,
-						}));
-				}
-			}
-
-			return null;
-		},
+		getArgumentCompletions: (prefix) =>
+			get_skill_argument_completions(prefix, mgr),
 		handler: async (args, ctx) => {
 			const trimmed = args.trim();
 
@@ -735,7 +614,7 @@ export default async function skills(pi: ExtensionAPI) {
 				}
 				default:
 					ctx.ui.notify(
-						`Unknown: ${sub}. Use: ${subs.join(', ')}`,
+						`Unknown: ${sub}. Use: ${SKILL_SUBCOMMANDS.join(', ')}`,
 						'warning',
 					);
 			}

@@ -18,6 +18,19 @@ import {
 	DEFAULT_PROMPT_PRESETS,
 } from './defaults.js';
 import { set_status } from './footer.js';
+import { format_prompt_preset_help, is_subcommand } from './help.js';
+import {
+	DISABLED,
+	ENABLED,
+	get_last_preset_state,
+	NONE_BASE_ID,
+	normalize_active_state,
+	parse_preset_flag,
+	persist_state,
+	SELECTED,
+	sets_equal,
+	UNSELECTED,
+} from './state.js';
 import {
 	get_global_presets_dir,
 	get_project_presets_dir,
@@ -26,14 +39,12 @@ import {
 	load_prompt_presets,
 	remove_project_prompt_preset,
 	save_global_prompt_preset_file,
-	save_persisted_prompt_state,
 	save_project_prompt_preset_file,
 	save_prompt_preset_file,
 } from './storage.js';
 import type {
 	LoadedPromptPreset,
 	PromptPresetKind,
-	PromptPresetState,
 } from './types.js';
 
 export {
@@ -64,135 +75,6 @@ export type {
 	PromptPresetSource,
 	PromptPresetState,
 } from './types.js';
-
-const PRESET_STATE_TYPE = 'prompt-preset-state';
-const ENABLED = '● enabled';
-const DISABLED = '○ disabled';
-const SELECTED = '● selected';
-const UNSELECTED = '○';
-const NONE_BASE_ID = '__base_none__';
-
-function get_last_preset_state(
-	ctx: ExtensionContext,
-): PromptPresetState | undefined {
-	const entries = ctx.sessionManager.getEntries();
-	for (let i = entries.length - 1; i >= 0; i--) {
-		const entry = entries[i] as {
-			type?: string;
-			customType?: string;
-			data?: PromptPresetState;
-		};
-		if (
-			entry.type === 'custom' &&
-			entry.customType === PRESET_STATE_TYPE &&
-			entry.data
-		) {
-			return entry.data;
-		}
-	}
-	return undefined;
-}
-
-function sets_equal(
-	a: ReadonlySet<string>,
-	b: ReadonlySet<string>,
-): boolean {
-	if (a.size !== b.size) return false;
-	for (const value of a) {
-		if (!b.has(value)) return false;
-	}
-	return true;
-}
-
-function persist_state(
-	pi: ExtensionAPI,
-	ctx: ExtensionContext,
-	active_base_name: string | undefined,
-	active_layers: ReadonlySet<string>,
-): void {
-	const state = {
-		base_name: active_base_name ?? null,
-		layer_names: [...active_layers].sort(),
-	};
-	pi.appendEntry(PRESET_STATE_TYPE, state);
-	save_persisted_prompt_state(ctx.cwd, state);
-}
-
-function normalize_active_state(
-	presets: Record<string, LoadedPromptPreset>,
-	active_base_name: string | undefined,
-	active_layers: ReadonlySet<string>,
-): {
-	active_base_name: string | undefined;
-	active_layers: Set<string>;
-} {
-	const next_base_name =
-		active_base_name && presets[active_base_name]?.kind === 'base'
-			? active_base_name
-			: undefined;
-	const next_layers = new Set(
-		[...active_layers].filter(
-			(name) => presets[name]?.kind === 'layer',
-		),
-	);
-	return {
-		active_base_name: next_base_name,
-		active_layers: next_layers,
-	};
-}
-
-function parse_preset_flag(flag: string): string[] {
-	return flag
-		.split(',')
-		.map((item) => item.trim())
-		.filter(Boolean);
-}
-
-function is_subcommand(command: string): boolean {
-	return [
-		'help',
-		'list',
-		'show',
-		'clear',
-		'edit',
-		'edit-global',
-		'export-defaults',
-		'delete',
-		'reset',
-		'reload',
-		'base',
-		'enable',
-		'disable',
-		'toggle',
-	].includes(command);
-}
-
-function format_prompt_preset_help(): string {
-	return `Prompt presets append instructions to the system prompt.
-
-Commands:
-- /prompt-preset                Open the preset picker
-- /prompt-preset show           Show the active base and layers
-- /prompt-preset <name>         Activate a base preset or toggle a layer
-- /prompt-preset base <name>    Activate a base preset
-- /prompt-preset enable <layer> Enable a layer
-- /prompt-preset disable <layer> Disable a layer
-- /prompt-preset edit <name>    Edit/create .pi/presets/<name>.md
-- /prompt-preset edit-global <name> Edit/create ~/.pi/agent/presets/<name>.md
-- /prompt-preset export-defaults Export built-ins to ~/.pi/agent/presets/*.md
-- /prompt-preset export-defaults project Export built-ins to .pi/presets/*.md
-- /prompt-preset reload         Reload presets after manual file edits
-- /prompt-preset clear          Clear active base and layers
-
-Examples:
-- /prompt-preset export-defaults
-- /prompt-preset edit-global terse
-- /prompt-preset base detailed
-- /prompt-preset enable bullets
-- /prompt-preset show
-
-Alias: /preset`;
-}
 
 export default async function prompt_presets(pi: ExtensionAPI) {
 	let presets: Record<string, LoadedPromptPreset> = {};
