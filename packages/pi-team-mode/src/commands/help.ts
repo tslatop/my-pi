@@ -16,7 +16,7 @@ export function show_team_help({ ctx }: TeamCommandDeps): void {
 			'/team task assign <id> <member> / unassign <id> — change owner without changing status',
 			'/team dm <member> <message> — send a mailbox message',
 			'/team inbox <member> read|ack [message-id...] — mark mailbox messages read or acknowledged',
-			'/team wait|shutdown <member> — control a teammate',
+			'/team wait <member> / shutdown [--done|--all|<member>] — control teammate processes',
 			'/team teams|switch|resume|detach — manage active team UI',
 			'/team delete <id> / prune-stale [days] [--cwd] — remove stored stale teams',
 		].join('\n'),

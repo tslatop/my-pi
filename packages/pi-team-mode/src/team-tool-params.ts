@@ -10,6 +10,7 @@ const TEAM_ACTIONS = [
 	'team_list',
 	'team_status',
 	'team_clear',
+	'team_shutdown',
 	'team_ui',
 	'member_upsert',
 	'member_spawn',
@@ -179,6 +180,7 @@ export function validate_team_tool_params(
 		case 'team_list':
 		case 'team_status':
 		case 'team_clear':
+		case 'team_shutdown':
 		case 'team_ui':
 		case 'member_status':
 		case 'task_list':

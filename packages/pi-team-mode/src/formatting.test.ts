@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	format_injected_messages,
 	format_messages,
+	format_status,
 	format_status_counts,
 	format_task_detail,
 } from './formatting.js';
@@ -50,6 +51,33 @@ describe('team formatting boundaries', () => {
 		);
 		expect(format_task_detail(team_status.tasks[0]!)).toContain(
 			'! #1 @alice waits for #0 Ship thing',
+		);
+	});
+
+	it('warns when teammates remain alive after all work is done', () => {
+		const team_status = status();
+		team_status.members = [
+			{
+				name: 'alice',
+				role: 'teammate',
+				status: 'running_orphaned',
+				pid: 123,
+				created_at: '2026-04-30T00:00:00.000Z',
+				updated_at: '2026-04-30T00:00:00.000Z',
+				last_seen_at: '2026-04-30T00:00:00.000Z',
+			},
+		];
+		team_status.tasks[0]!.status = 'completed';
+		team_status.counts = {
+			pending: 0,
+			in_progress: 0,
+			blocked: 0,
+			completed: 1,
+			cancelled: 0,
+		};
+
+		expect(format_status(team_status)).toContain(
+			'Use /team shutdown --done to free resources',
 		);
 	});
 

@@ -82,6 +82,50 @@ describe('execute_team_tool wait actions', () => {
 	});
 });
 
+describe('execute_team_tool shutdown actions', () => {
+	it('bulk shuts down done attached teammates', async () => {
+		const team = store.create_team({ cwd: '/repo' });
+		await store.upsert_member(team.id, {
+			name: 'alice',
+			role: 'teammate',
+			status: 'running_attached',
+		});
+		await store.create_task(team.id, {
+			title: 'done work',
+			assignee: 'alice',
+		});
+		await store.update_task(team.id, '1', { status: 'completed' });
+		let shutdown_called = false;
+		const runners = new Map([
+			[
+				'alice',
+				{
+					is_running: true,
+					shutdown: async () => {
+						shutdown_called = true;
+					},
+				},
+			],
+		]);
+
+		const result = await execute_team_tool(
+			{ action: 'team_shutdown' },
+			{
+				cwd: '/repo',
+				ui: {
+					setStatus: () => undefined,
+					setWidget: () => undefined,
+				},
+			} as any,
+			deps(team.id, { runners }) as any,
+		);
+
+		expect(shutdown_called).toBe(true);
+		expect(result.content[0].text).toContain('Shutdown 1 teammate');
+		expect(store.list_members(team.id)[0]?.status).toBe('offline');
+	});
+});
+
 describe('execute_team_tool mailbox actions', () => {
 	it('marks selected messages read without acknowledging them', async () => {
 		const team = store.create_team({ cwd: '/repo' });

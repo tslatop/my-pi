@@ -185,6 +185,8 @@ export default async function team_mode(pi: ExtensionAPI) {
 				'send',
 				'steer',
 				'wait',
+				'shutdown --done',
+				'shutdown --all',
 				'shutdown',
 			];
 			if (should_enable_fake_teammate_command()) subs.push('fake');

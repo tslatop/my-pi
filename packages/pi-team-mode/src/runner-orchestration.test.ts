@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { capture_process_identity } from './process-identity.js';
 import {
 	shutdown_orphaned_member,
+	shutdown_team_members,
 	wait_for_orphaned_member,
 } from './runner-orchestration.js';
 import { TeamStore } from './store.js';
@@ -153,5 +154,62 @@ describe('orphan process identity hardening', () => {
 				}
 			}
 		}
+	});
+});
+
+describe('team member shutdown orchestration', () => {
+	it('shuts down only done teammates by default', async () => {
+		const { store, team } = test_store();
+		await store.upsert_member(team.id, {
+			name: 'alice',
+			role: 'teammate',
+			status: 'running_attached',
+		});
+		await store.upsert_member(team.id, {
+			name: 'bob',
+			role: 'teammate',
+			status: 'running_attached',
+		});
+		await store.create_task(team.id, {
+			title: 'done work',
+			assignee: 'alice',
+		});
+		await store.create_task(team.id, {
+			title: 'open work',
+			assignee: 'bob',
+		});
+		await store.update_task(team.id, '1', { status: 'completed' });
+		await store.update_task(team.id, '2', { status: 'in_progress' });
+		const stopped: string[] = [];
+		const runners = new Map([
+			[
+				'alice',
+				{
+					is_running: true,
+					shutdown: async () => stopped.push('alice'),
+				},
+			],
+			[
+				'bob',
+				{
+					is_running: true,
+					shutdown: async () => stopped.push('bob'),
+				},
+			],
+		]);
+
+		const result = await shutdown_team_members(
+			store,
+			team.id,
+			runners as any,
+			'done',
+		);
+
+		expect(stopped).toEqual(['alice']);
+		expect(result.members.map((member) => member.name)).toEqual([
+			'alice',
+		]);
+		expect(runners.has('alice')).toBe(false);
+		expect(runners.has('bob')).toBe(true);
 	});
 });

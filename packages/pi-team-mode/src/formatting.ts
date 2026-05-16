@@ -124,11 +124,30 @@ function push_task_group(
 	}
 }
 
+function live_teammates_after_done(status: TeamStatus): number {
+	const has_open_work = status.tasks.some((task) =>
+		['pending', 'in_progress', 'blocked'].includes(task.status),
+	);
+	if (has_open_work || status.tasks.length === 0) return 0;
+	return status.members.filter(
+		(member) =>
+			member.role === 'teammate' &&
+			member.status !== 'offline' &&
+			member.pid,
+	).length;
+}
+
 export function format_status(status: TeamStatus): string {
 	const lines = [
 		`Team ${status.team.name} (${status.team.id})`,
 		format_status_counts(status),
 	];
+	const live_done_teammates = live_teammates_after_done(status);
+	if (live_done_teammates > 0) {
+		lines.push(
+			`⚠ ${live_done_teammates} teammate${live_done_teammates === 1 ? '' : 's'} still running after all work is done. Use /team shutdown --done to free resources.`,
+		);
+	}
 	if (status.members.length > 0) {
 		lines.push('', 'Members');
 		for (const member of status.members) {

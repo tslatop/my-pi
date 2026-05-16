@@ -11,6 +11,7 @@ import {
 	type TeamMember,
 	type TeamMessage,
 	type TeamStatus,
+	type TeamTask,
 } from './store.js';
 
 export async function deliver_message_to_runner(
@@ -131,6 +132,92 @@ export async function wait_for_orphaned_member(
 	return store
 		.list_members(team_id)
 		.find((item) => item.name === member_name)!;
+}
+
+export type TeamShutdownMode = 'all' | 'done';
+
+export interface TeamShutdownResult {
+	members: TeamMember[];
+	errors: Array<{ member: string; error: string }>;
+}
+
+function has_open_assigned_task(
+	member: TeamMember,
+	tasks: TeamTask[],
+): boolean {
+	return tasks.some(
+		(task) =>
+			task.assignee === member.name &&
+			['pending', 'in_progress', 'blocked'].includes(task.status),
+	);
+}
+
+function should_shutdown_member(
+	member: TeamMember,
+	tasks: TeamTask[],
+	mode: TeamShutdownMode,
+): boolean {
+	if (member.role !== 'teammate' || member.status === 'offline')
+		return false;
+	return mode === 'all' || !has_open_assigned_task(member, tasks);
+}
+
+export async function shutdown_team_members(
+	store: TeamStore,
+	team_id: string,
+	runners: Map<string, RpcTeammate>,
+	mode: TeamShutdownMode = 'done',
+	reason = 'team shutdown requested',
+	timeout_ms = 3_000,
+): Promise<TeamShutdownResult> {
+	const attached = attached_member_names(runners);
+	const members = await store.refresh_member_process_statuses(
+		team_id,
+		attached,
+	);
+	const tasks = store.list_tasks(team_id);
+	const targets = members.filter((member) =>
+		should_shutdown_member(member, tasks, mode),
+	);
+	const stopped: TeamMember[] = [];
+	const errors: TeamShutdownResult['errors'] = [];
+
+	for (const member of targets) {
+		try {
+			const runner = runners.get(member.name);
+			if (runner?.is_running) {
+				await runner.shutdown(reason);
+				runners.delete(member.name);
+				stopped.push(
+					await store.upsert_member(team_id, {
+						name: member.name,
+						status: 'offline',
+					}),
+				);
+			} else {
+				stopped.push(
+					await shutdown_orphaned_member(
+						store,
+						team_id,
+						member.name,
+						timeout_ms,
+					),
+				);
+			}
+		} catch (error) {
+			errors.push({
+				member: member.name,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
+
+	store.append_event(team_id, 'team_members_shutdown', {
+		mode,
+		members: stopped.map((member) => member.name),
+		errors,
+	});
+	return { members: stopped, errors };
 }
 
 export function attached_member_names(

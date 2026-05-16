@@ -22,6 +22,7 @@ import {
 	attached_member_names,
 	get_team_status,
 	shutdown_orphaned_member,
+	shutdown_team_members,
 } from '../runner-orchestration.js';
 import {
 	has_modal_ui,
@@ -145,25 +146,49 @@ export async function handle_shutdown(
 	rest: string[],
 ): Promise<void> {
 	const [member, ...reason_parts] = rest;
-	const name = require_arg(member, 'member');
-	const runner = deps.runners.get(name);
-	if (runner?.is_running) {
-		await runner.shutdown(reason_parts.join(' ') || undefined);
-		deps.runners.delete(name);
-		await deps.store.upsert_member(current_team_id(deps), {
-			name,
-			status: 'offline',
-		});
-		deps.ctx.ui.notify(`Shutdown requested for ${name}`);
-	} else {
-		const member = await shutdown_orphaned_member(
+	if (member === '--all' || member === 'all') {
+		const result = await shutdown_team_members(
 			deps.store,
 			current_team_id(deps),
-			name,
+			deps.runners,
+			'all',
+			reason_parts.join(' ') || undefined,
 		);
 		deps.ctx.ui.notify(
-			`Terminated orphaned teammate ${name}; status ${member.status}`,
+			`Shutdown ${result.members.length} teammates${result.errors.length ? `; ${result.errors.length} failed` : ''}`,
 		);
+	} else if (member === '--done' || member === 'done' || !member) {
+		const result = await shutdown_team_members(
+			deps.store,
+			current_team_id(deps),
+			deps.runners,
+			'done',
+			reason_parts.join(' ') || undefined,
+		);
+		deps.ctx.ui.notify(
+			`Shutdown ${result.members.length} done teammates${result.errors.length ? `; ${result.errors.length} failed` : ''}`,
+		);
+	} else {
+		const name = require_arg(member, 'member');
+		const runner = deps.runners.get(name);
+		if (runner?.is_running) {
+			await runner.shutdown(reason_parts.join(' ') || undefined);
+			deps.runners.delete(name);
+			await deps.store.upsert_member(current_team_id(deps), {
+				name,
+				status: 'offline',
+			});
+			deps.ctx.ui.notify(`Shutdown requested for ${name}`);
+		} else {
+			const member = await shutdown_orphaned_member(
+				deps.store,
+				current_team_id(deps),
+				name,
+			);
+			deps.ctx.ui.notify(
+				`Terminated orphaned teammate ${name}; status ${member.status}`,
+			);
+		}
 	}
 	set_team_ui(
 		deps.ctx,

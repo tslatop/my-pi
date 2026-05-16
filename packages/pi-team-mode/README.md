@@ -94,14 +94,26 @@ explicitly with git.
 If a lead process restarts while teammate child processes are still
 alive, `/team status` marks those persisted PIDs as orphaned. Use
 `/team shutdown <member>` or `member_shutdown` to safely terminate a
-known orphaned teammate process and clean up its member state. Before
-signalling an orphan, team mode verifies the persisted process
+known orphaned teammate process and clean up its member state. Use
+`/team shutdown` or `/team shutdown --done` when completed teammates
+are still running after their assigned work is done; use
+`/team shutdown --all` to stop every live teammate in the active team.
+Before signalling an orphan, team mode verifies the persisted process
 identity (PID plus process start identity and command/session markers
 where the platform exposes them) to avoid PID-reuse kills. Linux uses
 `/proc` start ticks, command line, and cwd. Other platforms fall back
 to `ps` start time and command line when available. If the platform
 cannot provide enough identity to verify the process, orphan
 shutdown/wait is refused and you must clean up manually.
+
+Each RPC teammate is a full Pi child session. Depending on the active
+profile, tools, MCP servers, language servers, and worktree size, a
+teammate can consume significant memory while it remains alive. Large
+teams should be treated as concurrent processes, not lightweight
+threads: spawn only the parallelism you need, check `/team status`,
+and shut down done teammates promptly with `/team shutdown --done`.
+Team status warns when all tasks are complete but teammate processes
+are still running.
 
 Reusable teammate profiles are JSON files loaded from:
 
@@ -173,6 +185,8 @@ redelivery on the next session.
 /team inbox alice read msg-id
 /team ack alice msg-id
 /team status
+/team shutdown --done
+/team shutdown --all
 /team dashboard
 /team results
 /team teams
@@ -188,10 +202,14 @@ Use `/team status` as the source of truth for member state, task
 state, and mailbox activity. `/team wait <member>` and the
 `member_wait` tool do not block the lead session; they refresh and
 return current team status while teammate work continues in the
-background. See [docs/comparison-matrix.md](docs/comparison-matrix.md)
-for the feature-parity gap check against comparable orchestration
-tools. Use `/team dashboard` for a compact modal with members, task
-groups, mailboxes, transcript paths, and available usage totals. Use
+background. Teammates also stay alive after finishing assigned work so
+you can inspect, steer, or reuse them; run `/team shutdown --done` to
+free resources once their completed results are captured, or
+`/team shutdown --all` to stop every live teammate. See
+[docs/comparison-matrix.md](docs/comparison-matrix.md) for the
+feature-parity gap check against comparable orchestration tools. Use
+`/team dashboard` for a compact modal with members, task groups,
+mailboxes, transcript paths, and available usage totals. Use
 `/team results` to join completed task results into a single summary.
 Assigned tasks stay queued until the assigned teammate claims them, so
 the status view reflects actual work in progress. Use
@@ -207,6 +225,8 @@ orchestration. Important actions include:
 
 - `team_create`
 - `team_list`
+- `team_shutdown` (defaults to completed/done teammates; pass
+  `member: "all"` to stop every live teammate)
 - `member_spawn` (`profile`/`agent`, `workspace_mode: "worktree"`,
   `mutating: true`, optional `branch`/`worktree_path` for isolated
   coding work)

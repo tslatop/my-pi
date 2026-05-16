@@ -14,6 +14,7 @@ import {
 	get_team_status,
 	get_team_statuses,
 	shutdown_orphaned_member,
+	shutdown_team_members,
 } from './runner-orchestration.js';
 import {
 	TeamStore,
@@ -203,6 +204,30 @@ export async function execute_team_tool(
 					},
 				],
 				details: { mode, style },
+			};
+		}
+		case 'team_shutdown': {
+			const mode = params.member === 'all' ? 'all' : 'done';
+			const result = await shutdown_team_members(
+				store,
+				require_team_id(),
+				runners,
+				mode,
+				params.message,
+				params.timeout_ms ?? 3_000,
+			);
+			set_team_ui(ctx, store, team_id, runners);
+			const suffix = result.errors.length
+				? `; ${result.errors.length} failed`
+				: '';
+			return {
+				content: [
+					{
+						type: 'text' as const,
+						text: `Shutdown ${result.members.length} teammate${result.members.length === 1 ? '' : 's'}${suffix}`,
+					},
+				],
+				details: result,
 			};
 		}
 		case 'member_upsert': {
