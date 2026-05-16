@@ -346,15 +346,7 @@ function search_args(query: string, limit: number): string[] {
 	];
 }
 
-export function run_gh_skill_search(
-	query: string,
-	limit = 15,
-	runner: CommandRunner = default_runner,
-): GhSkillSearchResult[] {
-	const output = ensure_success(
-		runner('gh', search_args(query, limit)),
-		'gh skill search failed',
-	);
+function parse_search_output(output: string): GhSkillSearchResult[] {
 	const parsed = JSON.parse(output) as unknown;
 	return Array.isArray(parsed)
 		? parsed.flatMap((item) => {
@@ -364,6 +356,18 @@ export function run_gh_skill_search(
 		: [];
 }
 
+export function run_gh_skill_search(
+	query: string,
+	limit = 15,
+	runner: CommandRunner = default_runner,
+): GhSkillSearchResult[] {
+	const output = ensure_success(
+		runner('gh', search_args(query.trim(), limit)),
+		'gh skill search failed',
+	);
+	return parse_search_output(output);
+}
+
 export async function run_gh_skill_search_async(
 	query: string,
 	limit = 15,
@@ -371,16 +375,10 @@ export async function run_gh_skill_search_async(
 	options?: { signal?: AbortSignal },
 ): Promise<GhSkillSearchResult[]> {
 	const output = await ensure_success_async(
-		runner('gh', search_args(query, limit), options),
+		runner('gh', search_args(query.trim(), limit), options),
 		'gh skill search failed',
 	);
-	const parsed = JSON.parse(output) as unknown;
-	return Array.isArray(parsed)
-		? parsed.flatMap((item) => {
-				const result = normalize_search_result(item);
-				return result ? [result] : [];
-			})
-		: [];
+	return parse_search_output(output);
 }
 
 export function run_gh_skill_preview(

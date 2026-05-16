@@ -71,20 +71,34 @@ export async function show_search_github_skills_modal(
 		);
 		if (!results) return false;
 		if (results.length === 0) {
-			ctx.ui.notify(`No GitHub skills found for ${query}`, 'warning');
+			await show_text_modal(ctx, {
+				title: 'No GitHub skills found',
+				text: `Nothing found matching “${query}”.\n\nTry a shorter query, a skill name like “sveltekit”, or search directly with:\n\ngh skill search ${query}`,
+				footer:
+					'Source: gh skill search over public GitHub SKILL.md files',
+			});
 			return false;
 		}
 
+		const result_items = results.map((result) => ({
+			value: `${result.repo}\t${result.path}`,
+			label: format_search_result(result),
+			description: `${result.stars}★ • ${result.description}`,
+		}));
 		const selected_path = await show_picker_modal(ctx, {
 			title: 'GitHub skill search results',
 			subtitle: `${results.length} results for ${query}`,
-			items: results.map((result) => ({
-				value: `${result.repo}\t${result.path}`,
-				label: format_search_result(result),
-				description: `${result.stars}★ • ${result.description}`,
-			})),
-			footer:
-				'Untrusted content warning: preview and review before installing random skills.',
+			items: result_items,
+			selected_footer: (item) => {
+				const [repo, path] = item?.value.split('\t') ?? [];
+				return repo && path
+					? [
+							`Selected source: ${repo}`,
+							`Selected path: ${path}`,
+							'Preview before installing untrusted skills.',
+						]
+					: 'Source: gh skill search over public GitHub SKILL.md files';
+			},
 		});
 		if (!selected_path) return false;
 		const [repo, path] = selected_path.split('\t');
@@ -129,7 +143,9 @@ export async function show_search_github_skills_modal(
 			if (output === undefined) return false;
 			await show_text_modal(ctx, {
 				title: format_search_result(selected),
+				subtitle: `${repo} • ${path}`,
 				text: output || 'No preview output.',
+				footer: `Source: ${repo} • Path: ${path} • Install: /skills add ${repo} ${path}`,
 			});
 			return false;
 		}

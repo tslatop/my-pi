@@ -4,6 +4,7 @@ import {
 	SelectList,
 	SettingsList,
 	Text,
+	type SelectItem,
 	type TUI,
 } from '@earendil-works/pi-tui';
 import {
@@ -122,13 +123,25 @@ export async function show_picker_modal(
 		return undefined;
 	}
 
+	let selected_item: SelectItem | undefined =
+		options.items[options.initial_index ?? 0];
+	const default_footer = '↑↓ navigate • enter select • esc cancel';
 	return await show_modal<string | undefined>(
 		ctx,
 		{
 			title: options.title,
 			subtitle: options.subtitle,
-			footer:
-				options.footer ?? '↑↓ navigate • enter select • esc cancel',
+			footer: options.selected_footer
+				? () => {
+						const selected_footer =
+							options.selected_footer?.(selected_item);
+						if (selected_footer !== undefined) return selected_footer;
+						if (typeof options.footer === 'function') {
+							return options.footer();
+						}
+						return options.footer ?? default_footer;
+					}
+				: (options.footer ?? default_footer),
 			overlay_options: options.overlay_options,
 			style: options.style,
 		},
@@ -148,6 +161,9 @@ export async function show_picker_modal(
 			if (options.initial_index !== undefined) {
 				select_list.setSelectedIndex(options.initial_index);
 			}
+			select_list.onSelectionChange = (item) => {
+				selected_item = item;
+			};
 			select_list.onSelect = (item) => done(item.value);
 			select_list.onCancel = () => done(undefined);
 			return {

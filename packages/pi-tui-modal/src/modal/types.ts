@@ -57,6 +57,9 @@ export interface PickerModalOptions {
 	title: string;
 	subtitle?: ModalText;
 	footer?: ModalText;
+	selected_footer?: (
+		item: SelectItem | undefined,
+	) => string | string[] | undefined;
 	overlay_options?: OverlayOptions;
 	style?: ModalStyle;
 	items: SelectItem[];

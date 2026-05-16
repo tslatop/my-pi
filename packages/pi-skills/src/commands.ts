@@ -274,7 +274,7 @@ export default async function skills(pi: ExtensionAPI) {
 						ctx.ui.notify(
 							lines.length
 								? `GitHub skill search results for ${arg}:\n\n${lines.join('\n\n')}\n\nReview before installing. Preview: gh skill preview <repo> <path>\nInstall: /skills add <repo> <path>`
-								: `No GitHub skills found for ${arg}`,
+								: `Nothing found matching “${arg}”. Try a shorter query or run: gh skill search ${arg}`,
 							lines.length ? 'info' : 'warning',
 						);
 					} catch (error) {
