@@ -1,5 +1,15 @@
 # @spences10/pi-team-mode
 
+## 0.0.20
+
+### Patch Changes
+
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+- Updated dependencies [8944bf8]
+  - @spences10/pi-tui-modal@0.0.13
+  - @spences10/pi-redact@0.0.7
+
 ## 0.0.19
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # my-pi
 
+## 0.1.45
+
+### Patch Changes
+
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+- Updated dependencies [8944bf8]
+  - @spences10/pi-tui-modal@0.0.13
+
 ## 0.1.44
 
 ### Patch Changes

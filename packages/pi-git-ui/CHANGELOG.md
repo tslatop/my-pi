@@ -1,5 +1,24 @@
 # @spences10/pi-git-ui
 
+## 0.0.2
+
+### Patch Changes
+
+- de6d26d: Add file filtering and repository overview for branches,
+  recent commits, stashes, and remotes.
+- 080c638: Add hunk staging controls and tests for status parsing,
+  renames, and diff hunk extraction.
+- 2691ae7: Add contextual git actions, conflict guidance, and
+  friendlier errors for common staging failures.
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+- 30ba517: Add true line staging with line navigation, minimal patch
+  generation, and tests.
+- 4714629: Refactor git UI internals into focused rendering and Git
+  operation modules for maintainability.
+- Updated dependencies [8944bf8]
+  - @spences10/pi-tui-modal@0.0.13
+
 ## 0.0.1
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.9
+
+### Patch Changes
+
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+
 ## 0.0.8
 
 ### Patch Changes

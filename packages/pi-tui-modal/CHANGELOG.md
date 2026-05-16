@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.13
+
+### Patch Changes
+
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+
 ## 0.0.12
 
 ### Patch Changes

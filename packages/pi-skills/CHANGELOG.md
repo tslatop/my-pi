@@ -1,5 +1,14 @@
 # @spences10/pi-skills
 
+## 0.0.18
+
+### Patch Changes
+
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+- Updated dependencies [8944bf8]
+  - @spences10/pi-tui-modal@0.0.13
+
 ## 0.0.17
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @spences10/pi-coding-preferences
 
+## 0.0.4
+
+### Patch Changes
+
+- 8944bf8: Move Pi core runtime packages to peer dependencies for
+  safer external extension installs.
+
 ## 0.0.3
 
 ### Patch Changes
