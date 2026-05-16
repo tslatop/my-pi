@@ -1,6 +1,6 @@
 # @spences10/pi-git-ui
 
-Interactive Git staging UI for Pi.
+Interactive Git staging and diff review UI for Pi.
 
 ## Usage
 
@@ -16,9 +16,14 @@ Then run:
 
 Controls:
 
-- `↑`/`↓` or `j`/`k` — move selection
-- `space` — stage/unstage selected file
-- `a` — stage all
+- `↑`/`↓` or `j`/`k` — move file selection
+- `←`/`→` or `h`/`l` — scroll the diff preview
+- `space` — safely stage/unstage selected file; disabled for
+  partial/conflicted files
+- `s` — stage selected file explicitly
+- `x` — unstage selected file explicitly
+- `a` — safely stage all; blocked if partial/conflicted files exist
+- `A` — force stage all
 - `u` — unstage all
 - `r` — refresh
 - `esc`/`q` — close
