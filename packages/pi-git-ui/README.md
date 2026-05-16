@@ -17,6 +17,7 @@ Then run:
 Controls:
 
 - `↑`/`↓` or `j`/`k` — move file selection
+- `enter` — open contextual actions for the selected file
 - `←`/`→` or `h`/`l` — scroll the diff preview
 - `n`/`p` — move between diff hunks
 - `space` — safely stage/unstage selected file; disabled for

@@ -34,6 +34,12 @@ import {
 	truncate_plain,
 } from './render.js';
 
+interface ActionItem {
+	action_label: string;
+	action_description: string;
+	run: () => void;
+}
+
 export class GitStageBody implements ModalBody, Focusable {
 	private selected = 0;
 	private diff_scroll = 0;
@@ -43,6 +49,8 @@ export class GitStageBody implements ModalBody, Focusable {
 	private diff_for_path = '';
 	private busy = false;
 	private message = '';
+	private actions?: ActionItem[];
+	private selected_action = 0;
 	private composer?: CommitComposer;
 	private _focused = false;
 
@@ -84,6 +92,7 @@ export class GitStageBody implements ModalBody, Focusable {
 
 	render(width: number): string[] {
 		if (this.composer) return this.composer.render(width);
+		if (this.actions) return this.render_action_menu(width);
 		const lines = this.render_header(width);
 		if (this.message) lines.push(...this.render_message(width));
 		if (this.status.files.length === 0) return lines;
@@ -93,6 +102,11 @@ export class GitStageBody implements ModalBody, Focusable {
 	handleInput(data: string): void {
 		if (this.composer) {
 			this.composer.handleInput(data);
+			this.request_render();
+			return;
+		}
+		if (this.actions) {
+			this.handle_action_input(data);
 			this.request_render();
 			return;
 		}
@@ -124,6 +138,7 @@ export class GitStageBody implements ModalBody, Focusable {
 				'Unstaged all changes',
 			);
 		else if (data === 'c') this.open_commit_composer();
+		else if (data === '\r' || data === '\n') this.open_action_menu();
 		else if (data === 'r') void this.load(this.selected_file()?.path);
 		this.request_render();
 	}
@@ -133,18 +148,15 @@ export class GitStageBody implements ModalBody, Focusable {
 	}
 
 	private restore_selection(preferred_path?: string): void {
-		const path =
-			preferred_path ?? this.status.files[this.selected]?.path;
+		const files = this.visible_files();
+		const path = preferred_path ?? files[this.selected]?.path;
 		const index = path
-			? this.status.files.findIndex((file) => file.path === path)
+			? files.findIndex((file) => file.path === path)
 			: -1;
 		this.selected =
 			index >= 0
 				? index
-				: Math.min(
-						this.selected,
-						Math.max(0, this.status.files.length - 1),
-					);
+				: Math.min(this.selected, Math.max(0, files.length - 1));
 	}
 
 	private render_header(width: number): string[] {
@@ -170,6 +182,36 @@ export class GitStageBody implements ModalBody, Focusable {
 		);
 	}
 
+	private render_action_menu(width: number): string[] {
+		const file = this.selected_file();
+		const lines = [
+			this.theme.bold('Actions'),
+			this.theme.fg('muted', file?.path ?? 'No file selected'),
+			'',
+		];
+		for (
+			let index = 0;
+			index < (this.actions?.length ?? 0);
+			index++
+		) {
+			const action = this.actions![index]!;
+			const prefix = index === this.selected_action ? '› ' : '  ';
+			const line = `${prefix}${action.action_label.padEnd(18)} ${this.theme.fg('dim', action.action_description)}`;
+			lines.push(
+				index === this.selected_action
+					? this.theme.fg('accent', this.theme.bold(line))
+					: line,
+			);
+		}
+		lines.push(
+			'',
+			this.theme.fg('dim', '↑↓/jk move • enter run • esc cancel'),
+		);
+		return lines.flatMap((line) =>
+			new Text(line, 0, 0).render(width),
+		);
+	}
+
 	private render_workbench(width: number): string[] {
 		const gap = width >= 96 ? 3 : 1;
 		const list_width = Math.min(
@@ -191,8 +233,9 @@ export class GitStageBody implements ModalBody, Focusable {
 	private render_file_list(width: number): string[] {
 		const lines = [this.theme.bold('Files')];
 		let last_state: FileState | undefined;
-		for (let i = 0; i < this.status.files.length; i++) {
-			const file = this.status.files[i]!;
+		const files = this.visible_files();
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i]!;
 			if (file.state !== last_state) {
 				lines.push(
 					this.theme.fg('dim', state_label(file.state).toUpperCase()),
@@ -220,6 +263,15 @@ export class GitStageBody implements ModalBody, Focusable {
 			? `Diff: ${truncate_plain(selected.path, Math.max(0, width - 6))}`
 			: 'Diff';
 		const lines = [this.theme.bold(title)];
+		if (selected?.state === 'conflicted') {
+			lines.push(
+				this.theme.fg(
+					'warning',
+					'Conflict: resolve markers in your editor, then stage the file.',
+				),
+				'',
+			);
+		}
 		if (!this.diff || this.diff.path !== this.diff_for_path) {
 			lines.push(this.theme.fg('dim', 'Loading diff…'));
 			return lines;
@@ -269,14 +321,19 @@ export class GitStageBody implements ModalBody, Focusable {
 		return text;
 	}
 
+	private visible_files(): GitFile[] {
+		return this.status.files;
+	}
+
 	private selected_file(): GitFile | undefined {
-		return this.status.files[this.selected];
+		return this.visible_files()[this.selected];
 	}
 
 	private move_selection(delta: number): void {
+		const files = this.visible_files();
 		const next = Math.max(
 			0,
-			Math.min(this.status.files.length - 1, this.selected + delta),
+			Math.min(files.length - 1, this.selected + delta),
 		);
 		if (next === this.selected) return;
 		this.selected = next;
@@ -391,6 +448,83 @@ export class GitStageBody implements ModalBody, Focusable {
 			() => unstage_file(this.cwd, file),
 			`Unstaged ${file.path}`,
 		);
+	}
+
+	private open_action_menu(): void {
+		const file = this.selected_file();
+		if (!file) {
+			this.message = 'No file selected.';
+			return;
+		}
+		const actions: ActionItem[] = [
+			{
+				action_label: 'stage file',
+				action_description:
+					'Stage all worktree changes for this file',
+				run: () => void this.stage_selected(),
+			},
+			{
+				action_label: 'unstage file',
+				action_description: 'Remove this file from the index',
+				run: () => void this.unstage_selected(),
+			},
+			{
+				action_label: 'stage hunk',
+				action_description: 'Stage the selected unstaged hunk',
+				run: () => void this.stage_selected_hunk(),
+			},
+			{
+				action_label: 'unstage hunk',
+				action_description: 'Unstage the selected staged hunk',
+				run: () => void this.unstage_selected_hunk(),
+			},
+			{
+				action_label: 'commit',
+				action_description: 'Commit currently staged changes',
+				run: () => this.open_commit_composer(),
+			},
+			{
+				action_label: 'refresh',
+				action_description: 'Reload git status and diff',
+				run: () => void this.load(file.path),
+			},
+		];
+		if (file.state === 'conflicted') {
+			actions.unshift({
+				action_label: 'conflict help',
+				action_description: 'Show safe conflict resolution steps',
+				run: () => this.show_conflict_help(file),
+			});
+		}
+		this.actions = actions;
+		this.selected_action = 0;
+	}
+
+	private handle_action_input(data: string): void {
+		if (data === '\x1B' || data === 'q') {
+			this.actions = undefined;
+			return;
+		}
+		if (key_is_up(data)) {
+			this.selected_action = Math.max(0, this.selected_action - 1);
+			return;
+		}
+		if (key_is_down(data)) {
+			this.selected_action = Math.min(
+				(this.actions?.length ?? 1) - 1,
+				this.selected_action + 1,
+			);
+			return;
+		}
+		if (data !== '\r' && data !== '\n') return;
+		const action = this.actions?.[this.selected_action];
+		this.actions = undefined;
+		action?.run();
+	}
+
+	private show_conflict_help(file: GitFile): void {
+		this.actions = undefined;
+		this.message = `Resolve ${file.path} in your editor, then stage it with s when conflict markers are gone.`;
 	}
 
 	private open_commit_composer(): void {
