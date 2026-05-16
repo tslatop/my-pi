@@ -1,5 +1,18 @@
 # @spences10/pi-git-ui
 
+## 0.0.3
+
+### Patch Changes
+
+- c5ec5af: Add amend commit, confirmed file discard, and clarify git
+  UI as focused staging modal.
+- 6813fe0: Prevent stale async diff loads from overwriting newer file
+  selection state in git UI.
+- 009f41b: Improve git UI test coverage for porcelain parsing, line
+  patches, and real index application.
+- 346e513: Simplify git UI footer and add grouped help screen for
+  discoverable keyboard shortcuts.
+
 ## 0.0.2
 
 ### Patch Changes
