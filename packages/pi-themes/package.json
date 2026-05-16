@@ -32,6 +32,7 @@
 	"pi": {
 		"themes": [
 			"./themes"
-		]
+		],
+		"image": "https://raw.githubusercontent.com/spences10/my-pi/main/assets/pi-package-preview.png"
 	}
 }
