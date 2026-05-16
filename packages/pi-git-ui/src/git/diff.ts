@@ -100,6 +100,23 @@ export function parse_diff_hunks(
 	return hunks;
 }
 
+export function changed_line_indexes(hunk: DiffHunk): number[] {
+	const lines = hunk.patch.split('\n');
+	const header_index = lines.findIndex((line) =>
+		line.startsWith('@@'),
+	);
+	if (header_index < 0) return [];
+	return lines
+		.slice(header_index + 1)
+		.flatMap((line, index) =>
+			(line.startsWith('+') || line.startsWith('-')) &&
+			!line.startsWith('+++') &&
+			!line.startsWith('---')
+				? [hunk.line_index + 1 + index]
+				: [],
+		);
+}
+
 export async function stage_hunk(
 	cwd: string,
 	hunk: DiffHunk,
@@ -124,4 +141,79 @@ export async function unstage_hunk(
 		cwd,
 		`${hunk.patch}\n`,
 	);
+}
+
+export async function stage_line(
+	cwd: string,
+	hunk: DiffHunk,
+	line_index: number,
+): Promise<void> {
+	if (hunk.section !== 'unstaged')
+		throw new Error('Selected line is already staged.');
+	await git_with_input(
+		['apply', '--cached', '--whitespace=nowarn', '-'],
+		cwd,
+		`${build_line_patch(hunk, line_index)}\n`,
+	);
+}
+
+export async function unstage_line(
+	cwd: string,
+	hunk: DiffHunk,
+	line_index: number,
+): Promise<void> {
+	if (hunk.section !== 'staged')
+		throw new Error('Selected line is not staged.');
+	await git_with_input(
+		['apply', '--cached', '--reverse', '--whitespace=nowarn', '-'],
+		cwd,
+		`${build_line_patch(hunk, line_index)}\n`,
+	);
+}
+
+export function build_line_patch(
+	hunk: DiffHunk,
+	line_index: number,
+): string {
+	const lines = hunk.patch.split('\n');
+	const header_index = lines.findIndex((line) =>
+		line.startsWith('@@'),
+	);
+	if (header_index < 0)
+		throw new Error('Selected hunk has no header.');
+	const body_index = line_index - hunk.line_index - 1;
+	const body = lines.slice(header_index + 1);
+	const selected = body[body_index];
+	if (
+		!selected ||
+		(!selected.startsWith('+') && !selected.startsWith('-'))
+	) {
+		throw new Error('Selected line is not stageable.');
+	}
+
+	const next_body = body.flatMap((line, index) => {
+		if (index === body_index) return [line];
+		if (line.startsWith('+')) return [];
+		if (line.startsWith('-')) return [` ${line.slice(1)}`];
+		return [line];
+	});
+	const header = rebuild_hunk_header(lines[header_index]!, next_body);
+	return [...lines.slice(0, header_index), header, ...next_body].join(
+		'\n',
+	);
+}
+
+function rebuild_hunk_header(header: string, body: string[]): string {
+	const match = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)$/.exec(
+		header,
+	);
+	if (!match) return header;
+	let old_count = 0;
+	let new_count = 0;
+	for (const line of body) {
+		if (line.startsWith('\\')) continue;
+		if (!line.startsWith('+')) old_count++;
+		if (!line.startsWith('-')) new_count++;
+	}
+	return `@@ -${match[1]},${old_count} +${match[2]},${new_count} @@${match[3]}`;
 }

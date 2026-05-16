@@ -21,12 +21,15 @@ Controls:
 - `enter` — open contextual actions for the selected file
 - `←`/`→` or `h`/`l` — scroll the diff preview
 - `n`/`p` — move between diff hunks
+- `[`/`]` — move between changed lines
 - `space` — safely stage/unstage selected file; disabled for
   partial/conflicted files
 - `s` — stage selected file explicitly
 - `x` — unstage selected file explicitly
 - `S` — stage selected hunk
 - `X` — unstage selected hunk
+- `+` — stage selected changed line
+- `-` — unstage selected changed line
 - `c` — commit staged changes with a Conventional Commit helper or raw
   message
 - `g` — show repository overview with branches, recent commits,

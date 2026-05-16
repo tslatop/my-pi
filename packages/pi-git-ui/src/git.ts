@@ -1,8 +1,12 @@
 export {
+	build_line_patch,
+	changed_line_indexes,
 	parse_diff_hunks,
 	read_diff,
 	stage_hunk,
+	stage_line,
 	unstage_hunk,
+	unstage_line,
 } from './git/diff.js';
 export { format_git_error } from './git/errors.js';
 export {

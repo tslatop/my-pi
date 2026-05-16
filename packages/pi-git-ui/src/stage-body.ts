@@ -2,6 +2,7 @@ import type { Focusable } from '@earendil-works/pi-tui';
 import type { ModalBody, ModalTheme } from '@spences10/pi-tui-modal';
 import { CommitComposer } from './commit-composer.js';
 import {
+	changed_line_indexes,
 	commit,
 	EMPTY_STATUS,
 	format_git_error,
@@ -12,11 +13,13 @@ import {
 	stage_all,
 	stage_file,
 	stage_hunk,
+	stage_line,
 	staged_file_count,
 	toggle_file,
 	unstage_all,
 	unstage_file,
 	unstage_hunk,
+	unstage_line,
 	type DiffHunk,
 	type DiffView,
 	type GitFile,
@@ -36,6 +39,7 @@ export class GitStageBody implements ModalBody, Focusable {
 	private selected = 0;
 	private diff_scroll = 0;
 	private selected_hunk = 0;
+	private selected_line_index: number | undefined;
 	private status: GitStatus = EMPTY_STATUS;
 	private diff?: DiffView;
 	private diff_for_path = '';
@@ -99,6 +103,7 @@ export class GitStageBody implements ModalBody, Focusable {
 				diff_for_path: this.diff_for_path,
 				diff_scroll: this.diff_scroll,
 				selected_hunk: this.selected_hunk,
+				selected_line_index: this.selected_line_index,
 				actions: this.actions,
 				selected_action: this.selected_action,
 				repo_overview: this.repo_overview,
@@ -143,6 +148,10 @@ export class GitStageBody implements ModalBody, Focusable {
 		else if (data === 'x') void this.unstage_selected();
 		else if (data === 'S') void this.stage_selected_hunk();
 		else if (data === 'X') void this.unstage_selected_hunk();
+		else if (data === '+') void this.stage_selected_line();
+		else if (data === '-') void this.unstage_selected_line();
+		else if (data === ']') this.move_line(1);
+		else if (data === '[') this.move_line(-1);
 		else if (data === 'n') this.move_hunk(1);
 		else if (data === 'p') this.move_hunk(-1);
 		else if (data === 'a') void this.stage_all_safely();
@@ -203,6 +212,7 @@ export class GitStageBody implements ModalBody, Focusable {
 		this.selected = next;
 		this.diff_scroll = 0;
 		this.selected_hunk = 0;
+		this.selected_line_index = undefined;
 		void this.load_diff();
 	}
 
@@ -235,6 +245,7 @@ export class GitStageBody implements ModalBody, Focusable {
 		this.selected = 0;
 		this.diff_scroll = 0;
 		this.selected_hunk = 0;
+		this.selected_line_index = undefined;
 		this.message = this.filter_text
 			? `Filter: ${this.filter_text}`
 			: 'Filter cleared';
@@ -254,7 +265,48 @@ export class GitStageBody implements ModalBody, Focusable {
 			),
 		);
 		const hunk = this.selected_diff_hunk();
-		if (hunk) this.diff_scroll = hunk.line_index;
+		if (hunk) {
+			this.diff_scroll = hunk.line_index;
+			this.selected_line_index = changed_line_indexes(hunk)[0];
+		}
+	}
+
+	private move_line(delta: number): void {
+		const indexes = this.stageable_line_indexes();
+		if (indexes.length === 0) {
+			this.message = 'No stageable lines in selected diff.';
+			return;
+		}
+		const current = this.selected_line_index ?? indexes[0]!;
+		const current_index = Math.max(0, indexes.indexOf(current));
+		const next =
+			indexes[
+				Math.max(
+					0,
+					Math.min(indexes.length - 1, current_index + delta),
+				)
+			]!;
+		this.selected_line_index = next;
+		this.diff_scroll = next;
+		const hunk_index = this.diff?.hunks.findIndex((hunk) =>
+			changed_line_indexes(hunk).includes(next),
+		);
+		if (hunk_index !== undefined && hunk_index >= 0)
+			this.selected_hunk = hunk_index;
+	}
+
+	private stageable_line_indexes(): number[] {
+		return this.diff?.hunks.flatMap(changed_line_indexes) ?? [];
+	}
+
+	private selected_line_hunk(): DiffHunk | undefined {
+		return this.diff?.hunks.find((hunk) =>
+			this.selected_line_index === undefined
+				? false
+				: changed_line_indexes(hunk).includes(
+						this.selected_line_index,
+					),
+		);
 	}
 
 	private async load_diff(): Promise<void> {
@@ -271,6 +323,7 @@ export class GitStageBody implements ModalBody, Focusable {
 				this.selected_hunk,
 				Math.max(0, this.diff.hunks.length - 1),
 			);
+			this.selected_line_index ??= this.stageable_line_indexes()[0];
 		} catch (error) {
 			this.diff = {
 				path,
@@ -334,6 +387,30 @@ export class GitStageBody implements ModalBody, Focusable {
 		);
 	}
 
+	private async stage_selected_line(): Promise<void> {
+		const hunk = this.selected_line_hunk();
+		if (!hunk || this.selected_line_index === undefined) {
+			this.message = 'No line selected.';
+			return;
+		}
+		await this.run(
+			() => stage_line(this.cwd, hunk, this.selected_line_index!),
+			'Staged line',
+		);
+	}
+
+	private async unstage_selected_line(): Promise<void> {
+		const hunk = this.selected_line_hunk();
+		if (!hunk || this.selected_line_index === undefined) {
+			this.message = 'No line selected.';
+			return;
+		}
+		await this.run(
+			() => unstage_line(this.cwd, hunk, this.selected_line_index!),
+			'Unstaged line',
+		);
+	}
+
 	private async stage_all_safely(): Promise<void> {
 		const unsafe = this.status.files.find(
 			(file) => file.state === 'mixed' || file.state === 'conflicted',
@@ -372,6 +449,16 @@ export class GitStageBody implements ModalBody, Focusable {
 				action_label: 'unstage hunk',
 				action_description: 'Unstage the selected staged hunk',
 				run: () => void this.unstage_selected_hunk(),
+			},
+			{
+				action_label: 'stage line',
+				action_description: 'Stage the selected changed line',
+				run: () => void this.stage_selected_line(),
+			},
+			{
+				action_label: 'unstage line',
+				action_description: 'Unstage the selected changed line',
+				run: () => void this.unstage_selected_line(),
 			},
 			{
 				action_label: 'commit',
@@ -480,6 +567,7 @@ export class GitStageBody implements ModalBody, Focusable {
 			this.status = await read_status(this.cwd);
 			this.restore_selection(path);
 			this.diff_scroll = 0;
+			this.selected_line_index = undefined;
 			await this.load_diff();
 		} catch (error) {
 			this.message = format_git_error(error);

@@ -23,6 +23,7 @@ export interface StageRenderState {
 	diff_for_path: string;
 	diff_scroll: number;
 	selected_hunk: number;
+	selected_line_index?: number;
 	actions?: ActionItem[];
 	selected_action: number;
 	repo_overview?: RepoOverview;

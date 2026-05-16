@@ -204,6 +204,7 @@ function render_diff(
 				body[index]!,
 				width,
 				selected_hunk?.line_index === line_index,
+				state.selected_line_index === line_index,
 			),
 		);
 	}
@@ -217,9 +218,10 @@ function format_diff_line(
 	state: StageRenderState,
 	raw: string,
 	width: number,
-	selected = false,
+	selected_hunk = false,
+	selected_line = false,
 ): string {
-	const marker = selected ? '› ' : '';
+	const marker = selected_line ? '» ' : selected_hunk ? '› ' : '';
 	const text = truncate_plain(
 		`${marker}${raw.replace(/\t/g, '  ')}`,
 		width,

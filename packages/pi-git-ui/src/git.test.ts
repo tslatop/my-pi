@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parse_diff_hunks, parse_porcelain_z } from './git.js';
+import {
+	build_line_patch,
+	changed_line_indexes,
+	parse_diff_hunks,
+	parse_porcelain_z,
+} from './git.js';
 
 describe('parse_porcelain_z', () => {
 	it('classifies and sorts git status entries', () => {
@@ -63,5 +68,15 @@ index 1111111..2222222 100644
 		expect(hunks[0]?.patch).toContain('+const two = 2;');
 		expect(hunks[0]?.patch).not.toContain('+\tfinish();');
 		expect(hunks[1]?.patch).toContain('+\tfinish();');
+	});
+
+	it('builds a minimal patch for one selected changed line', () => {
+		const hunk = parse_diff_hunks(diff, 'unstaged')[0]!;
+		const line_index = changed_line_indexes(hunk)[0]!;
+		const patch = build_line_patch(hunk, line_index);
+
+		expect(patch).toContain('@@ -1,2 +1,3 @@');
+		expect(patch).toContain('+const two = 2;');
+		expect(patch).toContain(' const one = 1;');
 	});
 });
