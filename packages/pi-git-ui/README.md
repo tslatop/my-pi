@@ -1,6 +1,6 @@
 # @spences10/pi-git-ui
 
-Interactive Git staging and diff review UI for Pi.
+Interactive Git staging, diff review, and commit UI for Pi.
 
 ## Usage
 
@@ -22,6 +22,8 @@ Controls:
   partial/conflicted files
 - `s` — stage selected file explicitly
 - `x` — unstage selected file explicitly
+- `c` — commit staged changes with a Conventional Commit helper or raw
+  message
 - `a` — safely stage all; blocked if partial/conflicted files exist
 - `A` — force stage all
 - `u` — unstage all
