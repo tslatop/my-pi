@@ -50,6 +50,7 @@ export class GitStageBody implements ModalBody, Focusable {
 	private actions?: ActionItem[];
 	private selected_action = 0;
 	private repo_overview?: RepoOverview;
+	private show_help = false;
 	private composer?: CommitComposer;
 	private diff_request_id = 0;
 	private _focused = false;
@@ -108,6 +109,7 @@ export class GitStageBody implements ModalBody, Focusable {
 				actions: this.actions,
 				selected_action: this.selected_action,
 				repo_overview: this.repo_overview,
+				show_help: this.show_help,
 			},
 			width,
 		);
@@ -121,6 +123,12 @@ export class GitStageBody implements ModalBody, Focusable {
 		}
 		if (this.actions) {
 			this.handle_action_input(data);
+			this.request_render();
+			return;
+		}
+		if (this.show_help) {
+			if (data === '\x1B' || data === 'q' || data === '?')
+				this.show_help = false;
 			this.request_render();
 			return;
 		}
@@ -169,6 +177,7 @@ export class GitStageBody implements ModalBody, Focusable {
 		else if (data === 'g') void this.open_repo_overview();
 		else if (data === 'c') this.open_commit_composer();
 		else if (data === '\r' || data === '\n') this.open_action_menu();
+		else if (data === '?') this.show_help = true;
 		else if (data === '/') this.start_filter();
 		else if (data === 'r') void this.load(this.selected_file()?.path);
 		this.request_render();

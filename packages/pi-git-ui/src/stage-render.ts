@@ -20,6 +20,7 @@ export function render_stage(
 	width: number,
 ): string[] {
 	if (state.actions) return render_action_menu(state, width);
+	if (state.show_help) return render_help(state, width);
 	if (state.repo_overview) return render_repo_overview(state, width);
 	const lines = render_header(state, width);
 	if (state.message) lines.push(...render_message(state, width));
@@ -82,9 +83,59 @@ function render_action_menu(
 	}
 	lines.push(
 		'',
-		state.theme.fg('dim', '↑↓/jk move • enter run • esc cancel'),
+		state.theme.fg(
+			'dim',
+			'↑↓/jk move • enter run • ? help • esc cancel',
+		),
 	);
 	return lines.flatMap((line) => new Text(line, 0, 0).render(width));
+}
+
+function render_help(
+	state: StageRenderState,
+	width: number,
+): string[] {
+	const groups = [
+		[
+			'Navigation',
+			'↑↓/jk move files',
+			'←→/hl scroll diff',
+			'/ filter files',
+			'r refresh',
+		],
+		[
+			'Staging',
+			'space safe toggle file',
+			's stage file',
+			'x unstage file',
+			'S/X stage or unstage hunk',
+			'+/- stage or unstage line',
+			'a safe stage all',
+			'A force stage all',
+			'u unstage all',
+		],
+		['Diff selection', 'n/p move hunks', '[/] move changed lines'],
+		[
+			'Other',
+			'enter actions',
+			'c commit',
+			'g repository',
+			'q/esc close',
+		],
+	];
+	const lines = [
+		state.theme.bold('Git UI help'),
+		state.theme.fg('dim', '?/q/esc back'),
+		'',
+	];
+	for (const [title, ...items] of groups) {
+		lines.push(state.theme.fg('accent', state.theme.bold(title)));
+		for (const item of items) lines.push(`  ${item}`);
+		lines.push('');
+	}
+	return lines.flatMap((line) =>
+		new Text(truncate_plain(line, width), 0, 0).render(width),
+	);
 }
 
 function render_repo_overview(

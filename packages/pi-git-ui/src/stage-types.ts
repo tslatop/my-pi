@@ -27,4 +27,5 @@ export interface StageRenderState {
 	actions?: ActionItem[];
 	selected_action: number;
 	repo_overview?: RepoOverview;
+	show_help: boolean;
 }

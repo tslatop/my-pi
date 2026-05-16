@@ -19,8 +19,7 @@ async function show_git_ui(
 			title: 'Source Control',
 			subtitle:
 				'Review diffs, safely stage files, and commit staged changes',
-			footer:
-				'↑↓/jk files • / filter • enter actions • g overview • n/p hunks • [/]/+- lines • S/X hunk • ←→/hl diff • space safe toggle • s/x file • c commit • a/A stage all • u unstage all • r refresh • esc/q close',
+			footer: '↑↓/jk move • enter actions • ? help • q close',
 			overlay_options: {
 				width: '92%',
 				minWidth: 80,
