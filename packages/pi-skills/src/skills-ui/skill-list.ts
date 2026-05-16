@@ -48,13 +48,10 @@ export async function show_skill_list_modal(
 	mgr: SkillsManager,
 ): Promise<void> {
 	while (true) {
-		const skills = sort_skills([
-			...mgr.discover(),
-			...mgr.discover_importable(),
-		]);
+		const skills = sort_skills(mgr.discover());
 		const key = await pick_skill(ctx, {
 			title: 'Browse skills',
-			subtitle: `${mgr.discover().length} managed • ${mgr.discover_importable().length} importable`,
+			subtitle: `${skills.length} managed`,
 			skills,
 			empty_message: 'No skills found',
 		});

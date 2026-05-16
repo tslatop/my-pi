@@ -16,7 +16,7 @@ export async function show_refresh_summary(
 ): Promise<void> {
 	mgr.refresh();
 	ctx.ui.notify(
-		`Skills refreshed: ${mgr.discover().length} managed, ${mgr.discover_importable().length} importable`,
+		`Skills refreshed: ${mgr.discover().length} managed`,
 		'info',
 	);
 }

@@ -4,11 +4,6 @@ import {
 	type SkillFrontmatter,
 } from '@earendil-works/pi-coding-agent';
 import {
-	IMPORT_METADATA_FILE,
-	type ImportedSkillMetadata,
-	type PluginSkillSource,
-} from '@spences10/pi-skill-importer';
-import {
 	existsSync,
 	globSync,
 	readFileSync,
@@ -16,9 +11,7 @@ import {
 } from 'node:fs';
 import { dirname, join, parse, resolve } from 'node:path';
 
-export { IMPORT_METADATA_FILE, type ImportedSkillMetadata };
-
-export type SkillScope = 'global' | 'project' | 'plugin';
+export type SkillScope = 'global' | 'project';
 
 export interface DiscoveredSkill {
 	name: string;
@@ -27,9 +20,7 @@ export interface DiscoveredSkill {
 	baseDir: string;
 	source: string;
 	scope: SkillScope;
-	kind: 'managed' | 'external';
-	plugin?: PluginSkillSource;
-	import_meta?: ImportedSkillMetadata;
+	kind: 'managed';
 }
 
 function parse_skill_md(
@@ -46,21 +37,6 @@ function parse_skill_md(
 		return { name, description: description.trim() };
 	} catch {
 		return null;
-	}
-}
-
-function read_import_metadata(
-	base_dir: string,
-): ImportedSkillMetadata | undefined {
-	const metadata_path = join(base_dir, IMPORT_METADATA_FILE);
-	if (!existsSync(metadata_path)) return undefined;
-
-	try {
-		return JSON.parse(
-			readFileSync(metadata_path, 'utf-8'),
-		) as ImportedSkillMetadata;
-	} catch {
-		return undefined;
 	}
 }
 
@@ -89,7 +65,6 @@ function scan_dir_for_skills(
 				source: options.source,
 				scope: options.scope,
 				kind: 'managed',
-				import_meta: read_import_metadata(dir),
 			});
 		}
 		return results;
@@ -109,7 +84,6 @@ function scan_dir_for_skills(
 					source: options.source,
 					scope: options.scope,
 					kind: 'managed',
-					import_meta: read_import_metadata(base_dir),
 				});
 			}
 		}

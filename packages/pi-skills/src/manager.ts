@@ -1,4 +1,5 @@
-import { dirname, resolve } from 'node:path';
+import { existsSync, rmSync } from 'node:fs';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import {
 	type SkillContextRule,
 	type SkillDefaultPolicy,
@@ -11,19 +12,13 @@ import {
 	save_skills_config,
 } from './config.js';
 import {
-	type DeleteSkillResult,
-	type ImportSkillResult,
-	type SyncSkillResult,
-	delete_imported_skill,
-	import_external_skill,
-	scan_importable_skills,
-	sync_imported_skill,
-} from '@spences10/pi-skill-importer';
-import {
 	type DiscoveredSkill,
 	scan_managed_skills,
 	scan_project_skills,
 } from './scanner.js';
+export interface DeleteSkillResult {
+	skillDir: string;
+}
 
 export const SKILLS_PROFILE_ENV = 'MY_PI_SKILLS_PROFILE';
 
@@ -43,7 +38,6 @@ export interface SkillProfile {
 
 export interface SkillsManager {
 	discover(): ManagedSkill[];
-	discover_importable(): ManagedSkill[];
 	get_enabled_skill_paths(): string[];
 	/** Check if a skill should pass through pi's skillsOverride */
 	is_enabled_by_skill(name: string, filePath: string): boolean;
@@ -52,7 +46,6 @@ export interface SkillsManager {
 	disable(key: string): boolean;
 	toggle(key: string): boolean;
 	search(query: string): ManagedSkill[];
-	search_importable(query: string): ManagedSkill[];
 	set_defaults(policy: SkillDefaultPolicy): void;
 	get_active_profile(): string;
 	list_profiles(): SkillProfile[];
@@ -63,10 +56,6 @@ export interface SkillsManager {
 	): SkillProfile;
 	include_in_profile(profile: string, pattern: string): void;
 	exclude_from_profile(profile: string, pattern: string): void;
-	import_skill(
-		key_or_name: string,
-	): ImportSkillResult & { key: string };
-	sync_skill(key_or_name: string): SyncSkillResult & { key: string };
 	delete_skill(
 		key_or_name: string,
 	): DeleteSkillResult & { key: string };
@@ -166,7 +155,6 @@ export function create_skills_manager(
 	let cwd = options.cwd ?? process.cwd();
 	let project_skills_enabled = options.project_skills_enabled ?? true;
 	let managed_cache: DiscoveredSkill[] | null = null;
-	let importable_cache: DiscoveredSkill[] | null = null;
 
 	function get_managed(): DiscoveredSkill[] {
 		if (!managed_cache) {
@@ -176,13 +164,6 @@ export function create_skills_manager(
 			];
 		}
 		return managed_cache;
-	}
-
-	function get_importable(): DiscoveredSkill[] {
-		if (!importable_cache) {
-			importable_cache = scan_importable_skills();
-		}
-		return importable_cache;
 	}
 
 	function context_cwd_values(rule: SkillContextRule): string[] {
@@ -321,10 +302,6 @@ export function create_skills_manager(
 			return get_managed().map(to_managed);
 		},
 
-		discover_importable(): ManagedSkill[] {
-			return get_importable().map(to_managed);
-		},
-
 		is_enabled_by_skill(name: string, filePath: string): boolean {
 			const discovered = get_managed();
 			const match = discovered.find((s) => s.skillPath === filePath);
@@ -380,16 +357,6 @@ export function create_skills_manager(
 		search(query: string): ManagedSkill[] {
 			const q = query.toLowerCase();
 			return this.discover().filter(
-				(s) =>
-					s.name.toLowerCase().includes(q) ||
-					s.description.toLowerCase().includes(q) ||
-					s.source.toLowerCase().includes(q),
-			);
-		},
-
-		search_importable(query: string): ManagedSkill[] {
-			const q = query.toLowerCase();
-			return this.discover_importable().filter(
 				(s) =>
 					s.name.toLowerCase().includes(q) ||
 					s.description.toLowerCase().includes(q) ||
@@ -470,41 +437,35 @@ export function create_skills_manager(
 			save_skills_config(config);
 		},
 
-		import_skill(key_or_name: string) {
-			const skill = match_skill_by_key_or_name(
-				get_importable(),
-				key_or_name,
-			);
-			const result = import_external_skill(skill);
-			const managed_key = make_skill_key(skill.name, 'pi-native');
-			set_profile_skill_enabled(managed_key, true);
-			this.refresh();
-			return {
-				...result,
-				key: managed_key,
-			};
-		},
-
-		sync_skill(key_or_name: string) {
-			const skill = match_skill_by_key_or_name(
-				get_managed(),
-				key_or_name,
-			);
-			const result = sync_imported_skill(skill);
-			this.refresh();
-			return {
-				...result,
-				key: resolve_skill_key(skill),
-			};
-		},
-
 		delete_skill(key_or_name: string) {
 			const skill = match_skill_by_key_or_name(
 				get_managed(),
 				key_or_name,
 			);
+			if (!existsSync(skill.baseDir)) {
+				throw new Error(
+					`Skill directory no longer exists: ${skill.baseDir}`,
+				);
+			}
+			if (!existsSync(skill.skillPath)) {
+				throw new Error(
+					`Skill file no longer exists: ${skill.skillPath}`,
+				);
+			}
+			const skill_dir = resolve(skill.baseDir);
+			const skill_file = resolve(skill.skillPath);
+			const relative_skill_path = relative(skill_dir, skill_file);
+			if (
+				!relative_skill_path ||
+				relative_skill_path.startsWith('..') ||
+				isAbsolute(relative_skill_path)
+			) {
+				throw new Error(
+					`Refusing to delete unsafe skill path: ${skill.baseDir}`,
+				);
+			}
 			const key = resolve_skill_key(skill);
-			const result = delete_imported_skill(skill);
+			rmSync(skill_dir, { recursive: true, force: true });
 			for (const profile of Object.values(config.profiles)) {
 				profile.include = remove_value(profile.include, key);
 				profile.exclude = remove_value(profile.exclude, key);
@@ -512,14 +473,13 @@ export function create_skills_manager(
 			save_skills_config(config);
 			this.refresh();
 			return {
-				...result,
+				skillDir: skill_dir,
 				key,
 			};
 		},
 
 		refresh(): void {
 			managed_cache = null;
-			importable_cache = null;
 			config = load_skills_config();
 			project_skills_enabled =
 				options.project_skills_enabled ?? project_skills_enabled;

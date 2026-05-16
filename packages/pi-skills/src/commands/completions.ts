@@ -11,8 +11,6 @@ export const SKILL_SUBCOMMANDS = [
 	'delete',
 	'search',
 	'add',
-	'import',
-	'sync',
 	'update',
 	'profile',
 	'refresh',
@@ -35,26 +33,7 @@ export function get_skill_argument_completions(
 		['show', 'enable', 'disable', 'delete'].includes(parts[0] ?? '')
 	) {
 		const q = parts.slice(1).join(' ').toLowerCase();
-		const skills =
-			parts[0] === 'show'
-				? [...mgr.discover(), ...mgr.discover_importable()]
-				: mgr.discover();
-		return sort_skills(skills)
-			.filter(
-				(s) =>
-					s.key.toLowerCase().includes(q) ||
-					s.name.toLowerCase().includes(q),
-			)
-			.slice(0, 20)
-			.map((s) => ({
-				value: `${parts[0]} ${s.key}`,
-				label: s.key,
-			}));
-	}
-
-	if (parts[0] === 'import') {
-		const q = parts.slice(1).join(' ').toLowerCase();
-		return sort_skills(mgr.discover_importable())
+		return sort_skills(mgr.discover())
 			.filter(
 				(s) =>
 					s.key.toLowerCase().includes(q) ||
@@ -73,23 +52,6 @@ export function get_skill_argument_completions(
 			.map((flag) => ({
 				value: `${parts.slice(0, -1).join(' ')} ${flag}`.trim(),
 				label: flag,
-			}));
-	}
-
-	if (parts[0] === 'sync') {
-		const q = parts.slice(1).join(' ').toLowerCase();
-		return sort_skills(
-			mgr.discover().filter((skill) => Boolean(skill.import_meta)),
-		)
-			.filter(
-				(s) =>
-					s.key.toLowerCase().includes(q) ||
-					s.name.toLowerCase().includes(q),
-			)
-			.slice(0, 20)
-			.map((s) => ({
-				value: `${parts[0]} ${s.key}`,
-				label: s.key,
 			}));
 	}
 

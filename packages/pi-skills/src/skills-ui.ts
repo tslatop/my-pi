@@ -4,7 +4,6 @@ export {
 	show_update_github_skills_modal,
 } from './skills-ui/github.js';
 export { show_skills_home_modal } from './skills-ui/home.js';
-export { show_importable_skills_modal } from './skills-ui/importable.js';
 export { show_skills_manager_modal } from './skills-ui/manage.js';
 export {
 	pick_profile,

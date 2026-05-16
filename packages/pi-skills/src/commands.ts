@@ -33,7 +33,6 @@ import {
 	pick_skill,
 	show_add_github_skill_modal,
 	show_defaults_modal,
-	show_importable_skills_modal,
 	show_profiles_modal,
 	show_refresh_summary,
 	show_search_github_skills_modal,
@@ -58,7 +57,7 @@ export default async function skills(pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand('skills', {
-		description: 'Manage pi-native skills and import external skills',
+		description: 'Manage and discover Pi skills',
 		getArgumentCompletions: (prefix) =>
 			get_skill_argument_completions(prefix, mgr),
 		handler: async (args, ctx) => {
@@ -68,16 +67,11 @@ export default async function skills(pi: ExtensionAPI) {
 				let selected: string | undefined;
 				while (true) {
 					const managed = mgr.discover();
-					const importable = mgr.discover_importable();
 					const counts = {
 						managed: managed.length,
 						pi_native: managed.filter(
 							(skill) => skill.source === 'pi-native',
 						).length,
-						claude_code_detected:
-							managed.filter((skill) => skill.source === 'user-local')
-								.length + importable.length,
-						importable: importable.length,
 					};
 					selected = await show_skills_home_modal(
 						ctx,
@@ -88,8 +82,6 @@ export default async function skills(pi: ExtensionAPI) {
 
 					if (selected === 'manage') {
 						if (await show_skills_manager_modal(ctx, mgr)) return;
-					} else if (selected === 'importable') {
-						if (await show_importable_skills_modal(ctx, mgr)) return;
 					} else if (selected === 'search') {
 						if (await show_search_github_skills_modal(ctx)) return;
 					} else if (selected === 'add') {
@@ -110,10 +102,7 @@ export default async function skills(pi: ExtensionAPI) {
 
 			switch (sub) {
 				case 'list': {
-					const skills = [
-						...mgr.discover(),
-						...mgr.discover_importable(),
-					];
+					const skills = mgr.discover();
 					if (ctx.hasUI) {
 						await show_skill_list_modal(ctx, mgr);
 					} else {
@@ -122,10 +111,7 @@ export default async function skills(pi: ExtensionAPI) {
 					break;
 				}
 				case 'show': {
-					const skills = [
-						...mgr.discover(),
-						...mgr.discover_importable(),
-					];
+					const skills = mgr.discover();
 					let target = arg;
 					if (!target && ctx.hasUI) {
 						target =
@@ -329,146 +315,6 @@ export default async function skills(pi: ExtensionAPI) {
 							'info',
 						);
 						await ctx.reload();
-						return;
-					} catch (error) {
-						ctx.ui.notify(
-							error instanceof Error ? error.message : String(error),
-							'warning',
-						);
-						return;
-					}
-				}
-				case 'import': {
-					let target = arg;
-					if (!target && ctx.hasUI) {
-						target =
-							(await pick_skill(ctx, {
-								title: 'Import skill',
-								subtitle:
-									'Copy an external skill into Pi-native storage, or run: /skills import <owner/repo> <skill>',
-								skills: sort_skills(mgr.discover_importable()),
-								empty_message: 'No importable skills found',
-							})) ?? '';
-						if (!target) return;
-					}
-					if (!target) {
-						ctx.ui.notify(
-							'Usage: /skills import <key|name> OR /skills import <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]',
-							'warning',
-						);
-						return;
-					}
-
-					const gh_request = parse_gh_skill_install_args(rest);
-					if (gh_request) {
-						if (!has_gh_skill()) {
-							ctx.ui.notify(
-								'GitHub skill imports require gh v2.90.0+ with `gh skill` support.',
-								'warning',
-							);
-							return;
-						}
-						try {
-							const output = ctx.hasUI
-								? await run_with_progress_modal(
-										ctx,
-										{
-											title: 'Importing GitHub skill',
-											message: `Installing ${gh_request.skill} from ${gh_request.repository}`,
-										},
-										async ({ signal, update }) => {
-											update({ current: gh_request.skill });
-											return await run_gh_skill_install_async(
-												gh_request,
-												undefined,
-												{ signal },
-											);
-										},
-									)
-								: run_gh_skill_install(gh_request);
-							if (output === undefined) return;
-							if (ctx.hasUI) {
-								await show_text_modal(ctx, {
-									title: 'GitHub skill imported',
-									text: `${output || `Imported ${gh_request.skill} from ${gh_request.repository}`}\n\nReloading...`,
-								});
-							} else {
-								ctx.ui.notify(
-									`${output || `Imported ${gh_request.skill} from ${gh_request.repository}`}\nReloading...`,
-									'info',
-								);
-							}
-							await ctx.reload();
-							return;
-						} catch (error) {
-							ctx.ui.notify(
-								error instanceof Error
-									? error.message
-									: String(error),
-								'warning',
-							);
-							return;
-						}
-					}
-
-					try {
-						const result = mgr.import_skill(target);
-						ctx.ui.notify(
-							`Imported ${target} to ${result.skillDir}. Reloading...`,
-							'info',
-						);
-						await ctx.reload();
-						return;
-					} catch (error) {
-						ctx.ui.notify(
-							error instanceof Error ? error.message : String(error),
-							'warning',
-						);
-						return;
-					}
-				}
-				case 'sync': {
-					let target = arg;
-					if (!target && ctx.hasUI) {
-						target =
-							(await pick_skill(ctx, {
-								title: 'Sync imported skill',
-								subtitle:
-									'Update an imported skill from its upstream source',
-								skills: sort_skills(
-									mgr
-										.discover()
-										.filter((skill) => Boolean(skill.import_meta)),
-								),
-								empty_message: 'No imported skills found',
-							})) ?? '';
-						if (!target) return;
-					}
-					if (!target) {
-						ctx.ui.notify(
-							'Usage: /skills sync <key|name>',
-							'warning',
-						);
-						return;
-					}
-					try {
-						const result = mgr.sync_skill(target);
-						if (result.changed) {
-							ctx.ui.notify(`Synced ${target}. Reloading...`, 'info');
-							await ctx.reload();
-							return;
-						}
-						if (ctx.hasUI) {
-							await show_text_modal(ctx, {
-								title: 'Skill already up to date',
-								text: `${target} is already up to date.`,
-							});
-						} else {
-							ctx.ui.notify(
-								`${target} is already up to date.`,
-								'info',
-							);
-						}
 						return;
 					} catch (error) {
 						ctx.ui.notify(
@@ -687,7 +533,7 @@ export default async function skills(pi: ExtensionAPI) {
 					}
 					mgr.refresh();
 					ctx.ui.notify(
-						`Rescanned: ${mgr.discover().length} managed skills, ${mgr.discover_importable().length} importable skills found`,
+						`Rescanned: ${mgr.discover().length} managed skills found`,
 					);
 					break;
 				}

@@ -14,8 +14,6 @@ describe('show_skills_home_modal', () => {
 				{
 					managed: 3,
 					pi_native: 1,
-					claude_code_detected: 2,
-					importable: 2,
 				},
 				'default',
 			),
@@ -24,8 +22,7 @@ describe('show_skills_home_modal', () => {
 			expect.anything(),
 			expect.objectContaining({
 				title: 'Skills',
-				subtitle:
-					'3 managed • 2 Claude Code detected • 2 importable • profile default',
+				subtitle: '3 managed • 1 pi-native • profile default',
 				footer: 'enter opens • esc close/back',
 				items: expect.arrayContaining([
 					expect.objectContaining({
@@ -33,39 +30,12 @@ describe('show_skills_home_modal', () => {
 						label: 'Manage skills',
 					}),
 					expect.objectContaining({
-						value: 'importable',
-						label: 'Importable skills',
+						value: 'search',
+						label: 'Search GitHub skills',
 					}),
 					expect.objectContaining({
 						value: 'profiles',
 						label: 'Profiles',
-					}),
-				]),
-			}),
-		);
-	});
-
-	it('nudges new users towards importing Claude Code plugin skills', async () => {
-		await show_skills_home_modal(
-			{} as any,
-			{
-				managed: 0,
-				pi_native: 0,
-				claude_code_detected: 4,
-				importable: 4,
-			},
-			'default',
-		);
-
-		expect(show_picker_modal).toHaveBeenLastCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				title: 'Skills — import Claude Code skills?',
-				initial_index: 1,
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						value: 'importable',
-						label: 'Import Claude Code skills',
 					}),
 				]),
 			}),

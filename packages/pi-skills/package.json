@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-skills",
 	"version": "0.0.20",
-	"description": "Pi extension for managing and importing Agent Skills from Pi, Claude, and plugin sources",
+	"description": "Pi extension for managing, discovering, and installing Agent Skills",
 	"keywords": [
 		"agent-skills",
 		"pi",
@@ -43,7 +43,6 @@
 		"coverage": "pnpm --filter \"$npm_package_name^...\" run build:self && pnpm run coverage:self"
 	},
 	"dependencies": {
-		"@spences10/pi-skill-importer": "workspace:*",
 		"@spences10/pi-tui-modal": "workspace:*"
 	},
 	"devDependencies": {

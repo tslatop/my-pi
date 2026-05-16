@@ -38,24 +38,10 @@ layer for Pi skill ecosystems:
 - installs GitHub-hosted skills through `gh skill` when GitHub CLI
   support is available
 - checks or applies GitHub skill updates through `gh skill update`
-- integrates with `@spences10/pi-skill-importer` for external Agent
-  Skills-compatible sources such as Claude Code/plugin skills
 - provides a `/skills` command and interactive picker
 
-Imported skills are copied into:
-
-```text
-$PI_CODING_AGENT_DIR/skills/<skill-name>
-```
-
 External source import/sync behavior lives in
-`@spences10/pi-skill-importer`. The `~/.claude` locations are treated
-as upstream discovery sources, not Pi-managed state. Use `--no-skills`
-or `--untrusted` when sandbox runs must not read user-local Claude
-skills/plugins.
-
-Import metadata is stored beside each imported copy so sync can detect
-local edits and upstream changes.
+`@spences10/pi-skill-importer`.
 
 ## Commands
 
@@ -65,9 +51,6 @@ local edits and upstream changes.
 /skills disable <key|name|pattern>
 /skills search <query>
 /skills add <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
-/skills import <key-or-name>
-/skills import <owner/repo> <skill[@ref]> [--pin ref|--scope project|--dir path|--force]
-/skills sync <key-or-name>
 /skills update --dry-run
 /skills update --all
 /skills profile create <name>
@@ -77,18 +60,18 @@ local edits and upstream changes.
 /skills defaults all-disabled
 ```
 
-GitHub imports and updates require GitHub CLI `gh` v2.90.0 or newer
-with preview `gh skill` support. The extension delegates GitHub source
-tracking, pinning, preview/update metadata, and tree-SHA comparison to
-`gh skill` instead of maintaining a parallel cache.
+GitHub search, installs, and updates require GitHub CLI `gh` v2.90.0
+or newer with preview `gh skill` support. The extension delegates
+GitHub source tracking, pinning, preview/update metadata, and tree-SHA
+comparison to `gh skill` instead of maintaining a parallel cache.
 
 With a UI available, `/skills` opens a modal home menu for managing,
-adding GitHub skills, batch-importing plugin skills, updating GitHub
-skills, refreshing discovery, profile switching, and profile baseline
-selection. The Add GitHub skill flow can install one skill or every
-`SKILL.md` found in a repository. The no-arg `search`, `add`,
-`import`, `sync`, and `defaults` subcommands use modal pickers/forms
-in interactive mode. In headless mode, use the subcommands directly.
+adding GitHub skills, updating GitHub skills, refreshing discovery,
+profile switching, and profile baseline selection. The Add GitHub
+skill flow can install one skill or every `SKILL.md` found in a
+repository. The no-arg `search`, `add`, and `defaults` subcommands use
+modal pickers/forms in interactive mode. In headless mode, use the
+subcommands directly.
 
 ## Skill enablement
 

@@ -87,7 +87,6 @@
 		"@spences10/pi-omnisearch": "workspace:*",
 		"@spences10/pi-recall": "workspace:*",
 		"@spences10/pi-redact": "workspace:*",
-		"@spences10/pi-skill-importer": "workspace:*",
 		"@spences10/pi-skills": "workspace:*",
 		"@spences10/pi-sqlite-tools": "workspace:*",
 		"@spences10/pi-svelte-guardrails": "workspace:*",

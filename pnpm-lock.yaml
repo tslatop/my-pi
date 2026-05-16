@@ -82,9 +82,6 @@ importers:
       '@spences10/pi-redact':
         specifier: workspace:*
         version: link:packages/pi-redact
-      '@spences10/pi-skill-importer':
-        specifier: workspace:*
-        version: link:packages/pi-skill-importer
       '@spences10/pi-skills':
         specifier: workspace:*
         version: link:packages/pi-skills
@@ -348,9 +345,6 @@ importers:
       '@earendil-works/pi-tui':
         specifier: '*'
         version: 0.74.0
-      '@spences10/pi-skill-importer':
-        specifier: workspace:*
-        version: link:../pi-skill-importer
       '@spences10/pi-tui-modal':
         specifier: workspace:*
         version: link:../pi-tui-modal

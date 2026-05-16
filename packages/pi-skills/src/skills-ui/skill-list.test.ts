@@ -64,7 +64,6 @@ describe('skill list UI', () => {
 
 		const mgr = {
 			discover: () => [skill],
-			discover_importable: () => [],
 		};
 		await show_skill_list_modal({} as any, mgr as any);
 		expect(show_text_modal).toHaveBeenCalledTimes(2);
