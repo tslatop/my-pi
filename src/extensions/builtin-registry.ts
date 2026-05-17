@@ -55,6 +55,23 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 		load: async () => (await import('@spences10/pi-mcp')).default,
 	},
 	{
+		key: 'footer',
+		label: 'Footer',
+		docs_label: 'Footer',
+		description: 'Configurable interactive footer/statusline',
+		default_enabled: true,
+		option_name: 'footer',
+		cli_arg: 'no-footer',
+		cli_flag: '--no-footer',
+		cli_description: 'Disable custom footer/statusline',
+		aliases: ['footer', 'statusline', 'status-line'],
+		mode_constraints: {
+			disabled_in: ['print', 'json', 'rpc'],
+			reason: 'Footer only renders in the interactive TUI',
+		},
+		load: async () => (await import('./footer/index.js')).default,
+	},
+	{
 		key: 'skills',
 		label: 'Skills',
 		docs_label: 'Skills',

@@ -55,7 +55,7 @@ export {
 	get_current_thinking_level,
 	get_default_footer_thinking_level,
 	render_footer_status_line,
-} from './footer.js';
+} from '@spences10/pi-footer';
 export {
 	load_persisted_prompt_state,
 	load_prompt_presets,
@@ -788,6 +788,5 @@ export default async function prompt_presets(pi: ExtensionAPI) {
 
 	pi.on('session_shutdown', async (_event, ctx) => {
 		ctx.ui.setStatus('preset', undefined);
-		ctx.ui.setFooter(undefined);
 	});
 }
