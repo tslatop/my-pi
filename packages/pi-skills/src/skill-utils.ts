@@ -45,7 +45,7 @@ export function skill_status(skill: ManagedSkill): string {
 
 export function format_skill_detail(skill: ManagedSkill): string {
 	return [
-		`# ${skill.name}`,
+		skill.name,
 		'',
 		`Status: ${skill_status(skill)}`,
 		`Source: ${skill.source}`,
@@ -112,11 +112,7 @@ export function profile_description(profile: SkillProfile): string {
 }
 
 export function format_profile_detail(profile: SkillProfile): string {
-	const lines = [
-		`# ${profile.name}`,
-		'',
-		profile_description(profile),
-	];
+	const lines = [profile.name, '', profile_description(profile)];
 	if (profile.description) {
 		lines.push('', profile.description);
 	}
