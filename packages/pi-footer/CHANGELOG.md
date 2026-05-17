@@ -1,5 +1,18 @@
 # @spences10/pi-footer
 
+## 0.0.3
+
+### Patch Changes
+
+- 73e1fba: Use Nerd Font git glyphs for branch, dirty, staged,
+  untracked, ahead, and behind indicators.
+- cd3f28c: Group footer widgets into nested picker with space-toggle
+  enabled/disabled states and cleaner settings list.
+- 35c093d: Add live footer preview to widget modal and clarify
+  space/enter controls in settings footer.
+- d0f0f2d: Add configurable Git icon mode with Nerd Font glyphs and
+  plain-symbol fallback for unsupported terminals.
+
 ## 0.0.2
 
 ### Patch Changes

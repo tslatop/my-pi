@@ -1,6 +1,6 @@
 {
 	"name": "@spences10/pi-footer",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Configurable footer/statusline extension for Pi",
 	"keywords": [
 		"footer",
