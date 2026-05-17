@@ -18,12 +18,14 @@ import {
 	FOOTER_PRESETS,
 	FOOTER_TONES,
 	FOOTER_WIDGETS,
+	GIT_ICON_MODES,
 	STATUS_LABEL_MODES,
 	type FooterDensity,
 	type FooterPreset,
 	type FooterState,
 	type FooterTone,
 	type FooterWidget,
+	type GitIconMode,
 	type StatusLabelMode,
 } from '../presets/types.js';
 import { FOOTER_RESEARCH_REFERENCES } from '../reference/research.js';
@@ -96,6 +98,13 @@ function get_footer_settings(state: FooterState): SettingItem[] {
 			description: 'How extension statuses are labelled',
 			currentValue: state.status_label_mode,
 			values: [...STATUS_LABEL_MODES],
+		},
+		{
+			id: 'git-icons',
+			label: 'Git icons',
+			description: 'Use Nerd Font git glyphs or plain symbols',
+			currentValue: state.git_icon_mode,
+			values: [...GIT_ICON_MODES],
 		},
 		{
 			id: 'widgets',
@@ -222,6 +231,12 @@ function apply_footer_setting(
 	) {
 		state.status_label_mode = new_value as StatusLabelMode;
 	}
+	if (
+		id === 'git-icons' &&
+		GIT_ICON_MODES.includes(new_value as GitIconMode)
+	) {
+		state.git_icon_mode = new_value as GitIconMode;
+	}
 }
 
 function get_setting_detail(id: string): string | undefined {
@@ -233,6 +248,8 @@ function get_setting_detail(id: string): string | undefined {
 		return 'Muted uses dim theme color, balanced uses plain terminal foreground, bright uses theme accent.';
 	if (id === 'status-labels')
 		return 'Smart avoids doubled labels such as mcp:MCP 6/6 connected.';
+	if (id === 'git-icons')
+		return 'Nerd uses terminal font glyphs; plain uses ASCII-safe symbols.';
 	if (id === 'widgets')
 		return 'Open a dedicated picker for footer building blocks.';
 }
@@ -246,6 +263,7 @@ function get_setting_metadata(
 		`Density: ${state.density}`,
 		`Tone: ${state.tone}`,
 		`Status labels: ${state.status_label_mode}`,
+		`Git icons: ${state.git_icon_mode}`,
 	];
 	if (id === 'widgets') {
 		lines.push('', 'Enabled widgets:');

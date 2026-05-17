@@ -12,6 +12,7 @@ import {
 	FOOTER_PRESETS,
 	FOOTER_TONES,
 	FOOTER_WIDGETS,
+	GIT_ICON_MODES,
 	STATUS_LABEL_MODES,
 	type FooterState,
 } from './presets/types.js';
@@ -61,6 +62,11 @@ export function normalize_footer_state(
 		tone: FOOTER_TONES.includes(state.tone as never)
 			? state.tone!
 			: DEFAULT_FOOTER_STATE.tone,
+		git_icon_mode: GIT_ICON_MODES.includes(
+			state.git_icon_mode as never,
+		)
+			? state.git_icon_mode!
+			: DEFAULT_FOOTER_STATE.git_icon_mode,
 		widgets: {
 			...DEFAULT_FOOTER_WIDGETS,
 			...Object.fromEntries(

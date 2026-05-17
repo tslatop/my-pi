@@ -27,6 +27,10 @@ export const FOOTER_TONES = ['muted', 'balanced', 'bright'] as const;
 
 export type FooterTone = (typeof FOOTER_TONES)[number];
 
+export const GIT_ICON_MODES = ['nerd', 'plain'] as const;
+
+export type GitIconMode = (typeof GIT_ICON_MODES)[number];
+
 export const FOOTER_WIDGETS = [
 	'path',
 	'git',
@@ -49,6 +53,7 @@ export interface FooterState {
 	density: FooterDensity;
 	status_label_mode: StatusLabelMode;
 	tone: FooterTone;
+	git_icon_mode: GitIconMode;
 	widgets: FooterWidgetState;
 }
 
@@ -70,5 +75,6 @@ export const DEFAULT_FOOTER_STATE: FooterState = {
 	density: 'comfortable',
 	status_label_mode: 'smart',
 	tone: 'muted',
+	git_icon_mode: 'nerd',
 	widgets: DEFAULT_FOOTER_WIDGETS,
 };

@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import type { GitIconMode } from '../presets/types.js';
 
 export interface GitSummary {
 	branch?: string;
@@ -9,14 +10,24 @@ export interface GitSummary {
 	behind: number;
 }
 
-const GIT_GLYPHS = {
-	branch: '',
-	dirty: '',
-	staged: '',
-	untracked: '',
-	ahead: '⇡',
-	behind: '⇣',
-} as const;
+const GIT_ICONS = {
+	nerd: {
+		branch: ' ',
+		dirty: '',
+		staged: '',
+		untracked: '',
+		ahead: '⇡',
+		behind: '⇣',
+	},
+	plain: {
+		branch: '',
+		dirty: '±',
+		staged: '●',
+		untracked: '?',
+		ahead: '↑',
+		behind: '↓',
+	},
+} as const satisfies Record<GitIconMode, Record<string, string>>;
 
 export function get_git_summary(
 	cwd: string,
@@ -69,19 +80,16 @@ export function get_git_summary(
 
 export function format_git_summary(
 	summary: GitSummary,
+	icon_mode: GitIconMode = 'nerd',
 ): string | undefined {
+	const icons = GIT_ICONS[icon_mode];
 	const parts: string[] = [];
-	if (summary.branch)
-		parts.push(`${GIT_GLYPHS.branch} ${summary.branch}`);
-	if (summary.dirty)
-		parts.push(`${GIT_GLYPHS.dirty}${summary.dirty}`);
-	if (summary.staged)
-		parts.push(`${GIT_GLYPHS.staged}${summary.staged}`);
+	if (summary.branch) parts.push(`${icons.branch}${summary.branch}`);
+	if (summary.dirty) parts.push(`${icons.dirty}${summary.dirty}`);
+	if (summary.staged) parts.push(`${icons.staged}${summary.staged}`);
 	if (summary.untracked)
-		parts.push(`${GIT_GLYPHS.untracked}${summary.untracked}`);
-	if (summary.ahead)
-		parts.push(`${GIT_GLYPHS.ahead}${summary.ahead}`);
-	if (summary.behind)
-		parts.push(`${GIT_GLYPHS.behind}${summary.behind}`);
+		parts.push(`${icons.untracked}${summary.untracked}`);
+	if (summary.ahead) parts.push(`${icons.ahead}${summary.ahead}`);
+	if (summary.behind) parts.push(`${icons.behind}${summary.behind}`);
 	return parts.length > 0 ? parts.join(' ') : undefined;
 }

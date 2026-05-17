@@ -166,7 +166,12 @@ export function render_footer_lines(
 	state: FooterState,
 	width: number,
 ): string[] {
-	const model = build_footer_model(ctx, footer_data, theme);
+	const model = build_footer_model(
+		ctx,
+		footer_data,
+		theme,
+		state.git_icon_mode,
+	);
 	const lines: string[] = [];
 	const path_line = render_path_line(model, theme, state, width);
 	const stats_line = render_stats_line(model, theme, state, width);

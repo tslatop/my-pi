@@ -2,6 +2,7 @@ import type {
 	ExtensionContext,
 	ReadonlyFooterDataProvider,
 } from '@earendil-works/pi-coding-agent';
+import type { GitIconMode } from '../presets/types.js';
 import { error, warning, type FooterTheme } from '../theme/tokens.js';
 import { format_token_count } from '../utils/text.js';
 import {
@@ -32,6 +33,7 @@ export function build_footer_model(
 	ctx: ExtensionContext,
 	footer_data: ReadonlyFooterDataProvider,
 	theme: FooterTheme,
+	git_icon_mode: GitIconMode = 'nerd',
 ): FooterModel {
 	let total_input = 0;
 	let total_output = 0;
@@ -68,7 +70,7 @@ export function build_footer_model(
 
 	const git_branch = footer_data.getGitBranch() ?? undefined;
 	const git = get_git_summary(ctx.cwd, git_branch);
-	const git_text = format_git_summary(git);
+	const git_text = format_git_summary(git, git_icon_mode);
 	const session_text =
 		ctx.sessionManager.getSessionName() || undefined;
 
