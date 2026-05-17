@@ -59,21 +59,21 @@
 		"coverage": "pnpm --filter \"./packages/*\" run build:self && vp pack && sh -c 'vp test --coverage && pnpm --filter \"./packages/*\" --if-present run coverage:self' --"
 	},
 	"dependencies": {
-		"@earendil-works/pi-ai": "^0.74.0",
-		"@earendil-works/pi-coding-agent": "^0.74.0",
-		"@earendil-works/pi-tui": "^0.74.0",
+		"@earendil-works/pi-ai": "catalog:",
+		"@earendil-works/pi-coding-agent": "catalog:",
+		"@earendil-works/pi-tui": "catalog:",
 		"@spences10/pi-project-trust": "workspace:*",
 		"@spences10/pi-themes": "workspace:*",
 		"@spences10/pi-tui-modal": "workspace:*",
 		"citty": "^0.2.2",
-		"typebox": "^1.1.38"
+		"typebox": "catalog:"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.31.0",
-		"@types/node": "^25.8.0",
-		"@vitest/coverage-v8": "^4.1.6",
+		"@types/node": "catalog:",
+		"@vitest/coverage-v8": "catalog:",
 		"vite-plus": "^0.1.21",
-		"vitest": "^4.1.6"
+		"vitest": "catalog:"
 	},
 	"optionalDependencies": {
 		"@spences10/pi-child-env": "workspace:*",
