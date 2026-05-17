@@ -1,5 +1,12 @@
 # @spences10/pi-project-trust
 
+## 0.0.8
+
+### Patch Changes
+
+- a040ea3: Standardize package scripts through Vite+ and refresh
+  README badges/development guidance across published packages.
+
 ## 0.0.7
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @spences10/pi-child-env
 
+## 0.1.6
+
+### Patch Changes
+
+- a040ea3: Standardize package scripts through Vite+ and refresh
+  README badges/development guidance across published packages.
+
 ## 0.1.5
 
 ### Patch Changes

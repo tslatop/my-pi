@@ -1,5 +1,14 @@
 # my-pi
 
+## 0.1.51
+
+### Patch Changes
+
+- Updated dependencies [a040ea3]
+  - @spences10/pi-project-trust@0.0.8
+  - @spences10/pi-tui-modal@0.0.17
+  - @spences10/pi-themes@0.0.6
+
 ## 0.1.50
 
 ### Patch Changes

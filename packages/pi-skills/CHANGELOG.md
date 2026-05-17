@@ -1,5 +1,14 @@
 # @spences10/pi-skills
 
+## 0.0.23
+
+### Patch Changes
+
+- a040ea3: Standardize package scripts through Vite+ and refresh
+  README badges/development guidance across published packages.
+- Updated dependencies [a040ea3]
+  - @spences10/pi-tui-modal@0.0.17
+
 ## 0.0.22
 
 ### Patch Changes

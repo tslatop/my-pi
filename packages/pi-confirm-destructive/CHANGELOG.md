@@ -1,5 +1,12 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.13
+
+### Patch Changes
+
+- a040ea3: Standardize package scripts through Vite+ and refresh
+  README badges/development guidance across published packages.
+
 ## 0.0.12
 
 ### Patch Changes
