@@ -1,5 +1,12 @@
 # @spences10/pi-recall
 
+## 0.0.12
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+
 ## 0.0.11
 
 ### Patch Changes

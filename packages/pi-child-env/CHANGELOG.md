@@ -1,5 +1,12 @@
 # @spences10/pi-child-env
 
+## 0.1.7
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+
 ## 0.1.6
 
 ### Patch Changes

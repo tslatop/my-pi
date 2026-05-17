@@ -1,5 +1,16 @@
 # @spences10/pi-skill-importer
 
+## 0.0.5
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+- 2424977: Align Markdown parsing and skill discovery with Pi docs using YAML
+  frontmatter and recursive scanning.
+- Updated dependencies [599b355]
+  - @spences10/pi-tui-modal@0.0.18
+
 ## 0.0.4
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @spences10/pi-skills
 
+## 0.0.24
+
+### Patch Changes
+
+- 7bc2581: Improve context sidecar TUI text formatting, global stats display,
+  readable sizes, and remove markdown artifacts.
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+- 2424977: Align Markdown parsing and skill discovery with Pi docs using YAML
+  frontmatter and recursive scanning.
+- Updated dependencies [599b355]
+  - @spences10/pi-tui-modal@0.0.18
+
 ## 0.0.23
 
 ### Patch Changes

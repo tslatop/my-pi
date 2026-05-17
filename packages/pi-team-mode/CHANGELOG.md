@@ -1,5 +1,16 @@
 # @spences10/pi-team-mode
 
+## 0.0.26
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+- Updated dependencies [599b355]
+  - @spences10/pi-child-env@0.1.7
+  - @spences10/pi-tui-modal@0.0.18
+  - @spences10/pi-redact@0.0.11
+
 ## 0.0.25
 
 ### Patch Changes

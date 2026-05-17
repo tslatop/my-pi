@@ -1,5 +1,14 @@
 # @spences10/pi-footer
 
+## 0.0.4
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+- Updated dependencies [599b355]
+  - @spences10/pi-tui-modal@0.0.18
+
 ## 0.0.3
 
 ### Patch Changes

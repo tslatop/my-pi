@@ -1,5 +1,12 @@
 # @spences10/pi-svelte-guardrails
 
+## 0.0.9
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+
 ## 0.0.8
 
 ### Patch Changes

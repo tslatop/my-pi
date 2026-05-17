@@ -1,5 +1,12 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.14
+
+### Patch Changes
+
+- 599b355: Improve package README openings and descriptions to emphasize user
+  benefits and clarify pi-skills/pi-recall positioning.
+
 ## 0.0.13
 
 ### Patch Changes

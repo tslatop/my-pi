@@ -1,5 +1,16 @@
 # my-pi
 
+## 0.1.53
+
+### Patch Changes
+
+- 2424977: Align Markdown parsing and skill discovery with Pi docs using YAML
+  frontmatter and recursive scanning.
+- Updated dependencies [599b355]
+  - @spences10/pi-project-trust@0.0.9
+  - @spences10/pi-tui-modal@0.0.18
+  - @spences10/pi-themes@0.0.7
+
 ## 0.1.52
 
 ## 0.1.51
@@ -700,6 +711,7 @@
   session transfer prompts.
 
   The `/handoff` command now:
+
   - summarizes the current branch conversation with the active model
   - asks the user to review and edit the generated prompt
   - creates a new session linked to the current one
