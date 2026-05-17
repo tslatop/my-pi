@@ -2,8 +2,11 @@ import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
 } from '@earendil-works/pi-coding-agent';
-import type { SettingItem } from '@earendil-works/pi-tui';
-import { show_settings_modal } from '@spences10/pi-tui-modal';
+import { SelectList, type SettingItem } from '@earendil-works/pi-tui';
+import {
+	show_modal,
+	show_settings_modal,
+} from '@spences10/pi-tui-modal';
 import { save_footer_state } from '../config.js';
 import { install_footer } from '../extension/install.js';
 import {
@@ -35,6 +38,7 @@ async function configure_footer(
 	ctx: ExtensionCommandContext,
 	state: FooterState,
 ): Promise<void> {
+	let open_widgets = false;
 	await show_settings_modal(ctx, {
 		title: 'Footer settings',
 		subtitle:
@@ -45,12 +49,17 @@ async function configure_footer(
 		detail: (item) => get_setting_detail(item.id),
 		metadata: (item) => get_setting_metadata(item?.id, state),
 		on_change: (id, new_value) => {
+			if (id === 'widgets') {
+				open_widgets = true;
+				return true;
+			}
 			apply_footer_setting(state, id, new_value);
 			save_footer_state(state);
 			install_footer(ctx, state);
 			return false;
 		},
 	});
+	if (open_widgets) await configure_footer_widgets(ctx, state);
 }
 
 function get_footer_settings(state: FooterState): SettingItem[] {
@@ -83,14 +92,76 @@ function get_footer_settings(state: FooterState): SettingItem[] {
 			currentValue: state.status_label_mode,
 			values: [...STATUS_LABEL_MODES],
 		},
-		...FOOTER_WIDGETS.map((widget) => ({
-			id: `widget:${widget}`,
-			label: `Widget: ${widget}`,
-			description: 'Show or hide this footer building block',
-			currentValue: state.widgets[widget] ? 'on' : 'off',
-			values: ['on', 'off'],
-		})),
+		{
+			id: 'widgets',
+			label: 'Widgets',
+			description: 'Open widget visibility settings',
+			currentValue: `${get_enabled_widget_count(state)}/${FOOTER_WIDGETS.length} on`,
+			values: ['open'],
+		},
 	];
+}
+
+async function configure_footer_widgets(
+	ctx: ExtensionCommandContext,
+	state: FooterState,
+): Promise<void> {
+	await show_modal<void>(
+		ctx,
+		{
+			title: 'Footer widgets',
+			subtitle: 'Choose footer building blocks to show or hide.',
+			footer: 'space toggles • esc back',
+		},
+		({ done }, theme, layout) => {
+			const items = FOOTER_WIDGETS.map((widget) => ({
+				value: widget,
+				label: widget,
+				description: format_widget_state(state, widget),
+			}));
+			const list = new SelectList(
+				items,
+				Math.min(items.length, layout.get_max_body_lines()),
+				{
+					selectedPrefix: (text) => theme.fg('accent', text),
+					selectedText: (text) => theme.fg('accent', text),
+					description: (text) => theme.fg('muted', text),
+					scrollInfo: (text) => theme.fg('dim', text),
+					noMatch: (text) => theme.fg('dim', text),
+				},
+			);
+			list.onCancel = () => done();
+			return {
+				render: (width: number) => list.render(width),
+				invalidate: () => list.invalidate(),
+				handleInput: (data: string) => {
+					if (data === ' ') {
+						const selected = list.getSelectedItem();
+						if (!selected) return;
+						const widget = selected.value as FooterWidget;
+						state.widgets[widget] = !state.widgets[widget];
+						selected.description = format_widget_state(state, widget);
+						save_footer_state(state);
+						install_footer(ctx, state);
+						return;
+					}
+					list.handleInput(data);
+				},
+			};
+		},
+	);
+}
+
+function get_enabled_widget_count(state: FooterState): number {
+	return FOOTER_WIDGETS.filter((widget) => state.widgets[widget])
+		.length;
+}
+
+function format_widget_state(
+	state: FooterState,
+	widget: FooterWidget,
+): string {
+	return state.widgets[widget] ? '● enabled' : '○ disabled';
 }
 
 function apply_footer_setting(
@@ -122,11 +193,6 @@ function apply_footer_setting(
 	) {
 		state.status_label_mode = new_value as StatusLabelMode;
 	}
-	if (id.startsWith('widget:')) {
-		const widget = id.slice('widget:'.length) as FooterWidget;
-		if (FOOTER_WIDGETS.includes(widget))
-			state.widgets[widget] = new_value === 'on';
-	}
 }
 
 function get_setting_detail(id: string): string | undefined {
@@ -138,8 +204,8 @@ function get_setting_detail(id: string): string | undefined {
 		return 'Muted uses dim theme color, balanced uses plain terminal foreground, bright uses theme accent.';
 	if (id === 'status-labels')
 		return 'Smart avoids doubled labels such as mcp:MCP 6/6 connected.';
-	if (id.startsWith('widget:'))
-		return 'Widgets are composable footer building blocks you can show or hide.';
+	if (id === 'widgets')
+		return 'Open a dedicated picker for footer building blocks.';
 }
 
 function get_setting_metadata(
@@ -152,7 +218,7 @@ function get_setting_metadata(
 		`Tone: ${state.tone}`,
 		`Status labels: ${state.status_label_mode}`,
 	];
-	if (id?.startsWith('widget:')) {
+	if (id === 'widgets') {
 		lines.push('', 'Enabled widgets:');
 		for (const widget of FOOTER_WIDGETS.filter(
 			(widget) => state.widgets[widget],
