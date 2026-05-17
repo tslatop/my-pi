@@ -1,4 +1,7 @@
-import { getAgentDir } from '@earendil-works/pi-coding-agent';
+import {
+	getAgentDir,
+	parseFrontmatter,
+} from '@earendil-works/pi-coding-agent';
 import {
 	existsSync,
 	mkdirSync,
@@ -142,55 +145,12 @@ function read_prompt_presets_file(path: string): PromptPresetMap {
 	}
 }
 
-function unquote_frontmatter_value(value: string): string {
-	const trimmed = value.trim();
-	if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-		try {
-			return JSON.parse(trimmed) as string;
-		} catch {
-			return trimmed.slice(1, -1);
-		}
-	}
-	if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
-		return trimmed.slice(1, -1);
-	}
-	return trimmed;
-}
-
 function parse_prompt_preset_markdown(content: string): {
-	metadata: Record<string, string>;
+	metadata: Record<string, unknown>;
 	body: string;
 } {
-	const normalized = content.replace(/\r\n/g, '\n');
-	if (!normalized.startsWith('---\n')) {
-		return { metadata: {}, body: normalized.trim() };
-	}
-
-	const lines = normalized.split('\n');
-	const end = lines.findIndex(
-		(line, index) => index > 0 && line.trim() === '---',
-	);
-	if (end === -1) {
-		return { metadata: {}, body: normalized.trim() };
-	}
-
-	const metadata: Record<string, string> = {};
-	for (const line of lines.slice(1, end)) {
-		const separator = line.indexOf(':');
-		if (separator === -1) continue;
-		const key = line.slice(0, separator).trim().toLowerCase();
-		const value = line.slice(separator + 1).trim();
-		if (!key) continue;
-		metadata[key] = unquote_frontmatter_value(value);
-	}
-
-	return {
-		metadata,
-		body: lines
-			.slice(end + 1)
-			.join('\n')
-			.trim(),
-	};
+	const { frontmatter, body } = parseFrontmatter(content);
+	return { metadata: frontmatter, body: body.trim() };
 }
 
 export function read_prompt_presets_dir(
@@ -212,7 +172,8 @@ export function read_prompt_presets_dir(
 			presets[name] = {
 				kind: metadata.kind === 'layer' ? 'layer' : 'base',
 				instructions: body,
-				...(metadata.description
+				...(typeof metadata.description === 'string' &&
+				metadata.description.trim()
 					? { description: metadata.description }
 					: {}),
 			};

@@ -30,8 +30,9 @@ layer for Pi skill ecosystems:
 
 - discovers Pi-native skills in `$PI_CODING_AGENT_DIR/skills`
   (default: `~/.pi/agent/skills`)
-- discovers project skills in `.agents/*/SKILL.md`,
-  `.agents/skills/*/SKILL.md`, and `.pi/skills/*/SKILL.md`
+- discovers project skills recursively in `.agents/**/SKILL.md`,
+  `.agents/skills/**/SKILL.md`, `.pi/skills/**/SKILL.md`, and root
+  `.pi/skills/*.md` files
 - searches public GitHub `SKILL.md` files through `gh skill search`
 - previews GitHub-hosted skills through `gh skill preview`
 - installs GitHub-hosted skills through `gh skill` when GitHub CLI

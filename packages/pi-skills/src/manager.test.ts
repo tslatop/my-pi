@@ -79,6 +79,31 @@ describe('create_skills_manager', () => {
 		);
 	});
 
+	it('discovers recursive SKILL.md and root .pi skill markdown files', async () => {
+		const project = join(root, 'repo');
+		write_skill(
+			join(project, '.agents', 'skills', 'nested', 'deep'),
+			'deep-skill',
+			'Use the deep skill.',
+		);
+		mkdirSync(join(project, '.pi', 'skills'), { recursive: true });
+		writeFileSync(
+			join(project, '.pi', 'skills', 'root-helper.md'),
+			'---\ndescription: Use the root helper.\n---\n\n# Root helper\n',
+		);
+
+		const { create_skills_manager } = await import('./manager.js');
+		const mgr = create_skills_manager({ cwd: project });
+		const skills = mgr.discover();
+
+		expect(
+			skills.find((candidate) => candidate.name === 'deep-skill'),
+		).toMatchObject({ source: 'project:.agents/skills' });
+		expect(
+			skills.find((candidate) => candidate.name === 'root-helper'),
+		).toMatchObject({ source: 'project:.pi/skills' });
+	});
+
 	it('does not return default pi-native skills as explicit skill paths', async () => {
 		write_skill(
 			join(root, 'agent', 'skills', 'local-tooling'),

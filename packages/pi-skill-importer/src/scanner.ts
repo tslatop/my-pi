@@ -91,7 +91,11 @@ function parse_skill_md(
 		const description = frontmatter?.description;
 		if (!description) return null;
 
-		const name = frontmatter?.name || basename(dirname(skill_path));
+		const name =
+			frontmatter?.name ||
+			(basename(skill_path) === 'SKILL.md'
+				? basename(dirname(skill_path))
+				: parse(skill_path).name);
 		return { name, description: description.trim() };
 	} catch {
 		return null;
@@ -121,6 +125,8 @@ function scan_dir_for_skills(
 		kind: 'managed' | 'external';
 		plugin?: PluginSkillSource;
 		include_direct_root_skill?: boolean;
+		include_root_markdown_skills?: boolean;
+		exclude_matches?: (match: string) => boolean;
 	},
 ): DiscoveredSkill[] {
 	if (!existsSync(dir)) return [];
@@ -151,8 +157,17 @@ function scan_dir_for_skills(
 	}
 
 	try {
-		const matches = globSync('*/SKILL.md', { cwd: dir });
-		for (const match of matches) {
+		const matches = globSync('**/SKILL.md', { cwd: dir });
+		if (options.include_root_markdown_skills) {
+			matches.push(
+				...globSync('*.md', { cwd: dir }).filter(
+					(match) => match !== 'SKILL.md',
+				),
+			);
+		}
+		for (const match of matches
+			.filter((candidate) => !options.exclude_matches?.(candidate))
+			.sort((a, b) => a.localeCompare(b))) {
 			const full_path = resolve(dir, match);
 			const parsed = parse_skill_md(full_path);
 			if (parsed) {
@@ -215,6 +230,7 @@ export function scan_managed_skills(): DiscoveredSkill[] {
 			scope: 'global',
 			kind: 'managed',
 			include_direct_root_skill: false,
+			include_root_markdown_skills: true,
 		},
 	)) {
 		skills.push(skill);
@@ -260,6 +276,7 @@ export function scan_project_skills(
 			scope: 'project',
 			kind: 'managed',
 			include_direct_root_skill: false,
+			exclude_matches: (match) => match.startsWith('skills/'),
 		})) {
 			skills.push(skill);
 		}
@@ -281,6 +298,7 @@ export function scan_project_skills(
 				scope: 'project',
 				kind: 'managed',
 				include_direct_root_skill: false,
+				include_root_markdown_skills: true,
 			},
 		)) {
 			skills.push(skill);

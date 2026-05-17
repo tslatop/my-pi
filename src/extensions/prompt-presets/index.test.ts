@@ -3,6 +3,7 @@ import {
 	mkdtempSync,
 	readFileSync,
 	rmSync,
+	writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -96,7 +97,7 @@ describe('file-backed prompt presets', () => {
 		}
 	});
 
-	it('loads markdown presets with frontmatter from a presets directory', () => {
+	it('loads markdown presets with YAML frontmatter from a presets directory', () => {
 		const root = mkdtempSync(join(tmpdir(), 'my-pi-file-presets-'));
 		dirs.push(root);
 
@@ -105,12 +106,21 @@ describe('file-backed prompt presets', () => {
 			description: 'Call out risk',
 			instructions: 'Mention the important caveat.',
 		});
+		writeFileSync(
+			join(root, 'yaml.md'),
+			'---\nkind: layer\ndescription: >\n  Multi-line\n  description\n---\n\nUse YAML frontmatter.\n',
+		);
 
 		expect(read_prompt_presets_dir(root)).toEqual({
 			careful: {
 				kind: 'layer',
 				description: 'Call out risk',
 				instructions: 'Mention the important caveat.',
+			},
+			yaml: {
+				kind: 'layer',
+				description: 'Multi-line description\n',
+				instructions: 'Use YAML frontmatter.',
 			},
 		});
 	});
