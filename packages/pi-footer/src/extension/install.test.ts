@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { DEFAULT_FOOTER_STATE } from '../presets/types.js';
 import {
 	make_context,
 	make_footer_data,
@@ -13,11 +14,7 @@ describe('install_footer', () => {
 			hasUI: false,
 			ui: { setFooter: set_footer },
 		});
-		install_footer(ctx, {
-			preset: 'default',
-			status_label_mode: 'smart',
-			tone: 'muted',
-		});
+		install_footer(ctx, DEFAULT_FOOTER_STATE);
 		expect(set_footer).not.toHaveBeenCalled();
 	});
 
@@ -30,11 +27,7 @@ describe('install_footer', () => {
 		const set_footer = vi.fn();
 		const ctx = make_context({ ui: { setFooter: set_footer } });
 
-		install_footer(ctx, {
-			preset: 'default',
-			status_label_mode: 'smart',
-			tone: 'muted',
-		});
+		install_footer(ctx, DEFAULT_FOOTER_STATE);
 
 		const factory = set_footer.mock.calls[0]?.[0];
 		expect(factory).toBeTypeOf('function');

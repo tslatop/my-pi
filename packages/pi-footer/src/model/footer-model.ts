@@ -4,11 +4,25 @@ import type {
 } from '@earendil-works/pi-coding-agent';
 import { error, warning, type FooterTheme } from '../theme/tokens.js';
 import { format_token_count } from '../utils/text.js';
+import {
+	format_git_summary,
+	get_git_summary,
+	type GitSummary,
+} from './git.js';
 import { get_current_thinking_level } from './thinking.js';
 
 export interface FooterModel {
-	pwd: string;
-	stats_parts: string[];
+	cwd: string;
+	path_text: string;
+	git: GitSummary;
+	git_text?: string;
+	session_text?: string;
+	token_parts: string[];
+	cost_text?: string;
+	context_text: string;
+	model_name: string;
+	provider?: string;
+	thinking_text?: string;
 	model_text: string;
 	statuses: Map<string, string>;
 	preset_status?: string;
@@ -46,58 +60,56 @@ export function build_footer_model(
 			? context_percent_value.toFixed(1)
 			: '?';
 
-	let pwd = ctx.cwd;
+	let path_text = ctx.cwd;
 	const home = process.env.HOME || process.env.USERPROFILE;
-	if (home && pwd.startsWith(home)) {
-		pwd = `~${pwd.slice(home.length)}`;
+	if (home && path_text.startsWith(home)) {
+		path_text = `~${path_text.slice(home.length)}`;
 	}
 
-	const branch = footer_data.getGitBranch();
-	if (branch) pwd = `${pwd} (${branch})`;
+	const git_branch = footer_data.getGitBranch() ?? undefined;
+	const git = get_git_summary(ctx.cwd, git_branch);
+	const git_text = format_git_summary(git);
+	const session_text =
+		ctx.sessionManager.getSessionName() || undefined;
 
-	const session_name = ctx.sessionManager.getSessionName();
-	if (session_name) pwd = `${pwd} • ${session_name}`;
-
-	const stats_parts: string[] = [];
+	const token_parts: string[] = [];
 	if (total_input)
-		stats_parts.push(`↑${format_token_count(total_input)}`);
+		token_parts.push(`↑${format_token_count(total_input)}`);
 	if (total_output)
-		stats_parts.push(`↓${format_token_count(total_output)}`);
+		token_parts.push(`↓${format_token_count(total_output)}`);
 	if (total_cache_read)
-		stats_parts.push(`R${format_token_count(total_cache_read)}`);
+		token_parts.push(`R${format_token_count(total_cache_read)}`);
 	if (total_cache_write)
-		stats_parts.push(`W${format_token_count(total_cache_write)}`);
+		token_parts.push(`W${format_token_count(total_cache_write)}`);
 
 	const using_subscription = ctx.model
 		? ctx.modelRegistry.isUsingOAuth(ctx.model)
 		: false;
-	if (total_cost || using_subscription) {
-		stats_parts.push(
-			`$${total_cost.toFixed(3)}${using_subscription ? ' (sub)' : ''}`,
-		);
-	}
+	const cost_text =
+		total_cost || using_subscription
+			? `$${total_cost.toFixed(3)}${using_subscription ? ' (sub)' : ''}`
+			: undefined;
 
 	const context_percent_display =
 		context_percent === '?'
 			? `?/${format_token_count(context_window)}`
 			: `${context_percent}%/${format_token_count(context_window)}`;
-	let context_percent_str = context_percent_display;
+	let context_text = context_percent_display;
 	if (context_percent_value > 90) {
-		context_percent_str = error(theme, context_percent_display);
+		context_text = error(theme, context_percent_display);
 	} else if (context_percent_value > 70) {
-		context_percent_str = warning(theme, context_percent_display);
+		context_text = warning(theme, context_percent_display);
 	}
-	stats_parts.push(context_percent_str);
 
 	const model_name = ctx.model?.id || 'no-model';
 	const thinking_level = get_current_thinking_level(ctx);
+	const thinking_text = ctx.model?.reasoning
+		? thinking_level === 'off'
+			? 'thinking off'
+			: thinking_level
+		: undefined;
 	let model_text = model_name;
-	if (ctx.model?.reasoning) {
-		model_text =
-			thinking_level === 'off'
-				? `${model_name} • thinking off`
-				: `${model_name} • ${thinking_level}`;
-	}
+	if (thinking_text) model_text = `${model_name} • ${thinking_text}`;
 	if (footer_data.getAvailableProviderCount() > 1 && ctx.model) {
 		model_text = `(${ctx.model.provider}) ${model_text}`;
 	}
@@ -107,8 +119,17 @@ export function build_footer_model(
 	statuses.delete('preset');
 
 	return {
-		pwd,
-		stats_parts,
+		cwd: ctx.cwd,
+		path_text,
+		git,
+		git_text,
+		session_text,
+		token_parts,
+		cost_text,
+		context_text,
+		model_name,
+		provider: ctx.model?.provider,
+		thinking_text,
 		model_text,
 		statuses,
 		preset_status,

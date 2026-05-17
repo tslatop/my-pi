@@ -40,16 +40,13 @@ describe('build_footer_model', () => {
 
 		const model = build_footer_model(ctx, footer_data, test_theme);
 
-		expect(model.pwd).toBe('~/repos/my-pi (main) • named');
-		expect(model.stats_parts).toEqual(
-			expect.arrayContaining([
-				'↑1.2k',
-				'↓3.4k',
-				'R500',
-				'W100',
-				'$0.123',
-			]),
+		expect(model.path_text).toBe('~/repos/my-pi');
+		expect(model.git_text).toContain('main');
+		expect(model.session_text).toBe('named');
+		expect(model.token_parts).toEqual(
+			expect.arrayContaining(['↑1.2k', '↓3.4k', 'R500', 'W100']),
 		);
+		expect(model.cost_text).toBe('$0.123');
 		expect(model.model_text).toContain('claude-sonnet');
 		expect(model.preset_status).toBe('prompt:terse');
 		expect(model.statuses.get('mcp')).toBe('MCP 6/6 connected');

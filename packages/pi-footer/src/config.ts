@@ -1,0 +1,77 @@
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from 'node:fs';
+import { dirname, join } from 'node:path';
+import {
+	DEFAULT_FOOTER_STATE,
+	DEFAULT_FOOTER_WIDGETS,
+	FOOTER_DENSITIES,
+	FOOTER_PRESETS,
+	FOOTER_TONES,
+	FOOTER_WIDGETS,
+	STATUS_LABEL_MODES,
+	type FooterState,
+} from './presets/types.js';
+
+const CONFIG_PATH = join(
+	process.env.PI_HOME ??
+		join(process.env.HOME ?? '.', '.pi', 'agent'),
+	'extensions',
+	'pi-footer.json',
+);
+
+export function load_footer_state(): FooterState {
+	if (!existsSync(CONFIG_PATH)) return clone_default_state();
+	try {
+		const parsed = JSON.parse(
+			readFileSync(CONFIG_PATH, 'utf8'),
+		) as Partial<FooterState>;
+		return normalize_footer_state(parsed);
+	} catch {
+		return clone_default_state();
+	}
+}
+
+export function save_footer_state(state: FooterState): void {
+	mkdirSync(dirname(CONFIG_PATH), { recursive: true });
+	writeFileSync(
+		CONFIG_PATH,
+		`${JSON.stringify(state, null, '\t')}\n`,
+	);
+}
+
+export function normalize_footer_state(
+	state: Partial<FooterState>,
+): FooterState {
+	return {
+		preset: FOOTER_PRESETS.includes(state.preset as never)
+			? state.preset!
+			: DEFAULT_FOOTER_STATE.preset,
+		density: FOOTER_DENSITIES.includes(state.density as never)
+			? state.density!
+			: DEFAULT_FOOTER_STATE.density,
+		status_label_mode: STATUS_LABEL_MODES.includes(
+			state.status_label_mode as never,
+		)
+			? state.status_label_mode!
+			: DEFAULT_FOOTER_STATE.status_label_mode,
+		tone: FOOTER_TONES.includes(state.tone as never)
+			? state.tone!
+			: DEFAULT_FOOTER_STATE.tone,
+		widgets: {
+			...DEFAULT_FOOTER_WIDGETS,
+			...Object.fromEntries(
+				Object.entries(state.widgets ?? {}).filter(([key]) =>
+					FOOTER_WIDGETS.includes(key as never),
+				),
+			),
+		},
+	};
+}
+
+function clone_default_state(): FooterState {
+	return normalize_footer_state(DEFAULT_FOOTER_STATE);
+}

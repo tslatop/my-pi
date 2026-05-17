@@ -4,14 +4,19 @@ import type {
 } from '@earendil-works/pi-coding-agent';
 import type { SettingItem } from '@earendil-works/pi-tui';
 import { show_settings_modal } from '@spences10/pi-tui-modal';
+import { save_footer_state } from '../config.js';
 import { install_footer } from '../extension/install.js';
 import {
+	FOOTER_DENSITIES,
 	FOOTER_PRESETS,
 	FOOTER_TONES,
+	FOOTER_WIDGETS,
 	STATUS_LABEL_MODES,
+	type FooterDensity,
 	type FooterPreset,
 	type FooterState,
 	type FooterTone,
+	type FooterWidget,
 	type StatusLabelMode,
 } from '../presets/types.js';
 import { FOOTER_RESEARCH_REFERENCES } from '../reference/research.js';
@@ -32,7 +37,8 @@ async function configure_footer(
 ): Promise<void> {
 	await show_settings_modal(ctx, {
 		title: 'Footer settings',
-		subtitle: 'Changes apply live to the footer behind this modal.',
+		subtitle:
+			'Changes apply live and persist to ~/.pi/agent/extensions/pi-footer.json.',
 		footer: 'enter cycles values • esc close',
 		items: get_footer_settings(state),
 		enable_search: true,
@@ -40,6 +46,7 @@ async function configure_footer(
 		metadata: (item) => get_setting_metadata(item?.id, state),
 		on_change: (id, new_value) => {
 			apply_footer_setting(state, id, new_value);
+			save_footer_state(state);
 			install_footer(ctx, state);
 			return false;
 		},
@@ -56,6 +63,13 @@ function get_footer_settings(state: FooterState): SettingItem[] {
 			values: [...FOOTER_PRESETS],
 		},
 		{
+			id: 'density',
+			label: 'Density',
+			description: 'How many footer rows to use',
+			currentValue: state.density,
+			values: [...FOOTER_DENSITIES],
+		},
+		{
 			id: 'tone',
 			label: 'Tone',
 			description: 'Footer color treatment from the active Pi theme',
@@ -69,6 +83,13 @@ function get_footer_settings(state: FooterState): SettingItem[] {
 			currentValue: state.status_label_mode,
 			values: [...STATUS_LABEL_MODES],
 		},
+		...FOOTER_WIDGETS.map((widget) => ({
+			id: `widget:${widget}`,
+			label: `Widget: ${widget}`,
+			description: 'Show or hide this footer building block',
+			currentValue: state.widgets[widget] ? 'on' : 'off',
+			values: ['on', 'off'],
+		})),
 	];
 }
 
@@ -84,6 +105,12 @@ function apply_footer_setting(
 		state.preset = new_value as FooterPreset;
 	}
 	if (
+		id === 'density' &&
+		FOOTER_DENSITIES.includes(new_value as FooterDensity)
+	) {
+		state.density = new_value as FooterDensity;
+	}
+	if (
 		id === 'tone' &&
 		FOOTER_TONES.includes(new_value as FooterTone)
 	) {
@@ -95,18 +122,24 @@ function apply_footer_setting(
 	) {
 		state.status_label_mode = new_value as StatusLabelMode;
 	}
+	if (id.startsWith('widget:')) {
+		const widget = id.slice('widget:'.length) as FooterWidget;
+		if (FOOTER_WIDGETS.includes(widget))
+			state.widgets[widget] = new_value === 'on';
+	}
 }
 
 function get_setting_detail(id: string): string | undefined {
-	if (id === 'preset') {
-		return 'Start broad here: presets choose which semantic footer rows and widgets are visible.';
-	}
-	if (id === 'tone') {
-		return 'Muted uses dim theme color, balanced uses plain terminal foreground, bright uses the theme accent color.';
-	}
-	if (id === 'status-labels') {
-		return 'Smart avoids doubled labels such as mcp:MCP 6/6 connected while preserving context for unlabeled statuses.';
-	}
+	if (id === 'preset')
+		return 'Presets are starter arrangements; widget toggles decide exact content.';
+	if (id === 'density')
+		return 'Compact is one row, comfortable is normal 2–3 rows, expanded adds diagnostic/footer mode detail.';
+	if (id === 'tone')
+		return 'Muted uses dim theme color, balanced uses plain terminal foreground, bright uses theme accent.';
+	if (id === 'status-labels')
+		return 'Smart avoids doubled labels such as mcp:MCP 6/6 connected.';
+	if (id.startsWith('widget:'))
+		return 'Widgets are composable footer building blocks you can show or hide.';
 }
 
 function get_setting_metadata(
@@ -115,26 +148,17 @@ function get_setting_metadata(
 ): string[] {
 	const lines = [
 		`Current preset: ${state.preset}`,
+		`Density: ${state.density}`,
 		`Tone: ${state.tone}`,
 		`Status labels: ${state.status_label_mode}`,
 	];
-	if (id === 'tone') {
-		lines.push(
-			'',
-			'Theme values:',
-			'muted → theme dim',
-			'balanced → terminal foreground',
-			'bright → theme accent',
-		);
-	}
-	if (id === 'status-labels') {
-		lines.push(
-			'',
-			'Examples:',
-			'smart → MCP 6/6 connected',
-			'always → mcp:MCP 6/6 connected',
-			'never → MCP 6/6 connected',
-		);
+	if (id?.startsWith('widget:')) {
+		lines.push('', 'Enabled widgets:');
+		for (const widget of FOOTER_WIDGETS.filter(
+			(widget) => state.widgets[widget],
+		)) {
+			lines.push(`• ${widget}`);
+		}
 	}
 	if (id === 'preset') {
 		lines.push('', 'Research references to fold in:');

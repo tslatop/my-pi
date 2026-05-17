@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { DEFAULT_FOOTER_STATE } from '../presets/types.js';
 import {
 	make_context,
 	make_footer_data,
@@ -12,12 +13,8 @@ describe('render_footer_lines', () => {
 			make_context(),
 			test_theme,
 			make_footer_data(),
-			{
-				preset: 'minimal',
-				status_label_mode: 'smart',
-				tone: 'muted',
-			},
-			100,
+			{ ...DEFAULT_FOOTER_STATE, preset: 'minimal' },
+			300,
 		);
 		expect(lines).toHaveLength(1);
 		expect(lines[0]).toContain('claude-sonnet');
@@ -35,11 +32,7 @@ describe('render_footer_lines', () => {
 						]),
 				),
 			}),
-			{
-				preset: 'default',
-				status_label_mode: 'smart',
-				tone: 'muted',
-			},
+			DEFAULT_FOOTER_STATE,
 			120,
 		);
 		expect(lines.join('\n')).toContain('MCP 6/6 connected');
@@ -55,11 +48,7 @@ describe('render_footer_lines', () => {
 					() => new Map([['mcp', 'MCP 6/6 connected']]),
 				),
 			}),
-			{
-				preset: 'default',
-				status_label_mode: 'always',
-				tone: 'muted',
-			},
+			{ ...DEFAULT_FOOTER_STATE, status_label_mode: 'always' },
 			120,
 		);
 		expect(lines.join('\n')).toContain('mcp:MCP 6/6 connected');
