@@ -9,6 +9,15 @@ export interface GitSummary {
 	behind: number;
 }
 
+const GIT_GLYPHS = {
+	branch: '',
+	dirty: '',
+	staged: '',
+	untracked: '',
+	ahead: '⇡',
+	behind: '⇣',
+} as const;
+
 export function get_git_summary(
 	cwd: string,
 	branch?: string,
@@ -62,11 +71,17 @@ export function format_git_summary(
 	summary: GitSummary,
 ): string | undefined {
 	const parts: string[] = [];
-	if (summary.branch) parts.push(summary.branch);
-	if (summary.dirty) parts.push(`±${summary.dirty}`);
-	if (summary.staged) parts.push(`●${summary.staged}`);
-	if (summary.untracked) parts.push(`?${summary.untracked}`);
-	if (summary.ahead) parts.push(`↑${summary.ahead}`);
-	if (summary.behind) parts.push(`↓${summary.behind}`);
+	if (summary.branch)
+		parts.push(`${GIT_GLYPHS.branch} ${summary.branch}`);
+	if (summary.dirty)
+		parts.push(`${GIT_GLYPHS.dirty}${summary.dirty}`);
+	if (summary.staged)
+		parts.push(`${GIT_GLYPHS.staged}${summary.staged}`);
+	if (summary.untracked)
+		parts.push(`${GIT_GLYPHS.untracked}${summary.untracked}`);
+	if (summary.ahead)
+		parts.push(`${GIT_GLYPHS.ahead}${summary.ahead}`);
+	if (summary.behind)
+		parts.push(`${GIT_GLYPHS.behind}${summary.behind}`);
 	return parts.length > 0 ? parts.join(' ') : undefined;
 }
