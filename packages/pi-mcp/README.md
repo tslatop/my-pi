@@ -1,13 +1,12 @@
 # @spences10/pi-mcp
 
-[![npm version](https://img.shields.io/npm/v/@spences10/pi-mcp?color=CB3837&logo=npm)](https://www.npmjs.com/package/@spences10/pi-mcp)
 [![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
 [![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-mcp?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-mcp)
+[![license](https://img.shields.io/npm/l/@spences10/pi-mcp)](https://www.npmjs.com/package/@spences10/pi-mcp)
 
 Pi extension for connecting MCP servers and exposing their tools
 inside Pi.
-
-Maintained in the `my-pi` Vite+ workspace and tested with Vitest.
 
 ## Installation
 
@@ -126,6 +125,9 @@ import mcp from '@spences10/pi-mcp';
 MCP extension.
 
 ## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
 
 ```bash
 pnpm --filter @spences10/pi-mcp run check

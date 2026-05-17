@@ -1,5 +1,10 @@
 # @spences10/pi-project-trust
 
+[![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
+[![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-project-trust?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-project-trust)
+[![license](https://img.shields.io/npm/l/@spences10/pi-project-trust)](https://www.npmjs.com/package/@spences10/pi-project-trust)
+
 Shared project-resource trust policy helpers for Pi extensions.
 
 Use this package when an extension needs to decide whether to load
@@ -62,6 +67,9 @@ subjects are invalidated when their hash changes. Path-only subjects
 are supported for current LSP binary trust semantics.
 
 ## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
 
 ```bash
 pnpm --filter @spences10/pi-project-trust run check

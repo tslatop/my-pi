@@ -1,5 +1,10 @@
 # @spences10/pi-child-env
 
+[![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
+[![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-child-env?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-child-env)
+[![license](https://img.shields.io/npm/l/@spences10/pi-child-env)](https://www.npmjs.com/package/@spences10/pi-child-env)
+
 Shared safe environment builder for Pi child processes.
 
 By default it passes only a minimal non-secret baseline (`PATH`,
@@ -34,3 +39,14 @@ Profile-specific allowlists:
 - `team-mode` — `MY_PI_TEAM_MODE_ENV_ALLOWLIST`
 
 Use allowlists only for variables the child process truly needs.
+
+## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
+
+```bash
+pnpm --filter @spences10/pi-child-env run check
+pnpm --filter @spences10/pi-child-env run test
+pnpm --filter @spences10/pi-child-env run build
+```

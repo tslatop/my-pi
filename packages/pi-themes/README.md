@@ -1,5 +1,9 @@
 # @spences10/pi-themes
 
+[![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-themes?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-themes)
+[![license](https://img.shields.io/npm/l/@spences10/pi-themes)](https://www.npmjs.com/package/@spences10/pi-themes)
+
 Theme pack for the Pi coding agent.
 
 ## Install
@@ -30,3 +34,14 @@ JSON:
 - Rosé Pine
 - Solarized Dark
 - Tokyo Night
+
+## Development
+
+This package is included in the Vite+ workspace, but its package-level
+build and test scripts are currently no-ops because it ships static
+theme assets.
+
+```bash
+pnpm --filter @spences10/pi-themes run check
+pnpm --filter @spences10/pi-themes run build
+```

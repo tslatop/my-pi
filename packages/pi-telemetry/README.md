@@ -1,13 +1,12 @@
 # @spences10/pi-telemetry
 
-[![npm version](https://img.shields.io/npm/v/@spences10/pi-telemetry?color=CB3837&logo=npm)](https://www.npmjs.com/package/@spences10/pi-telemetry)
 [![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
 [![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-telemetry?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-telemetry)
+[![license](https://img.shields.io/npm/l/@spences10/pi-telemetry)](https://www.npmjs.com/package/@spences10/pi-telemetry)
 
 Pi extension for local SQLite telemetry of runs, turns, tool calls,
 and provider requests.
-
-Maintained in the `my-pi` Vite+ workspace and tested with Vitest.
 
 ## Installation
 
@@ -151,6 +150,9 @@ Operational details:
   `PRAGMA busy_timeout = 5000`
 
 ## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
 
 ```bash
 pnpm --filter @spences10/pi-telemetry run check

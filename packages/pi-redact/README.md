@@ -1,13 +1,12 @@
 # @spences10/pi-redact
 
-[![npm version](https://img.shields.io/npm/v/@spences10/pi-redact?color=CB3837&logo=npm)](https://www.npmjs.com/package/@spences10/pi-redact)
 [![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
 [![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-redact?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-redact)
+[![license](https://img.shields.io/npm/l/@spences10/pi-redact)](https://www.npmjs.com/package/@spences10/pi-redact)
 
 Pi extension that redacts likely secrets from tool output before the
 model sees them.
-
-Maintained in the `my-pi` Vite+ workspace and tested with Vitest.
 
 ## Installation
 
@@ -91,6 +90,9 @@ proper secret hygiene as the primary control:
 - rotate anything that may have been exposed
 
 ## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
 
 ```bash
 pnpm --filter @spences10/pi-redact run check

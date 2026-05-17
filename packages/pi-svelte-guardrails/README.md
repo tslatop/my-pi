@@ -1,5 +1,10 @@
 # @spences10/pi-svelte-guardrails
 
+[![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
+[![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-svelte-guardrails?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-svelte-guardrails)
+[![license](https://img.shields.io/npm/l/@spences10/pi-svelte-guardrails)](https://www.npmjs.com/package/@spences10/pi-svelte-guardrails)
+
 Pi extension that blocks agents from writing discouraged Svelte
 patterns. In `my-pi`, this guardrail is built in and enabled by
 default. In vanilla Pi, install it explicitly with this package.
@@ -68,3 +73,14 @@ the pattern. The current default remains `block`.
 When a tool result says a write was blocked, the target file was not
 created or modified. Rewrite the change without `$effect` and run the
 write/edit again before reporting success.
+
+## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
+
+```bash
+pnpm --filter @spences10/pi-svelte-guardrails run check
+pnpm --filter @spences10/pi-svelte-guardrails run test
+pnpm --filter @spences10/pi-svelte-guardrails run build
+```

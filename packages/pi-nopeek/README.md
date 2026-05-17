@@ -1,13 +1,12 @@
 # @spences10/pi-nopeek
 
-[![npm version](https://img.shields.io/npm/v/@spences10/pi-nopeek?color=CB3837&logo=npm)](https://www.npmjs.com/package/@spences10/pi-nopeek)
 [![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
 [![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-nopeek?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-nopeek)
+[![license](https://img.shields.io/npm/l/@spences10/pi-nopeek)](https://www.npmjs.com/package/@spences10/pi-nopeek)
 
 Pi extension that reminds the model to use `nopeek` for secret-safe
 environment loading.
-
-Maintained in the `my-pi` Vite+ workspace and tested with Vitest.
 
 ## Installation
 
@@ -71,6 +70,9 @@ import nopeek from '@spences10/pi-nopeek';
 nopeek reminder.
 
 ## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
 
 ```bash
 pnpm --filter @spences10/pi-nopeek run check

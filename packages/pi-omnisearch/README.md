@@ -1,15 +1,14 @@
 # @spences10/pi-omnisearch
 
-[![npm version](https://img.shields.io/npm/v/@spences10/pi-omnisearch?color=CB3837&logo=npm)](https://www.npmjs.com/package/@spences10/pi-omnisearch)
 [![built with Vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
 [![tested with Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![npm version](https://img.shields.io/npm/v/@spences10/pi-omnisearch?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-omnisearch)
+[![license](https://img.shields.io/npm/l/@spences10/pi-omnisearch)](https://www.npmjs.com/package/@spences10/pi-omnisearch)
 
 Pi extension that reminds the model to use `mcp-omnisearch` for
 verified web research instead of relying on stale model memory or
 search snippets. It does not start or duplicate the MCP server; it
 only injects workflow guidance when Omnisearch tools are available.
-
-Maintained in the `my-pi` Vite+ workspace and tested with Vitest.
 
 ## Installation
 
@@ -76,6 +75,9 @@ import omnisearch from '@spences10/pi-omnisearch';
 Omnisearch reminder.
 
 ## Development
+
+Package scripts build transitive workspace dependencies first, then
+run local tools through Vite+ with `vp exec`.
 
 ```bash
 pnpm --filter @spences10/pi-omnisearch run check
