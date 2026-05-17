@@ -11,13 +11,18 @@ import {
 	type FooterModel,
 } from '../model/footer-model.js';
 import type { FooterState } from '../presets/types.js';
-import { muted, type FooterTheme } from '../theme/tokens.js';
+import {
+	muted,
+	themed_text,
+	type FooterTheme,
+} from '../theme/tokens.js';
 import { sanitize_status_text } from '../utils/text.js';
 import { render_footer_status_line } from './status-line.js';
 
 function render_stats_line(
 	model: FooterModel,
 	theme: FooterTheme,
+	state: FooterState,
 	width: number,
 ): string {
 	let stats_left = model.stats_parts.join(' ');
@@ -58,9 +63,15 @@ function render_stats_line(
 		}
 	}
 
-	const dim_stats_left = muted(theme, stats_left);
+	const themed_stats_left = themed_text(
+		theme,
+		state.tone,
+		stats_left,
+	);
 	const remainder = stats_line.slice(stats_left.length);
-	return dim_stats_left + muted(theme, remainder);
+	return (
+		themed_stats_left + themed_text(theme, state.tone, remainder)
+	);
 }
 
 function render_status_label(
@@ -92,6 +103,7 @@ function render_statuses(
 		width,
 		other_statuses,
 		model.preset_status,
+		state.tone,
 	);
 }
 
@@ -112,6 +124,7 @@ export function render_footer_lines(
 				width,
 				[model.pwd],
 				model.model_text,
+				state.tone,
 			) ?? '',
 		);
 		return lines.filter(Boolean);
@@ -119,18 +132,22 @@ export function render_footer_lines(
 
 	lines.push(
 		truncateToWidth(
-			muted(theme, model.pwd),
+			themed_text(theme, state.tone, model.pwd),
 			width,
 			muted(theme, '...'),
 		),
 	);
-	lines.push(render_stats_line(model, theme, width));
+	lines.push(render_stats_line(model, theme, state, width));
 
 	const status_line = render_statuses(model, theme, state, width);
 	if (status_line) lines.push(status_line);
 
 	if (state.preset === 'power') {
-		const footer_mode = muted(theme, `footer:${state.preset}`);
+		const footer_mode = themed_text(
+			theme,
+			state.tone,
+			`footer:${state.preset}`,
+		);
 		lines.push(
 			truncateToWidth(footer_mode, width, muted(theme, '...')),
 		);

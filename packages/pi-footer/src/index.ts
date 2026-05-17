@@ -19,6 +19,7 @@ export { FOOTER_COLORS, type FooterTheme } from './theme/tokens.js';
 const state: FooterState = {
 	preset: 'default',
 	status_label_mode: 'smart',
+	tone: 'muted',
 };
 
 export default function footer_extension(pi: ExtensionAPI): void {

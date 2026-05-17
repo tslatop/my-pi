@@ -15,7 +15,12 @@ export const STATUS_LABEL_MODES = [
 
 export type StatusLabelMode = (typeof STATUS_LABEL_MODES)[number];
 
+export const FOOTER_TONES = ['muted', 'balanced', 'bright'] as const;
+
+export type FooterTone = (typeof FOOTER_TONES)[number];
+
 export interface FooterState {
 	preset: FooterPreset;
 	status_label_mode: StatusLabelMode;
+	tone: FooterTone;
 }

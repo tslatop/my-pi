@@ -2,7 +2,12 @@ import {
 	truncateToWidth,
 	visibleWidth,
 } from '@earendil-works/pi-tui';
-import { muted, type FooterTheme } from '../theme/tokens.js';
+import type { FooterTone } from '../presets/types.js';
+import {
+	muted,
+	themed_text,
+	type FooterTheme,
+} from '../theme/tokens.js';
 import { sanitize_status_text } from '../utils/text.js';
 
 export function render_footer_status_line(
@@ -10,19 +15,20 @@ export function render_footer_status_line(
 	width: number,
 	left_items: string[],
 	right_item?: string,
+	tone: FooterTone = 'muted',
 ): string | undefined {
 	const left = sanitize_status_text(left_items.join(' '));
 	const right = right_item ? sanitize_status_text(right_item) : '';
 	if (!left && !right) return undefined;
 	if (!right) {
 		return truncateToWidth(
-			muted(theme, left),
+			themed_text(theme, tone, left),
 			width,
 			muted(theme, '...'),
 		);
 	}
 	if (!left) {
-		const themed_right = muted(theme, right);
+		const themed_right = themed_text(theme, tone, right);
 		const right_width = visibleWidth(themed_right);
 		return right_width >= width
 			? truncateToWidth(themed_right, width, muted(theme, '...'))
@@ -32,7 +38,7 @@ export function render_footer_status_line(
 	const right_width = visibleWidth(right);
 	if (right_width >= width) {
 		return truncateToWidth(
-			muted(theme, right),
+			themed_text(theme, tone, right),
 			width,
 			muted(theme, '...'),
 		);
@@ -44,8 +50,8 @@ export function render_footer_status_line(
 	const left_width = visibleWidth(truncated_left);
 	const gap = Math.max(min_gap, width - left_width - right_width);
 	return (
-		muted(theme, truncated_left) +
+		themed_text(theme, tone, truncated_left) +
 		' '.repeat(gap) +
-		muted(theme, right)
+		themed_text(theme, tone, right)
 	);
 }

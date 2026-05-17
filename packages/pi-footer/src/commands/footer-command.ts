@@ -7,9 +7,11 @@ import { show_settings_modal } from '@spences10/pi-tui-modal';
 import { install_footer } from '../extension/install.js';
 import {
 	FOOTER_PRESETS,
+	FOOTER_TONES,
 	STATUS_LABEL_MODES,
 	type FooterPreset,
 	type FooterState,
+	type FooterTone,
 	type StatusLabelMode,
 } from '../presets/types.js';
 import { FOOTER_RESEARCH_REFERENCES } from '../reference/research.js';
@@ -54,6 +56,13 @@ function get_footer_settings(state: FooterState): SettingItem[] {
 			values: [...FOOTER_PRESETS],
 		},
 		{
+			id: 'tone',
+			label: 'Tone',
+			description: 'Footer color treatment from the active Pi theme',
+			currentValue: state.tone,
+			values: [...FOOTER_TONES],
+		},
+		{
 			id: 'status-labels',
 			label: 'Status labels',
 			description: 'How extension statuses are labelled',
@@ -75,6 +84,12 @@ function apply_footer_setting(
 		state.preset = new_value as FooterPreset;
 	}
 	if (
+		id === 'tone' &&
+		FOOTER_TONES.includes(new_value as FooterTone)
+	) {
+		state.tone = new_value as FooterTone;
+	}
+	if (
 		id === 'status-labels' &&
 		STATUS_LABEL_MODES.includes(new_value as StatusLabelMode)
 	) {
@@ -85,6 +100,9 @@ function apply_footer_setting(
 function get_setting_detail(id: string): string | undefined {
 	if (id === 'preset') {
 		return 'Start broad here: presets choose which semantic footer rows and widgets are visible.';
+	}
+	if (id === 'tone') {
+		return 'Muted uses dim theme color, balanced uses plain terminal foreground, bright uses the theme accent color.';
 	}
 	if (id === 'status-labels') {
 		return 'Smart avoids doubled labels such as mcp:MCP 6/6 connected while preserving context for unlabeled statuses.';
@@ -97,8 +115,18 @@ function get_setting_metadata(
 ): string[] {
 	const lines = [
 		`Current preset: ${state.preset}`,
+		`Tone: ${state.tone}`,
 		`Status labels: ${state.status_label_mode}`,
 	];
+	if (id === 'tone') {
+		lines.push(
+			'',
+			'Theme values:',
+			'muted → theme dim',
+			'balanced → terminal foreground',
+			'bright → theme accent',
+		);
+	}
 	if (id === 'status-labels') {
 		lines.push(
 			'',
