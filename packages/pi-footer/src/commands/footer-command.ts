@@ -1,6 +1,7 @@
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
+	ExtensionContext,
 } from '@earendil-works/pi-coding-agent';
 import { SelectList, type SettingItem } from '@earendil-works/pi-tui';
 import {
@@ -8,7 +9,10 @@ import {
 	show_settings_modal,
 } from '@spences10/pi-tui-modal';
 import { save_footer_state } from '../config.js';
-import { install_footer } from '../extension/install.js';
+import {
+	get_current_footer_data,
+	install_footer,
+} from '../extension/install.js';
 import {
 	FOOTER_DENSITIES,
 	FOOTER_PRESETS,
@@ -23,6 +27,7 @@ import {
 	type StatusLabelMode,
 } from '../presets/types.js';
 import { FOOTER_RESEARCH_REFERENCES } from '../reference/research.js';
+import { render_footer_lines } from '../render/footer-lines.js';
 
 export function register_footer_command(
 	pi: ExtensionAPI,
@@ -43,7 +48,7 @@ async function configure_footer(
 		title: 'Footer settings',
 		subtitle:
 			'Changes apply live and persist to ~/.pi/agent/extensions/pi-footer.json.',
-		footer: 'enter cycles values • esc close',
+		footer: 'space/enter cycles values • esc close',
 		items: get_footer_settings(state),
 		enable_search: true,
 		detail: (item) => get_setting_detail(item.id),
@@ -110,7 +115,7 @@ async function configure_footer_widgets(
 		ctx,
 		{
 			title: 'Footer widgets',
-			subtitle: 'Choose footer building blocks to show or hide.',
+			subtitle: () => get_widget_modal_subtitle(ctx, state),
 			footer: 'space toggles • esc back',
 		},
 		({ done }, theme, layout) => {
@@ -155,6 +160,30 @@ async function configure_footer_widgets(
 function get_enabled_widget_count(state: FooterState): number {
 	return FOOTER_WIDGETS.filter((widget) => state.widgets[widget])
 		.length;
+}
+
+function get_widget_modal_subtitle(
+	ctx: ExtensionCommandContext,
+	state: FooterState,
+): string[] {
+	const footer_data = get_current_footer_data();
+	if (!footer_data)
+		return ['Choose footer building blocks to show or hide.'];
+	const lines = render_footer_lines(
+		ctx as ExtensionContext,
+		ctx.ui.theme,
+		footer_data,
+		state,
+		72,
+	);
+	return [
+		'Choose footer building blocks to show or hide.',
+		'',
+		'Preview:',
+		...(lines.length > 0
+			? lines.map((line) => `  ${line}`)
+			: ['  —']),
+	];
 }
 
 function format_widget_state(
