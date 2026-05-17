@@ -5,10 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-omnisearch?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-omnisearch)
 [![license](https://img.shields.io/npm/l/@spences10/pi-omnisearch)](https://www.npmjs.com/package/@spences10/pi-omnisearch)
 
-Pi extension that reminds the model to use `mcp-omnisearch` for
-verified web research instead of relying on stale model memory or
-search snippets. It does not start or duplicate the MCP server; it
-only injects workflow guidance when Omnisearch tools are available.
+Make agents verify current facts before answering. `pi-omnisearch`
+reminds the model to use the Omnisearch MCP tools for web search,
+extraction, and cited synthesis instead of relying on stale memory or
+snippets.
 
 ## Installation
 

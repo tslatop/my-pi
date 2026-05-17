@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-themes",
 	"version": "0.0.6",
-	"description": "Bundled theme pack for Pi coding agent",
+	"description": "Polished theme pack for Pi that improves contrast, mood, and visual hierarchy in the terminal UI",
 	"keywords": [
 		"pi",
 		"pi-package",

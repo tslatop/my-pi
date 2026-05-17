@@ -5,8 +5,9 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-team-mode?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-team-mode)
 [![license](https://img.shields.io/npm/l/@spences10/pi-team-mode)](https://www.npmjs.com/package/@spences10/pi-team-mode)
 
-Experimental Pi extension for local team orchestration with RPC
-teammates, tasks, and mailbox-backed messages.
+Run parallel agent work without losing coordination. `pi-team-mode`
+adds local RPC teammates, task tracking, and mailbox messaging so a
+lead agent can delegate research, review, and implementation safely.
 
 ## Installation
 

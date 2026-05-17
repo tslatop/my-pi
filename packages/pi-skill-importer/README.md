@@ -5,8 +5,9 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-skill-importer?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-skill-importer)
 [![license](https://img.shields.io/npm/l/@spences10/pi-skill-importer)](https://www.npmjs.com/package/@spences10/pi-skill-importer)
 
-Pi extension and helper API for importing external Agent
-Skills-compatible sources into Pi-native skill storage.
+Move external Agent Skills into Pi without hand-copying files.
+`pi-skill-importer` provides the import helpers Pi uses to normalize
+skill metadata, content, and storage from compatible skill sources.
 
 The extension registers `/skill-importer` with list/import/sync/delete
 flows. It discovers Claude plugin skills, then copies selected skills

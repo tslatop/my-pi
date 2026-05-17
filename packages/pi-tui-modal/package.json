@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-tui-modal",
 	"version": "0.0.17",
-	"description": "Shared Pi TUI modal helpers for picker and settings overlays",
+	"description": "Shared Pi TUI modal primitives for consistent pickers, settings, prompts, confirmations, and scrollable overlays",
 	"keywords": [
 		"modal",
 		"pi",

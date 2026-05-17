@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-sqlite-tools",
 	"version": "0.0.10",
-	"description": "Pi extension that reminds the model to prefer mcp-sqlite-tools for SQLite database work",
+	"description": "SQLite safety workflow reminder that steers Pi agents to use gated mcp-sqlite-tools instead of raw sqlite3",
 	"keywords": [
 		"database",
 		"mcp",

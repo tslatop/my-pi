@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-skill-importer",
 	"version": "0.0.4",
-	"description": "Pi extension helpers for importing external Agent Skills into Pi-native storage",
+	"description": "Helpers for importing external Agent Skills-compatible sources into Pi-native skill storage",
 	"keywords": [
 		"agent-skills",
 		"importer",

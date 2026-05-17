@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-mcp",
 	"version": "0.0.29",
-	"description": "Pi extension for connecting MCP servers and exposing their tools",
+	"description": "MCP server integration for Pi that exposes configured MCP tools safely and manages large responses",
 	"keywords": [
 		"mcp",
 		"model-context-protocol",

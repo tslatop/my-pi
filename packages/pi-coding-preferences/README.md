@@ -5,8 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-coding-preferences?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-coding-preferences)
 [![license](https://img.shields.io/npm/l/@spences10/pi-coding-preferences)](https://www.npmjs.com/package/@spences10/pi-coding-preferences)
 
-Pi extension that blocks configured coding workflow anti-patterns
-before agents run them.
+Keep agents aligned with your local coding standards before bad
+commands run. `pi-coding-preferences` turns workflow preferences—like
+using `rg` instead of `grep`—into lightweight guardrails that nudge
+the model toward the project’s conventions.
 
 It ships with default workflow preferences. Add user preferences at
 `~/.pi/agent/coding-preferences.json` and project preferences at

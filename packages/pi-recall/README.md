@@ -5,8 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-recall?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-recall)
 [![license](https://img.shields.io/npm/l/@spences10/pi-recall)](https://www.npmjs.com/package/@spences10/pi-recall)
 
-Pi extension that reminds the model to use `pirecall` for past-session
-context and syncs local recall data.
+Find the old decision, bugfix, or implementation detail instead of
+rediscovering it. `pi-recall` keeps `pirecall` synced and reminds the
+model to query past Pi sessions when history would save time or avoid
+repeated work.
 
 ## Installation
 

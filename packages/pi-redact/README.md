@@ -5,8 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-redact?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-redact)
 [![license](https://img.shields.io/npm/l/@spences10/pi-redact)](https://www.npmjs.com/package/@spences10/pi-redact)
 
-Pi extension that redacts likely secrets from tool output before the
-model sees them.
+Prevent accidental secret exposure before tool output reaches the
+model. `pi-redact` scans command results for likely tokens, keys, and
+credentials, replacing them with safe placeholders while preserving
+enough context to debug.
 
 ## Installation
 

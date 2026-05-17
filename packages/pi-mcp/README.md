@@ -5,8 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-mcp?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-mcp)
 [![license](https://img.shields.io/npm/l/@spences10/pi-mcp)](https://www.npmjs.com/package/@spences10/pi-mcp)
 
-Pi extension for connecting MCP servers and exposing their tools
-inside Pi.
+Bring your MCP servers into Pi as first-class agent tools. `pi-mcp`
+discovers configured servers, exposes their tools safely, and keeps
+large MCP responses manageable through Pi’s context sidecar
+integration.
 
 ## Installation
 

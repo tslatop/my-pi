@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-skills",
 	"version": "0.0.23",
-	"description": "Pi extension for managing, discovering, and installing Agent Skills",
+	"description": "Agent Skills management for Pi with profiles, enablement rules, GitHub search/install, and update flows",
 	"keywords": [
 		"agent-skills",
 		"pi",

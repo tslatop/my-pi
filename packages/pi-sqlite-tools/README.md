@@ -5,10 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-sqlite-tools?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-sqlite-tools)
 [![license](https://img.shields.io/npm/l/@spences10/pi-sqlite-tools)](https://www.npmjs.com/package/@spences10/pi-sqlite-tools)
 
-Pi extension that reminds the model to prefer `mcp-sqlite-tools` for
-SQLite database work instead of raw `sqlite3` shell commands. It does
-not start or duplicate the MCP server; it only injects workflow
-guidance when SQLite MCP tools are available.
+Make SQLite work safer than ad-hoc shell commands. `pi-sqlite-tools`
+reminds agents to use the gated `mcp-sqlite-tools` workflow for
+inspecting, querying, backing up, and modifying databases instead of
+raw `sqlite3` scripts.
 
 ## Installation
 

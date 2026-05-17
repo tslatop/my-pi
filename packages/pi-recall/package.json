@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-recall",
 	"version": "0.0.11",
-	"description": "Pi extension that reminds the model to use pirecall and syncs session recall data",
+	"description": "Pi extension that syncs pirecall and nudges agents to query past Pi sessions when history matters",
 	"keywords": [
 		"pi",
 		"pi-package",

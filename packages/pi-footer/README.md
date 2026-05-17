@@ -5,7 +5,9 @@
 [![npm version](https://img.shields.io/npm/v/@spences10/pi-footer?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@spences10/pi-footer)
 [![license](https://img.shields.io/npm/l/@spences10/pi-footer)](https://www.npmjs.com/package/@spences10/pi-footer)
 
-Configurable Pi footer/statusline extension.
+See the session state that matters without leaving Pi. `pi-footer`
+adds a configurable statusline for model, project, Git, token, and
+runtime signals so long agent sessions stay easy to orient and trust.
 
 It owns `ctx.ui.setFooter(...)` and renders core Pi session data plus
 extension statuses published by other extensions with

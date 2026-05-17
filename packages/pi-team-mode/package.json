@@ -1,7 +1,7 @@
 {
 	"name": "@spences10/pi-team-mode",
 	"version": "0.0.25",
-	"description": "Pi extension for local orchestrator/team mode with RPC teammates, tasks, and mailboxes",
+	"description": "Local team orchestration for Pi with RPC teammates, task tracking, and mailbox coordination",
 	"keywords": [
 		"agent",
 		"orchestration",
