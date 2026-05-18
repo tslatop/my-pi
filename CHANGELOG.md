@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.55
+
+### Patch Changes
+
+- 86192a9: Update pi-coding-agent catalog dependency to 0.75.0 and
+  refresh lockfile resolution entries.
+
 ## 0.1.54
 
 ### Patch Changes
