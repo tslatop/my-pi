@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	make_context,
 	make_footer_data,
@@ -6,8 +6,20 @@ import {
 } from '../test-utils.js';
 import { build_footer_model } from './footer-model.js';
 
+const original_home = process.env.HOME;
+
+function restore_home() {
+	if (original_home === undefined) delete process.env.HOME;
+	else process.env.HOME = original_home;
+}
+
 describe('build_footer_model', () => {
+	afterEach(() => {
+		restore_home();
+	});
+
 	it('builds path, stats, model, and status data', () => {
+		process.env.HOME = '/home/scott';
 		const ctx = make_context({
 			sessionManager: {
 				getEntries: vi.fn(() => [
