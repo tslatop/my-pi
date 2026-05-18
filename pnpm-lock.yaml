@@ -13,8 +13,8 @@ catalogs:
       specifier: ^0.74.1
       version: 0.74.1
     '@earendil-works/pi-tui':
-      specifier: ^0.74.1
-      version: 0.74.1
+      specifier: ^0.75.0
+      version: 0.75.0
     '@types/node':
       specifier: ^25.8.0
       version: 25.8.0
@@ -43,7 +43,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@spences10/pi-project-trust':
         specifier: workspace:*
         version: link:packages/pi-project-trust
@@ -212,7 +212,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.8.0
@@ -234,7 +234,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.8.0
@@ -384,7 +384,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.8.0
@@ -406,7 +406,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.8.0
@@ -470,7 +470,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.8.0
@@ -509,7 +509,7 @@ importers:
         version: 0.74.1(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.74.1
+        version: 0.75.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.8.0
@@ -725,6 +725,10 @@ packages:
   '@earendil-works/pi-tui@0.74.1':
     resolution: {integrity: sha512-wQj2TRG43/BBNyd/lReQJWtTCOJVyIwI+7Ifp3hNITfTtQr4zQdMeF7uxqEMQ73LI6rQO7Ljx0P2w+oMx8uyIA==}
     engines: {node: '>=20.0.0'}
+
+  '@earendil-works/pi-tui@0.75.0':
+    resolution: {integrity: sha512-bz5c/8A1XmVeZ1P0ogMMqGUlaThyMdKKSiL1KlO9kLB+PY1T/+aQC0gsfC8RLUwji6NBzSZtFQLU52ckYlm94g==}
+    engines: {node: '>=22.19.0'}
 
   '@emnapi/core@1.9.2':
     resolution: {integrity: sha512-UC+ZhH3XtczQYfOlu3lNEkdW/p4dsJ1r/bP7H8+rhao3TTTMO1ATq/4DdIi23XuGoFY+Cz0JmCbdVl0hz9jZcA==}
@@ -2864,6 +2868,13 @@ snapshots:
       - zod
 
   '@earendil-works/pi-tui@0.74.1':
+    dependencies:
+      get-east-asian-width: 1.6.0
+      marked: 15.0.12
+    optionalDependencies:
+      koffi: 2.16.2
+
+  '@earendil-works/pi-tui@0.75.0':
     dependencies:
       get-east-asian-width: 1.6.0
       marked: 15.0.12
