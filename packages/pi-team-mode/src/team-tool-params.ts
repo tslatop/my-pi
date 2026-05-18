@@ -27,6 +27,7 @@ const TEAM_ACTIONS = [
 	'task_claim_next',
 	'message_send',
 	'message_list',
+	'message_wait',
 	'message_read',
 	'message_ack',
 ] as const;
@@ -85,6 +86,10 @@ export const TeamToolParams = Type.Object({
 	to: Type.Optional(Type.String()),
 	message: Type.Optional(Type.String()),
 	message_ids: Type.Optional(Type.Array(Type.String())),
+	reply_to: Type.Optional(Type.String()),
+	ttl_ms: Type.Optional(Type.Number()),
+	requires_ack: Type.Optional(Type.Boolean()),
+	include_read: Type.Optional(Type.Boolean()),
 	urgent: Type.Optional(Type.Boolean()),
 	initial_prompt: Type.Optional(Type.String()),
 	model: Type.Optional(Type.String()),
@@ -127,6 +132,10 @@ export type TeamToolParams = {
 	to?: string;
 	message?: string;
 	message_ids?: string[];
+	reply_to?: string;
+	ttl_ms?: number;
+	requires_ack?: boolean;
+	include_read?: boolean;
 	urgent?: boolean;
 	initial_prompt?: string;
 	model?: string;
@@ -220,6 +229,7 @@ export function validate_team_tool_params(
 			require_tool_field(params, 'message');
 			return;
 		case 'message_list':
+		case 'message_wait':
 		case 'message_read':
 		case 'message_ack':
 			require_tool_any_field(params, ['member', 'to'], 'member');

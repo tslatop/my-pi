@@ -215,6 +215,13 @@ export function format_messages(messages: TeamMessage[]): string {
 	return messages
 		.map((message) => {
 			const urgent = message.urgent ? ' urgent' : '';
+			const ack = message.requires_ack ? ' requires-ack' : '';
+			const reply = message.reply_to
+				? ` reply-to:${message.reply_to}`
+				: '';
+			const expires = message.expires_at
+				? ` expires:${message.expires_at}`
+				: '';
 			const state = message.acknowledged_at
 				? 'acknowledged'
 				: message.read_at
@@ -222,7 +229,7 @@ export function format_messages(messages: TeamMessage[]): string {
 					: message.delivered_at
 						? 'delivered'
 						: 'unread';
-			return `- ${message.id}${urgent} ${state} from ${message.from}: ${message.body}`;
+			return `- ${message.id}${urgent}${ack}${reply}${expires} ${state} from ${message.from}: ${message.body}`;
 		})
 		.join('\n');
 }

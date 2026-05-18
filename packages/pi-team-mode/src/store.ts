@@ -94,6 +94,9 @@ export interface TeamMessage {
 	body: string;
 	urgent: boolean;
 	created_at: string;
+	reply_to?: string;
+	expires_at?: string;
+	requires_ack?: boolean;
 	delivered_at?: string;
 	read_at?: string;
 	acknowledged_at?: string;
@@ -150,6 +153,9 @@ export interface SendMessageInput {
 	to: string;
 	body: string;
 	urgent?: boolean;
+	reply_to?: string;
+	ttl_ms?: number;
+	requires_ack?: boolean;
 }
 
 export interface TeamStatus {
@@ -702,6 +708,21 @@ export class TeamStore {
 				urgent: input.urgent ?? false,
 				created_at: timestamp,
 			};
+			if (input.reply_to?.trim()) {
+				const reply_to = input.reply_to.trim();
+				if (safe_segment(reply_to) !== reply_to) {
+					throw new Error(`Invalid reply_to message id: ${reply_to}`);
+				}
+				message.reply_to = reply_to;
+			}
+			if (input.ttl_ms && input.ttl_ms > 0) {
+				message.expires_at = new Date(
+					Date.parse(timestamp) + input.ttl_ms,
+				).toISOString();
+			}
+			if (input.requires_ack !== undefined) {
+				message.requires_ack = input.requires_ack;
+			}
 			write_json(
 				join(this.mailbox_dir(team_id, to), `${message.id}.json`),
 				message,
@@ -718,6 +739,49 @@ export class TeamStore {
 			this.mailbox_dir(team_id, require_member_name(member)),
 			validate_message,
 		);
+	}
+
+	async wait_for_message(
+		team_id: string,
+		member: string,
+		options: {
+			reply_to?: string;
+			from?: string;
+			timeout_ms?: number;
+			include_read?: boolean;
+		} = {},
+	): Promise<TeamMessage | undefined> {
+		const normalized_member = require_member_name(member);
+		const from = options.from
+			? require_member_name(options.from, 'from')
+			: undefined;
+		const reply_to = options.reply_to?.trim();
+		if (reply_to && safe_segment(reply_to) !== reply_to) {
+			throw new Error(`Invalid reply_to message id: ${reply_to}`);
+		}
+		const timeout_ms = Math.max(0, options.timeout_ms ?? 30_000);
+		const deadline = Date.now() + timeout_ms;
+		for (;;) {
+			const timestamp = Date.now();
+			const message = this.list_messages(
+				team_id,
+				normalized_member,
+			).find((item) => {
+				if (!options.include_read && item.read_at) return false;
+				if (reply_to && item.reply_to !== reply_to) return false;
+				if (from && item.from !== from) return false;
+				if (
+					item.expires_at &&
+					Date.parse(item.expires_at) <= timestamp
+				) {
+					return false;
+				}
+				return true;
+			});
+			if (message) return message;
+			if (timestamp >= deadline) return undefined;
+			await delay(Math.min(250, deadline - timestamp));
+		}
 	}
 
 	async mark_messages_delivered(

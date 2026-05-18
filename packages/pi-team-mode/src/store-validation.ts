@@ -66,4 +66,18 @@ export function validate_message(message: TeamMessage): void {
 	if (typeof message.urgent !== 'boolean') {
 		throw new Error('Message urgent must be boolean');
 	}
+	if (
+		message.reply_to &&
+		safe_segment(message.reply_to) !== message.reply_to
+	) {
+		throw new Error(
+			`Invalid reply_to message id: ${message.reply_to}`,
+		);
+	}
+	if (
+		message.requires_ack !== undefined &&
+		typeof message.requires_ack !== 'boolean'
+	) {
+		throw new Error('Message requires_ack must be boolean');
+	}
 }

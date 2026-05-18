@@ -365,6 +365,54 @@ describe('TeamStore', async () => {
 		expect(acknowledged[0].acknowledged_at).toBeTruthy();
 	});
 
+	it('tracks reply metadata and waits for matching peer replies', async () => {
+		const team = store.create_team({ cwd: '/repo' });
+		const original = await store.send_message(team.id, {
+			from: 'lead',
+			to: 'alice',
+			body: 'question',
+			requires_ack: true,
+		});
+		await store.send_message(team.id, {
+			from: 'bob',
+			to: 'lead',
+			body: 'unrelated',
+		});
+		const reply = await store.send_message(team.id, {
+			from: 'alice',
+			to: 'lead',
+			body: 'answer',
+			reply_to: original.id,
+			ttl_ms: 10_000,
+		});
+
+		await expect(
+			store.wait_for_message(team.id, 'lead', {
+				reply_to: original.id,
+				from: 'alice',
+				timeout_ms: 1,
+			}),
+		).resolves.toMatchObject({ id: reply.id, reply_to: original.id });
+		expect(store.list_messages(team.id, 'alice')[0]).toMatchObject({
+			requires_ack: true,
+		});
+	});
+
+	it('ignores expired messages while waiting', async () => {
+		const team = store.create_team({ cwd: '/repo' });
+		await store.send_message(team.id, {
+			from: 'alice',
+			to: 'lead',
+			body: 'stale',
+			ttl_ms: 1,
+		});
+		await new Promise((resolve) => setTimeout(resolve, 5));
+
+		await expect(
+			store.wait_for_message(team.id, 'lead', { timeout_ms: 1 }),
+		).resolves.toBeUndefined();
+	});
+
 	it('can restore delivered but unacknowledged messages to unread', async () => {
 		const team = store.create_team({ cwd: '/repo' });
 		const message = await store.send_message(team.id, {

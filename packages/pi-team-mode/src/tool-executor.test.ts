@@ -171,6 +171,44 @@ describe('execute_team_tool mailbox actions', () => {
 		).toBeUndefined();
 	});
 
+	it('waits for a matching reply message', async () => {
+		const team = store.create_team({ cwd: '/repo' });
+		const original = await store.send_message(team.id, {
+			from: 'lead',
+			to: 'alice',
+			body: 'question',
+		});
+		const reply = await store.send_message(team.id, {
+			from: 'alice',
+			to: 'lead',
+			body: 'answer',
+			reply_to: original.id,
+		});
+
+		const result = await execute_team_tool(
+			{
+				action: 'message_wait',
+				member: 'lead',
+				from: 'alice',
+				reply_to: original.id,
+				timeout_ms: 1,
+			},
+			{
+				cwd: '/repo',
+				ui: {
+					setStatus: () => undefined,
+					setWidget: () => undefined,
+				},
+			} as any,
+			deps(team.id) as any,
+		);
+
+		expect(result.content[0].text).toContain(reply.id);
+		expect(result.details).toMatchObject({
+			message: { id: reply.id, reply_to: original.id },
+		});
+	});
+
 	it('acknowledges selected messages without touching the rest', async () => {
 		const team = store.create_team({ cwd: '/repo' });
 		const first = await store.send_message(team.id, {

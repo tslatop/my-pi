@@ -544,6 +544,9 @@ export async function execute_team_tool(
 				to: require_arg(params.to, 'to'),
 				body: require_arg(params.message, 'message'),
 				urgent: params.urgent,
+				reply_to: params.reply_to,
+				ttl_ms: params.ttl_ms,
+				requires_ack: params.requires_ack,
 			});
 			const runner = runners.get(message.to);
 			if (runner?.is_running) {
@@ -577,6 +580,29 @@ export async function execute_team_tool(
 					},
 				],
 				details: { messages },
+			};
+		}
+		case 'message_wait': {
+			const message = await store.wait_for_message(
+				require_team_id(),
+				require_arg(params.member ?? params.to, 'member'),
+				{
+					reply_to: params.reply_to,
+					from: params.from,
+					timeout_ms: params.timeout_ms,
+					include_read: params.include_read,
+				},
+			);
+			return {
+				content: [
+					{
+						type: 'text' as const,
+						text: message
+							? format_messages([message])
+							: 'No matching message before timeout.',
+					},
+				],
+				details: { message },
 			};
 		}
 		case 'message_read':

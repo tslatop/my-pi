@@ -162,7 +162,12 @@ Mailbox messages track three separate states:
 Use `message_read` to mark reviewed messages without acknowledging
 work, and `message_ack` after acting on them. Both tool actions accept
 optional `message_ids`; without IDs they update the whole inbox for
-the member. Command equivalents are
+the member. `message_send` also supports peer-comms metadata:
+`reply_to` to thread a response to an earlier message, `ttl_ms` to set
+an expiry, and `requires_ack` to make the expected handoff explicit.
+Use `message_wait` with `member`/`to`, optional `from`, optional
+`reply_to`, and `timeout_ms` to block briefly for a matching peer
+reply without polling manually. Command equivalents are
 `/team inbox <member> read [ids...]`,
 `/team inbox <member> ack [ids...]`, `/team read <member> [ids...]`,
 and `/team ack <member> [ids...]`. If a teammate exits after delivery
