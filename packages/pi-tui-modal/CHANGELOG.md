@@ -1,5 +1,12 @@
 # @spences10/pi-tui-modal
 
+## 0.0.19
+
+### Patch Changes
+
+- 7d90676: Fix text modal tab wrapping to prevent rendered lines from
+  exceeding terminal width and crashing.
+
 ## 0.0.18
 
 ### Patch Changes

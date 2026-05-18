@@ -1,5 +1,12 @@
 # @spences10/pi-footer
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [7d90676]
+  - @spences10/pi-tui-modal@0.0.19
+
 ## 0.0.4
 
 ### Patch Changes
