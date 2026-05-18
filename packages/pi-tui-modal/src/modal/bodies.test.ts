@@ -30,6 +30,21 @@ describe('modal bodies', () => {
 		expect(cancel).toHaveBeenCalledOnce();
 	});
 
+	it('expands tabs before wrapping text modal content', () => {
+		const body = new TextModalBody(
+			'Took 0.0s\tlong_identifier',
+			5,
+			modal_theme,
+			vi.fn(),
+		);
+
+		expect(body.render(12)).toEqual([
+			'Took 0.0s',
+			'long_identif',
+			'ier',
+		]);
+	});
+
 	it('renders settings, cycles values, filters, and cancels', () => {
 		const on_change = vi.fn();
 		const on_cancel = vi.fn();

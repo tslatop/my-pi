@@ -19,6 +19,10 @@ import type {
 	ModalTheme,
 } from './types.js';
 
+function expand_tabs(text: string): string {
+	return text.replace(/\t/g, '   ');
+}
+
 export class TextModalBody implements ModalBody {
 	private offset = 0;
 	private wrapped_lines: string[] = [];
@@ -36,7 +40,7 @@ export class TextModalBody implements ModalBody {
 
 	render(width: number): string[] {
 		this.wrapped_lines = normalize_text(this.text).flatMap((block) =>
-			block
+			expand_tabs(block)
 				.split('\n')
 				.flatMap((line) =>
 					line.length === 0 ? [''] : wrapTextWithAnsi(line, width),

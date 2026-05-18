@@ -4,8 +4,8 @@
 
 ### Patch Changes
 
-- 599b355: Improve package README openings and descriptions to emphasize user
-  benefits and clarify pi-skills/pi-recall positioning.
+- 599b355: Improve package README openings and descriptions to
+  emphasize user benefits and clarify pi-skills/pi-recall positioning.
 
 ## 0.0.10
 
