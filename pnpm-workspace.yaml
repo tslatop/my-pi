@@ -3,9 +3,9 @@ packages:
   - packages/*
 
 catalog:
-  '@earendil-works/pi-ai': ^0.75.0
-  '@earendil-works/pi-coding-agent': ^0.75.0
-  '@earendil-works/pi-tui': ^0.75.0
+  '@earendil-works/pi-ai': ^0.75.3
+  '@earendil-works/pi-coding-agent': ^0.75.3
+  '@earendil-works/pi-tui': ^0.75.3
   '@types/node': ^25.8.0
   '@vitest/coverage-v8': 4.1.5
   typebox: ^1.1.38
