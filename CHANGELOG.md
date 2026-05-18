@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.56
+
+### Patch Changes
+
+- 6c288a7: Update Pi catalog dependencies to 0.75.3 for latest
+  upstream runtime and fetch stability fixes.
+
 ## 0.1.55
 
 ### Patch Changes
