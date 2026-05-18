@@ -1,5 +1,12 @@
 # @spences10/pi-team-mode
 
+## 0.0.28
+
+### Patch Changes
+
+- d938c19: Add peer message threading, expiry metadata, and wait
+  support to pi-team-mode mailbox workflows.
+
 ## 0.0.27
 
 ### Patch Changes
