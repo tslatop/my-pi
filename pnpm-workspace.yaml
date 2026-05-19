@@ -29,5 +29,8 @@ allowBuilds:
 
 onlyBuiltDependencies:
   - '@google/genai'
+  - esbuild
   - koffi
   - protobufjs
+  - sharp
+  - workerd
