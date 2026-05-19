@@ -23,10 +23,9 @@ extensions.
 ## What this is for
 
 `my-pi` is a composable Pi-based coding-agent harness for local agent
-work, eval runs, and agent-ops experiments. It is intentionally more
-of a cockpit than a single-purpose assistant: the default CLI combines
-MCP, LSP, skills, prompt presets, secret-safe tooling, local
-telemetry, session recall, and optional team-mode orchestration.
+work, eval runs, and agent-ops experiments. The default CLI combines
+MCP, LSP, skills, prompt presets, secret-safe tooling, local telemetry,
+session recall, and optional team-mode orchestration.
 
 The main design goal is repeatability: run an agent task, capture
 structured telemetry, preserve session context, and reuse the same
