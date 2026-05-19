@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vp exec vite dev",
-		"build": "wrangler types --check && vp exec vite build",
+		"build": "wrangler types && vp exec vite build",
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
 		"prepare": "vp exec svelte-kit sync || echo ''",
 		"check": "wrangler types --check && vp exec svelte-kit sync && vp exec svelte-check --tsconfig ./tsconfig.json",
