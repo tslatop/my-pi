@@ -18,7 +18,7 @@ overrides:
   postcss: '8.5.12'
   protobufjs: '7.5.5'
 
-minimumReleaseAge: 0
+minimumReleaseAge: 1440
 
 allowBuilds:
   '@google/genai': true
