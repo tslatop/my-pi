@@ -7,6 +7,8 @@
 
 Composable [pi](https://pi.dev) coding agent for humans and agents.
 
+![my-pi package preview](./assets/pi-package-preview.png)
+
 Built on the
 [@earendil-works/pi-coding-agent](https://github.com/badlogic/pi-mono)
 SDK. Adds MCP server support, a managed extension registry, user
