@@ -42,13 +42,7 @@
 			<div class="mt-8 flex flex-wrap gap-3 font-mono text-sm">
 				<a
 					class="rounded-full border border-accent bg-[color-mix(in_srgb,var(--afterglow-text-accent)_18%,transparent)] px-5 py-3 text-accent shadow-(--afterglow-shadow-magenta) transition hover:bg-element-hover"
-					href="/demo"
-				>
-					View demo
-				</a>
-				<a
-					class="rounded-full border border-border-muted px-5 py-3 text-muted transition hover:border-cyan hover:text-cyan"
-					href="https://github.com/earendil-works/pi-coding-agent"
+					href="https://github.com/spences10/my-pi"
 				>
 					GitHub
 				</a>
