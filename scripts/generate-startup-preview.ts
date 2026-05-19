@@ -22,8 +22,8 @@ const ANSI_CAPTURE_PREFIX_PATTERN = new RegExp(
 );
 const MODEL_ID = 'gpt-5.5';
 
-type Span = {
-	text: string;
+type Cell = {
+	char: string;
 	color: string;
 	bold: boolean;
 };
@@ -91,23 +91,15 @@ function trim_ansi_padding(line: string, trim_right = true): string {
 	return output;
 }
 
-function spans_from_ansi(line: string): Span[] {
-	const spans: Span[] = [];
+function cells_from_ansi(line: string): Cell[] {
+	const cells: Cell[] = [];
 	let color = RESET_COLOR;
 	let bold = false;
-	let text = '';
-
-	function flush(): void {
-		if (!text) return;
-		spans.push({ text, color, bold });
-		text = '';
-	}
 
 	for (let i = 0; i < line.length; ) {
 		if (line[i] === ESC) {
 			const control = ANSI_CAPTURE_PREFIX_PATTERN.exec(line.slice(i));
 			if (control) {
-				flush();
 				const parts = control[1]!.split(';').map(Number);
 				if (parts.includes(0)) {
 					color = RESET_COLOR;
@@ -125,11 +117,10 @@ function spans_from_ansi(line: string): Span[] {
 			}
 		}
 
-		text += line[i++];
+		cells.push({ char: line[i++]!, color, bold });
 	}
 
-	flush();
-	return spans;
+	return cells;
 }
 
 function render_preview_line(
@@ -137,26 +128,27 @@ function render_preview_line(
 	row: number,
 	width: number,
 ): string {
-	const y = PAD_Y + row * LINE_HEIGHT + FONT_SIZE;
-	const plain_width = strip_ansi(line.text).length * CHAR_WIDTH;
+	const cells = cells_from_ansi(line.text);
+	const plain_width = cells.length * CHAR_WIDTH;
 	const x =
 		line.align === 'center'
-			? width / 2
+			? (width - plain_width) / 2
 			: line.align === 'logo'
 				? (width - plain_width) / 2
 				: PAD_X;
-	const anchor = line.align === 'center' ? 'middle' : 'start';
-	const text_length =
-		line.align === 'logo'
-			? ` textLength="${plain_width}" lengthAdjust="spacingAndGlyphs"`
-			: '';
-	const spans = spans_from_ansi(line.text)
-		.map(
-			(span) =>
-				`<tspan fill="${span.color}" font-weight="${span.bold ? 700 : 500}">${escape_xml(span.text)}</tspan>`,
-		)
+	const text_y = PAD_Y + row * LINE_HEIGHT + FONT_SIZE;
+	const rect_y = PAD_Y + row * LINE_HEIGHT + 1;
+	const block_height = LINE_HEIGHT - 3;
+	return cells
+		.map((cell, index) => {
+			if (cell.char === ' ') return '';
+			const cell_x = (x + index * CHAR_WIDTH).toFixed(1);
+			if (cell.char === '█') {
+				return `<rect x="${cell_x}" y="${rect_y}" width="${CHAR_WIDTH}" height="${block_height}" fill="${cell.color}"/>`;
+			}
+			return `<text x="${cell_x}" y="${text_y}" fill="${cell.color}" font-weight="${cell.bold ? 700 : 500}">${escape_xml(cell.char)}</text>`;
+		})
 		.join('');
-	return `<text x="${x}" y="${y}" text-anchor="${anchor}"${text_length}>${spans}</text>`;
 }
 
 const header_lines: PreviewLine[] = render_startup_header(
@@ -168,14 +160,15 @@ const header_lines: PreviewLine[] = render_startup_header(
 	text: trim_ansi_padding(line, index < 2 || index > 7),
 	align: index >= 2 && index <= 7 ? 'logo' : 'center',
 }));
+const FOOTER_WIDTH = 75;
 const footer_lines: PreviewLine[] = [
-	'─'.repeat(TERMINAL_WIDTH),
-	'█'.padEnd(TERMINAL_WIDTH),
-	'─'.repeat(TERMINAL_WIDTH),
-	'~/repos/my-pi (⌘ main ✐4 ?1)'.padStart(54),
-	'$0.000 (sub) 0.0%/272k'.padEnd(TERMINAL_WIDTH - 14) +
+	'─'.repeat(FOOTER_WIDTH),
+	'█'.padEnd(FOOTER_WIDTH),
+	'─'.repeat(FOOTER_WIDTH),
+	'~/repos/my-pi (⌘ main ✐2 ↟2)',
+	'$0.000 (sub) 0.0%/272k'.padEnd(FOOTER_WIDTH - 14) +
 		`${MODEL_ID} • low`,
-	'MCP 6/6 connected'.padEnd(TERMINAL_WIDTH - 17) + 'prompt:terse +1',
+	'MCP 6/6 connected'.padEnd(FOOTER_WIDTH - 17) + 'prompt:terse +1',
 ].map((line) => ({
 	text: `\x1b[38;2;255;0;180m${line}\x1b[0m`,
 	align: 'left',
