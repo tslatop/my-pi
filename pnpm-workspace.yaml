@@ -24,8 +24,11 @@ minimumReleaseAge: 1440
 
 allowBuilds:
   '@google/genai': true
+  esbuild: true
   koffi: true
   protobufjs: true
+  sharp: true
+  workerd: true
 
 onlyBuiltDependencies:
   - '@google/genai'
