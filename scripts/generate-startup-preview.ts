@@ -9,7 +9,7 @@ import { render_startup_header } from '../src/extensions/startup-screen/index.ts
 const OUTPUT_PATH = 'assets/pi-package-preview.png';
 const TERMINAL_WIDTH = 100;
 const FONT_SIZE = 24;
-const LINE_HEIGHT = 32;
+const LINE_HEIGHT = 28;
 const PAD_X = 16;
 const PAD_Y = 36;
 const CHAR_WIDTH = 14.4;
