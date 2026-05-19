@@ -25,6 +25,16 @@ export default defineConfig({
 		proseWrap: 'always',
 	},
 	lint: {
+		ignorePatterns: [
+			'.svelte-kit/**',
+			'build/**',
+			'dist/**',
+			'worker-configuration.d.ts',
+			'apps/web/.svelte-kit/**',
+			'apps/web/build/**',
+			'apps/web/dist/**',
+			'apps/web/worker-configuration.d.ts',
+		],
 		options: {
 			typeAware: true,
 			typeCheck: true,

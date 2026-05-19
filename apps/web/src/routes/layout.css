@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+:root {
+	color-scheme: dark;
+
+	--afterglow-background: #06040f;
+	--afterglow-surface-background: #06040f;
+	--afterglow-elevated-surface-background: #0b0820;
+	--afterglow-border: #9d4dff;
+	--afterglow-border-variant: #473a72;
+	--afterglow-border-focused: #ff00cc;
+	--afterglow-border-selected: #00eaff;
+	--afterglow-border-transparent: #00000000;
+	--afterglow-border-disabled: #473a7280;
+	--afterglow-element-background: #0b0820;
+	--afterglow-element-hover: #26104d;
+	--afterglow-element-active: #26104d;
+	--afterglow-element-selected: #ff00cc33;
+	--afterglow-element-disabled: #0b082080;
+	--afterglow-ghost-element-background: #00000000;
+	--afterglow-ghost-element-hover: #26104dcc;
+	--afterglow-ghost-element-active: #26104d;
+	--afterglow-ghost-element-selected: #ff00cc2e;
+	--afterglow-drop-target-background: #ff00cc40;
+	--afterglow-text: #fff7ff;
+	--afterglow-text-muted: #8a7fb5;
+	--afterglow-text-placeholder: #473a72;
+	--afterglow-text-disabled: #8a7fb580;
+	--afterglow-text-accent: #ff00cc;
+	--afterglow-link-text-hover: #ff00cc;
+	--afterglow-panel-focused-border: #ff00cc;
+	--afterglow-panel-indent-guide: #473a7280;
+	--afterglow-panel-indent-guide-active: #00eaff;
+	--afterglow-scrollbar-thumb-background: #473a7280;
+	--afterglow-scrollbar-thumb-hover-background: #8a7fb599;
+	--afterglow-search-match-background: #ff00cc3d;
+	--afterglow-editor-active-line-background: #26104d80;
+	--afterglow-editor-highlighted-line-background: #ff00cc1f;
+	--afterglow-terminal-red: #ff174f;
+	--afterglow-terminal-green: #ccff00;
+	--afterglow-terminal-yellow: #ffb000;
+	--afterglow-terminal-blue: #00eaff;
+	--afterglow-terminal-magenta: #ff00cc;
+	--afterglow-terminal-cyan: #7df9ff;
+	--afterglow-terminal-white: #fff7ff;
+	--afterglow-comment: #75699f;
+	--afterglow-shadow-magenta: 0 0 32px rgb(255 0 204 / 0.26);
+	--afterglow-shadow-cyan: 0 0 32px rgb(0 234 255 / 0.22);
+}
+
+@theme inline {
+	--font-mono: 'Berkeley Mono', 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+
+	--color-background: var(--afterglow-background);
+	--color-surface: var(--afterglow-elevated-surface-background);
+	--color-element: var(--afterglow-element-background);
+	--color-element-hover: var(--afterglow-element-hover);
+	--color-border: var(--afterglow-border);
+	--color-border-muted: var(--afterglow-border-variant);
+	--color-foreground: var(--afterglow-text);
+	--color-muted: var(--afterglow-text-muted);
+	--color-placeholder: var(--afterglow-text-placeholder);
+	--color-accent: var(--afterglow-text-accent);
+	--color-red: var(--afterglow-terminal-red);
+	--color-green: var(--afterglow-terminal-green);
+	--color-yellow: var(--afterglow-terminal-yellow);
+	--color-blue: var(--afterglow-terminal-blue);
+	--color-magenta: var(--afterglow-terminal-magenta);
+	--color-cyan: var(--afterglow-terminal-cyan);
+	--color-comment: var(--afterglow-comment);
+}
+
+@layer base {
+	body {
+		margin: 0;
+		background:
+			radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--afterglow-terminal-magenta) 14%, transparent), transparent 28rem),
+			radial-gradient(circle at 78% 26%, color-mix(in srgb, var(--afterglow-terminal-blue) 10%, transparent), transparent 24rem),
+			var(--afterglow-background);
+		color: var(--afterglow-text);
+		font-family: var(--font-mono);
+	}
+}
