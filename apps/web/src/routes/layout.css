@@ -49,7 +49,9 @@
 }
 
 @theme inline {
-	--font-mono: 'Berkeley Mono', 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+	--font-mono:
+		'Berkeley Mono', 'JetBrains Mono', 'SFMono-Regular', Consolas,
+		monospace;
 
 	--color-background: var(--afterglow-background);
 	--color-surface: var(--afterglow-elevated-surface-background);
@@ -74,8 +76,24 @@
 	body {
 		margin: 0;
 		background:
-			radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--afterglow-terminal-magenta) 14%, transparent), transparent 28rem),
-			radial-gradient(circle at 78% 26%, color-mix(in srgb, var(--afterglow-terminal-blue) 10%, transparent), transparent 24rem),
+			radial-gradient(
+				circle at 24% 18%,
+				color-mix(
+					in srgb,
+					var(--afterglow-terminal-magenta) 14%,
+					transparent
+				),
+				transparent 28rem
+			),
+			radial-gradient(
+				circle at 78% 26%,
+				color-mix(
+					in srgb,
+					var(--afterglow-terminal-blue) 10%,
+					transparent
+				),
+				transparent 24rem
+			),
 			var(--afterglow-background);
 		color: var(--afterglow-text);
 		font-family: var(--font-mono);
