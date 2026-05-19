@@ -1,3 +1,6 @@
+@import '@fontsource-variable/newsreader';
+@import '@fontsource-variable/source-sans-3';
+@import '@fontsource-variable/victor-mono';
 @import 'tailwindcss';
 
 :root {
@@ -49,9 +52,11 @@
 }
 
 @theme inline {
+	--font-sans: 'Source Sans 3 Variable', 'Source Sans 3', system-ui, sans-serif;
+	--font-serif: 'Newsreader Variable', Newsreader, Georgia, serif;
 	--font-mono:
-		'Berkeley Mono', 'JetBrains Mono', 'SFMono-Regular', Consolas,
-		monospace;
+		'Victor Mono Variable', 'Victor Mono', 'Berkeley Mono', 'JetBrains Mono',
+		'SFMono-Regular', Consolas, monospace;
 
 	--color-background: var(--afterglow-background);
 	--color-surface: var(--afterglow-elevated-surface-background);
@@ -96,6 +101,7 @@
 			),
 			var(--afterglow-background);
 		color: var(--afterglow-text);
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
+		font-feature-settings: 'ss01' 1, 'ss02' 1;
 	}
 }
