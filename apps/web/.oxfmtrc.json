@@ -1,0 +1,11 @@
+{
+	"useTabs": true,
+	"singleQuote": true,
+	"trailingComma": "all",
+	"printWidth": 70,
+	"proseWrap": "always",
+	"svelte": true,
+	"sortTailwindcss": {
+		"stylesheet": "./src/routes/layout.css"
+	}
+}

@@ -1,16 +1,23 @@
+import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { playwright } from '@vitest/browser-playwright';
-import { sveltekit } from '@sveltejs/kit/vite';
 
 export default {
 	plugins: [tailwindcss(), sveltekit()],
 	fmt: {
 		useTabs: true,
 		singleQuote: true,
+		printWidth: 70,
 		trailingComma: 'all',
+		proseWrap: 'always',
 	},
 	lint: {
-		ignorePatterns: ['.svelte-kit/**', 'build/**', 'dist/**', 'worker-configuration.d.ts'],
+		ignorePatterns: [
+			'.svelte-kit/**',
+			'build/**',
+			'dist/**',
+			'worker-configuration.d.ts',
+		],
 		options: {
 			typeAware: false,
 			typeCheck: false,
