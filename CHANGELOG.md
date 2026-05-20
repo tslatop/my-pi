@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.58
+
+### Patch Changes
+
+- 9b40fe4: Add generated startup preview image to README and version
+  workflow
+
 ## 0.1.57
 
 ## 0.1.56
