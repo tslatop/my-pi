@@ -23,7 +23,7 @@ overrides:
   miniflare>ws: '8.20.1'
   '@sveltejs/kit>cookie': '0.7.0'
 
-minimumReleaseAge: 1440
+minimumReleaseAge: 2880
 
 allowBuilds:
   '@google/genai': true
