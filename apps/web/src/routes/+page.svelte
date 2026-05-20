@@ -1,4 +1,16 @@
 <script lang="ts">
+	import { Head } from 'svead';
+	import type { SeoConfig } from 'svead';
+
+	const seo_config: SeoConfig = {
+		title: 'My-Pi',
+		description: 'A terminal-first coding agent interface.',
+		url: 'https://github.com/spences10/my-pi',
+		website: 'github.com/spences10/my-pi',
+		site_name: 'My-Pi',
+		twitter_card_type: 'summary',
+	};
+
 	const logo_lines = [
 		'███╗   ███╗                  ██████╗ ██╗',
 		'████╗ ████║ ██╗   ██╗        ██╔══██╗   ',
@@ -9,13 +21,7 @@
 	] as const;
 </script>
 
-<svelte:head>
-	<title>My-Pi</title>
-	<meta
-		name="description"
-		content="A vivid terminal-first coding agent interface."
-	/>
-</svelte:head>
+<Head {seo_config} />
 
 <main
 	class="min-h-screen overflow-hidden bg-background px-5 py-10 text-foreground sm:px-8 lg:px-12"
