@@ -97,6 +97,8 @@
 			var(--afterglow-background);
 		color: var(--afterglow-text);
 		font-family: var(--font-sans);
-		font-feature-settings: 'ss01' 1, 'ss02' 1;
+		font-feature-settings:
+			'ss01' 1,
+			'ss02' 1;
 	}
 }
