@@ -10,9 +10,10 @@
 			"groupSlug": "mariozechner-pi"
 		},
 		{
-			"description": "Do not open PRs for temporary security pins in pnpm.overrides",
+			"description": "Do not open PRs for temporary/security pins in pnpm-workspace overrides",
 			"matchManagers": ["npm"],
-			"matchDepTypes": ["pnpm.overrides"],
+			"matchFileNames": ["pnpm-workspace.yaml"],
+			"matchDepTypes": ["pnpm-workspace.overrides"],
 			"enabled": false
 		}
 	]
