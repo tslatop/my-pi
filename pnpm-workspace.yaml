@@ -8,11 +8,11 @@ catalog:
   '@earendil-works/pi-coding-agent': 0.75.3
   '@earendil-works/pi-tui': 0.75.3
   '@types/node': ^25.8.0
-  '@vitest/coverage-v8': 4.1.5
+  '@vitest/coverage-v8': 4.1.6
   typebox: ^1.1.38
   typescript: ^6.0.3
   vite-plus: ^0.1.21
-  vitest: 4.1.5
+  vitest: 4.1.6
 
 # Temporary/security pins. See docs/dependency-overrides.md.
 overrides:
