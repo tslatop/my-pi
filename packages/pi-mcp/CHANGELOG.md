@@ -4,8 +4,8 @@
 
 ### Patch Changes
 
-- 90b34d2: Centralize user settings across packages while preserving portable MCP
-  server configuration in mcp.json.
+- 90b34d2: Centralize user settings across packages while preserving
+  portable MCP server configuration in mcp.json.
 - Updated dependencies [90b34d2]
   - @spences10/pi-project-trust@0.0.11
   - @spences10/pi-context@0.0.23
