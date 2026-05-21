@@ -1,5 +1,12 @@
 # @spences10/pi-mcp
 
+## 0.0.33
+
+### Patch Changes
+
+- d523b2f: Fix MCP tool discovery by connecting enabled servers before
+  first agent turn while preserving idle reconnect behavior
+
 ## 0.0.32
 
 ### Patch Changes
