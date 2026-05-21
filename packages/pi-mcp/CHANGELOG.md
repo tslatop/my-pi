@@ -1,5 +1,16 @@
 # @spences10/pi-mcp
 
+## 0.0.32
+
+### Patch Changes
+
+- 47fb902: Add repo/org/cwd MCP activation policy files to
+  conditionally load matching servers only.
+- 626839d: Defer MCP server connections until explicitly requested,
+  reducing startup processes and memory use by default.
+- 6634425: Fix MCP server lifecycle by disconnecting disabled or idle
+  servers and reconnecting on future tool use.
+
 ## 0.0.31
 
 ### Patch Changes
