@@ -16,8 +16,10 @@ import { handle_mcp_profile } from './profile-actions.js';
 import { get_project_mcp_config_load_decision } from './project-config-loader.js';
 import { format_mcp_tool_result } from './result.js';
 import {
+	clear_mcp_idle_timer,
 	count_pending_enabled_servers,
 	create_server_states,
+	get_mcp_idle_timeout_ms,
 	remove_server_tools_from_active,
 	report_mcp_failure,
 	set_connect_feedback,
@@ -75,6 +77,39 @@ export default async function mcp(pi: ExtensionAPI) {
 		}
 	};
 
+	const disconnect_server = async (
+		state: ServerState,
+		ctx?: ExtensionContext,
+	): Promise<void> => {
+		clear_mcp_idle_timer(state);
+		await state.connect_promise?.catch(() => {});
+		await state.client?.disconnect().catch(() => {});
+		state.client = undefined;
+		if (state.status !== 'failed') state.status = 'disconnected';
+		if (ctx) update_mcp_status(ctx, servers);
+	};
+
+	const schedule_idle_disconnect = (
+		state: ServerState,
+		ctx?: ExtensionContext,
+	): void => {
+		clear_mcp_idle_timer(state);
+		const timeout_ms = get_mcp_idle_timeout_ms(state);
+		if (!timeout_ms || state.status !== 'connected') return;
+		state.idle_timer = setTimeout(() => {
+			if (
+				state.status !== 'connected' ||
+				state.active_call_count > 0 ||
+				Date.now() - (state.last_used_at ?? 0) < timeout_ms
+			) {
+				schedule_idle_disconnect(state, ctx);
+				return;
+			}
+			void disconnect_server(state, ctx);
+		}, timeout_ms);
+		state.idle_timer.unref?.();
+	};
+
 	const connect_server = async (
 		state: ServerState,
 		ctx?: ExtensionContext,
@@ -86,6 +121,7 @@ export default async function mcp(pi: ExtensionAPI) {
 		}
 
 		state.connect_promise = (async () => {
+			clear_mcp_idle_timer(state);
 			state.status = 'connecting';
 			state.error = undefined;
 			if (ctx) update_mcp_status(ctx, servers);
@@ -119,27 +155,38 @@ export default async function mcp(pi: ExtensionAPI) {
 								typeof defineTool
 							>[0]['parameters'],
 							execute: async (_id, params) => {
-								const result = (await state.client!.callTool(
-									mcp_tool.name,
-									params as Record<string, unknown>,
-								)) as {
-									content?: Array<{
-										type: string;
-										text?: string;
-									}>;
-								};
+								clear_mcp_idle_timer(state);
+								state.active_call_count += 1;
+								try {
+									if (!state.client || state.status !== 'connected') {
+										await connect_server(state);
+									}
+									const result = (await state.client!.callTool(
+										mcp_tool.name,
+										params as Record<string, unknown>,
+									)) as {
+										content?: Array<{
+											type: string;
+											text?: string;
+										}>;
+									};
 
-								const formatted = format_mcp_tool_result(result, {
-									tool_name,
-									input_summary: summarize_mcp_tool_params(params),
-								});
+									const formatted = format_mcp_tool_result(result, {
+										tool_name,
+										input_summary: summarize_mcp_tool_params(params),
+									});
 
-								return {
-									content: [
-										{ type: 'text' as const, text: formatted.text },
-									],
-									details: formatted.details,
-								};
+									return {
+										content: [
+											{ type: 'text' as const, text: formatted.text },
+										],
+										details: formatted.details,
+									};
+								} finally {
+									state.active_call_count -= 1;
+									state.last_used_at = Date.now();
+									schedule_idle_disconnect(state, undefined);
+								}
 							},
 						}),
 					);
@@ -147,6 +194,8 @@ export default async function mcp(pi: ExtensionAPI) {
 
 				state.tool_names = tool_names;
 				state.status = 'connected';
+				state.last_used_at = Date.now();
+				schedule_idle_disconnect(state, ctx);
 				if (!state.enabled) {
 					remove_server_tools_from_active(pi, state.tool_names);
 				} else if (
@@ -205,6 +254,7 @@ export default async function mcp(pi: ExtensionAPI) {
 		set_mcp_server_enabled(ctx.cwd, name, enabled);
 		if (!enabled) {
 			remove_server_tools_from_active(pi, server.tool_names);
+			void disconnect_server(server, ctx);
 			update_mcp_status(ctx, servers);
 			return server;
 		}
@@ -426,12 +476,7 @@ export default async function mcp(pi: ExtensionAPI) {
 	pi.on('session_shutdown', async (_event, ctx) => {
 		await Promise.allSettled(
 			Array.from(servers.values()).map(async (server) => {
-				await server.connect_promise?.catch(() => {});
-				await server.client?.disconnect();
-				server.client = undefined;
-				if (server.status !== 'failed') {
-					server.status = 'disconnected';
-				}
+				await disconnect_server(server, ctx);
 			}),
 		);
 		ctx.ui.setStatus('mcp', undefined);

@@ -12,6 +12,8 @@ interface McpServerTrustMetadata {
 	disabled?: boolean;
 	/** Request timeout in milliseconds. Primarily used by tests. */
 	request_timeout_ms?: number;
+	/** Disconnect an idle connected server after this many milliseconds. */
+	idle_timeout_ms?: number;
 }
 
 export interface McpStdioServerConfig extends McpServerTrustMetadata {

@@ -15,6 +15,9 @@ export interface ServerState {
 	status: 'disconnected' | 'connecting' | 'connected' | 'failed';
 	error?: string;
 	connect_promise?: Promise<void>;
+	active_call_count: number;
+	last_used_at?: number;
+	idle_timer?: NodeJS.Timeout;
 }
 
 export function create_server_states(
@@ -28,6 +31,7 @@ export function create_server_states(
 				tool_names: [],
 				enabled: config.disabled !== true,
 				status: 'disconnected' as const,
+				active_call_count: 0,
 			},
 		]),
 	);
@@ -41,6 +45,26 @@ export function remove_server_tools_from_active(
 	pi.setActiveTools(
 		pi.getActiveTools().filter((tool) => !tool_set.has(tool)),
 	);
+}
+
+export function get_mcp_idle_timeout_ms(
+	state: ServerState,
+): number | undefined {
+	const configured = state.config.idle_timeout_ms;
+	const value =
+		configured ??
+		(process.env.MY_PI_MCP_IDLE_TIMEOUT_MS
+			? Number(process.env.MY_PI_MCP_IDLE_TIMEOUT_MS)
+			: undefined);
+	return value && Number.isFinite(value) && value > 0
+		? value
+		: undefined;
+}
+
+export function clear_mcp_idle_timer(state: ServerState): void {
+	if (!state.idle_timer) return;
+	clearTimeout(state.idle_timer);
+	state.idle_timer = undefined;
 }
 
 export function format_server_status(state: ServerState): string {
