@@ -6,6 +6,7 @@ import {
 	type ToolCallEvent,
 	type ToolCallEventResult,
 } from '@earendil-works/pi-coding-agent';
+import { read_settings_section } from '@spences10/pi-settings';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
@@ -107,10 +108,18 @@ export function get_project_config_path(cwd = process.cwd()): string {
 function read_config_file(
 	path: string,
 ): CodingPreferencesConfig | undefined {
-	if (!existsSync(path)) return undefined;
-	const parsed = JSON.parse(
-		readFileSync(path, 'utf8'),
-	) as Partial<CodingPreferencesConfig>;
+	let parsed: Partial<CodingPreferencesConfig> | undefined;
+	if (path === get_global_config_path()) {
+		parsed = read_settings_section<
+			Partial<CodingPreferencesConfig> | undefined
+		>('codingPreferences', undefined);
+	} else {
+		if (!existsSync(path)) return undefined;
+		parsed = JSON.parse(
+			readFileSync(path, 'utf8'),
+		) as Partial<CodingPreferencesConfig>;
+	}
+	if (!parsed) return undefined;
 	return { rules: parsed.rules ?? [] };
 }
 

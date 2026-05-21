@@ -1,12 +1,9 @@
 import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	writeFileSync,
-} from 'node:fs';
+	read_package_settings,
+	write_package_settings,
+} from '@spences10/pi-settings';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
 export type SkillDefaultPolicy = 'all-enabled' | 'all-disabled';
 
@@ -209,12 +206,11 @@ export function safe_profile_name(value: string): string | undefined {
 }
 
 export function load_skills_config(): SkillsConfig {
-	const path = get_config_path();
-	if (!existsSync(path)) return structuredClone(DEFAULT_CONFIG);
-
 	try {
-		const raw = readFileSync(path, 'utf-8');
-		const parsed = JSON.parse(raw) as Partial<SkillsConfig>;
+		const parsed = read_package_settings<Partial<SkillsConfig>>(
+			'skills',
+			DEFAULT_CONFIG,
+		);
 		const enabled = normalize_enabled_map(parsed.enabled);
 		const defaults = parsed.defaults ?? 'all-disabled';
 		const profiles = migrate_legacy_enablement_to_default_profile(
@@ -240,17 +236,7 @@ export function load_skills_config(): SkillsConfig {
 }
 
 export function save_skills_config(config: SkillsConfig): void {
-	const path = get_config_path();
-	const dir = dirname(path);
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true, mode: 0o700 });
-	}
-
-	const tmp = `${path}.tmp-${Date.now()}`;
-	writeFileSync(tmp, JSON.stringify(config, null, '\t') + '\n', {
-		mode: 0o600,
-	});
-	renameSync(tmp, path);
+	write_package_settings('skills', config);
 }
 
 export function make_skill_key(name: string, source: string): string {

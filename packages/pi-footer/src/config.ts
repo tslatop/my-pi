@@ -1,10 +1,7 @@
 import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	writeFileSync,
-} from 'node:fs';
-import { dirname, join } from 'node:path';
+	read_package_settings,
+	write_package_settings,
+} from '@spences10/pi-settings';
 import {
 	DEFAULT_FOOTER_STATE,
 	DEFAULT_FOOTER_WIDGETS,
@@ -17,19 +14,12 @@ import {
 	type FooterState,
 } from './presets/types.js';
 
-const CONFIG_PATH = join(
-	process.env.PI_HOME ??
-		join(process.env.HOME ?? '.', '.pi', 'agent'),
-	'extensions',
-	'pi-footer.json',
-);
-
 export function load_footer_state(): FooterState {
-	if (!existsSync(CONFIG_PATH)) return clone_default_state();
 	try {
-		const parsed = JSON.parse(
-			readFileSync(CONFIG_PATH, 'utf8'),
-		) as Partial<FooterState>;
+		const parsed = read_package_settings<Partial<FooterState>>(
+			'footer',
+			{},
+		);
 		return normalize_footer_state(parsed);
 	} catch {
 		return clone_default_state();
@@ -37,11 +27,7 @@ export function load_footer_state(): FooterState {
 }
 
 export function save_footer_state(state: FooterState): void {
-	mkdirSync(dirname(CONFIG_PATH), { recursive: true });
-	writeFileSync(
-		CONFIG_PATH,
-		`${JSON.stringify(state, null, '\t')}\n`,
-	);
+	write_package_settings('footer', state);
 }
 
 export function normalize_footer_state(

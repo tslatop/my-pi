@@ -64,6 +64,7 @@
 		"@earendil-works/pi-coding-agent": "catalog:",
 		"@earendil-works/pi-tui": "catalog:",
 		"@spences10/pi-project-trust": "workspace:*",
+		"@spences10/pi-settings": "workspace:*",
 		"@spences10/pi-themes": "workspace:*",
 		"@spences10/pi-tui-modal": "workspace:*",
 		"citty": "^0.2.2",

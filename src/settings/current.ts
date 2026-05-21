@@ -1,43 +1,28 @@
-import { getAgentDir } from '@earendil-works/pi-coding-agent';
 import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	writeFileSync,
-} from 'node:fs';
-import { dirname, join } from 'node:path';
+	get_settings_path,
+	read_settings,
+	write_settings,
+} from '@spences10/pi-settings';
+import { existsSync } from 'node:fs';
 import {
 	DEFAULT_SETTINGS,
 	normalize_settings,
 	type MyPiSettings,
 } from './schema.js';
 
-export function get_settings_path(): string {
-	return join(getAgentDir(), 'my-pi-settings.json');
-}
+export { get_settings_path } from '@spences10/pi-settings';
 
 export function current_settings_exists(): boolean {
 	return existsSync(get_settings_path());
 }
 
 export function read_current_settings(): MyPiSettings {
-	const path = get_settings_path();
-	if (!existsSync(path)) return { ...DEFAULT_SETTINGS };
-	return normalize_settings(JSON.parse(readFileSync(path, 'utf-8')));
+	if (!current_settings_exists()) return { ...DEFAULT_SETTINGS };
+	return normalize_settings(read_settings());
 }
 
 export function write_current_settings(settings: MyPiSettings): void {
-	const path = get_settings_path();
-	const dir = dirname(path);
-	if (!existsSync(dir))
-		mkdirSync(dir, { recursive: true, mode: 0o700 });
-
-	const tmp = `${path}.tmp-${Date.now()}`;
-	writeFileSync(tmp, JSON.stringify(settings, null, '\t') + '\n', {
-		mode: 0o600,
-	});
-	renameSync(tmp, path);
+	write_settings(settings);
 }
 
 export function ensure_current_settings(): MyPiSettings {

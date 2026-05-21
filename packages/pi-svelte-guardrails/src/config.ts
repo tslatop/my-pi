@@ -1,3 +1,4 @@
+import { read_package_settings } from '@spences10/pi-settings';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { isAbsolute, join, relative, resolve } from 'node:path';
@@ -72,9 +73,14 @@ export function load_svelte_guardrails_config(
 function read_svelte_guardrails_config_file(
 	path: string,
 ): Partial<SvelteGuardrailsConfig> {
-	if (!existsSync(path)) return {};
-
 	try {
+		if (path === get_svelte_guardrails_config_path()) {
+			return read_package_settings<Partial<SvelteGuardrailsConfig>>(
+				'svelteGuardrails',
+				{},
+			);
+		}
+		if (!existsSync(path)) return {};
 		return JSON.parse(
 			readFileSync(path, 'utf-8'),
 		) as Partial<SvelteGuardrailsConfig>;

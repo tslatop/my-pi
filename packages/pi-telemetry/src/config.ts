@@ -1,12 +1,9 @@
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
 import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	writeFileSync,
-} from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+	read_package_settings,
+	write_package_settings,
+} from '@spences10/pi-settings';
+import { join, resolve } from 'node:path';
 
 export interface TelemetryConfig {
 	version: number;
@@ -35,11 +32,11 @@ export function resolve_telemetry_db_path(
 }
 
 export function load_telemetry_config(): TelemetryConfig {
-	const path = get_telemetry_config_path();
-	if (!existsSync(path)) return { ...DEFAULT_CONFIG };
-
 	try {
-		const parsed = JSON.parse(readFileSync(path, 'utf-8')) as {
+		const parsed = read_package_settings(
+			'telemetry',
+			DEFAULT_CONFIG,
+		) as {
 			version?: unknown;
 			enabled?: unknown;
 		};
@@ -59,17 +56,7 @@ export function load_telemetry_config(): TelemetryConfig {
 }
 
 export function save_telemetry_config(config: TelemetryConfig): void {
-	const path = get_telemetry_config_path();
-	const dir = dirname(path);
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true, mode: 0o700 });
-	}
-
-	const tmp = `${path}.tmp-${Date.now()}`;
-	writeFileSync(tmp, JSON.stringify(config, null, '\t') + '\n', {
-		mode: 0o600,
-	});
-	renameSync(tmp, path);
+	write_package_settings('telemetry', config);
 }
 
 export function resolve_telemetry_enabled(

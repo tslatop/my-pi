@@ -1,15 +1,15 @@
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
 import {
+	read_settings,
+	write_settings,
+} from '@spences10/pi-settings';
+import {
 	existsSync,
 	mkdirSync,
 	renameSync,
 	writeFileSync,
 } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
-import {
-	read_current_settings,
-	write_current_settings,
-} from './current.js';
 import { find_legacy_settings_files } from './legacy.js';
 import { normalize_settings, type MyPiSettings } from './schema.js';
 
@@ -34,26 +34,69 @@ function backup_path_for(
 
 export function migrate_legacy_settings(): SettingsMigrationResult {
 	const legacy = find_legacy_settings_files();
-	const entries = Object.values(legacy);
-	let settings = read_current_settings();
+	const entries = Object.values(legacy).filter(
+		(entry) => entry !== undefined,
+	);
+	const settings = read_settings();
 
 	if (legacy.extensions) {
-		settings = normalize_settings({
-			...settings,
-			extensions: {
-				...settings.extensions,
-				enabled: {
-					...settings.extensions.enabled,
-					...legacy.extensions.config.enabled,
-				},
+		settings.extensions = {
+			...settings.extensions,
+			enabled: {
+				...settings.extensions?.enabled,
+				...legacy.extensions.config.enabled,
 			},
-		});
+		};
 	}
+	if (legacy.mcpPolicy) {
+		settings.mcp = {
+			...settings.mcp,
+			policy: legacy.mcpPolicy.config,
+		};
+	}
+	if (legacy.codingPreferences) {
+		settings.codingPreferences = legacy.codingPreferences.config;
+	}
+	if (legacy.promptPresets || legacy.promptPresetState) {
+		settings.promptPresets = {
+			...settings.promptPresets,
+			...(legacy.promptPresets && {
+				global: legacy.promptPresets.config,
+			}),
+			...(legacy.promptPresetState && {
+				state: legacy.promptPresetState.config,
+			}),
+		};
+	}
+	settings.trust = {
+		...settings.trust,
+		...(legacy.trustedHooks && { hooks: legacy.trustedHooks.config }),
+		...(legacy.trustedMcpProjects && {
+			mcpProjects: legacy.trustedMcpProjects.config,
+		}),
+		...(legacy.trustedLspBinaries && {
+			lspBinaries: legacy.trustedLspBinaries.config,
+		}),
+	};
+	settings.packages = {
+		...settings.packages,
+		...(legacy.telemetry && { telemetry: legacy.telemetry.config }),
+		...(legacy.footer && { footer: legacy.footer.config }),
+		...(legacy.skills && { skills: legacy.skills.config }),
+		...(legacy.svelteGuardrails && {
+			svelteGuardrails: legacy.svelteGuardrails.config,
+		}),
+		...(legacy.context && { context: legacy.context.config }),
+	};
 
-	write_current_settings(settings);
+	write_settings(settings);
 
 	if (entries.length === 0) {
-		return { migrated: false, moved_files: [], settings };
+		return {
+			migrated: false,
+			moved_files: [],
+			settings: normalize_settings(settings),
+		};
 	}
 
 	const backup_dir = join(
@@ -84,5 +127,10 @@ export function migrate_legacy_settings(): SettingsMigrationResult {
 		{ mode: 0o600 },
 	);
 
-	return { migrated: true, backup_dir, moved_files, settings };
+	return {
+		migrated: true,
+		backup_dir,
+		moved_files,
+		settings: normalize_settings(settings),
+	};
 }

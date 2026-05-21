@@ -1,4 +1,5 @@
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
+import { read_settings } from '@spences10/pi-settings';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
@@ -224,6 +225,11 @@ function read_config(path: string): RawMcpConfigFile['mcpServers'] {
 }
 
 function read_policy_file(path: string): RawMcpPolicyFile {
+	if (path === global_mcp_policy_path()) {
+		const parsed = (read_settings().mcp?.policy ??
+			{}) as RawMcpPolicyFile;
+		return { servers: parsed.servers ?? {} };
+	}
 	if (!existsSync(path)) return { servers: {} };
 	const parsed = JSON.parse(
 		readFileSync(path, 'utf-8'),

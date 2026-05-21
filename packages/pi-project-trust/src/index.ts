@@ -1,11 +1,15 @@
 import {
+	read_trust_settings,
+	write_trust_settings,
+} from '@spences10/pi-settings';
+import {
 	existsSync,
 	mkdirSync,
 	readFileSync,
 	writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 export type ProjectTrustFallback = 'global';
 
@@ -150,13 +154,33 @@ export function normalize_project_trust_env_decision(
 	return undefined;
 }
 
+function trust_settings_key(path: string): string | undefined {
+	switch (basename(path)) {
+		case 'trusted-hooks.json':
+			return 'hooks';
+		case 'trusted-mcp-projects.json':
+			return 'mcpProjects';
+		case 'trusted-lsp-binaries.json':
+			return 'lspBinaries';
+		case 'trusted-project-resources.json':
+			return 'projectResources';
+		default:
+			return undefined;
+	}
+}
+
 export function read_project_trust_store(
 	trust_store_path: string = default_project_trust_store_path(),
 ): ProjectTrustStore {
-	if (!existsSync(trust_store_path)) return {};
 	try {
-		const raw = readFileSync(trust_store_path, 'utf-8');
-		const parsed = JSON.parse(raw) as ProjectTrustStore;
+		const settings_key = trust_settings_key(trust_store_path);
+		const parsed = settings_key
+			? read_trust_settings<ProjectTrustStore>(settings_key, {})
+			: existsSync(trust_store_path)
+				? (JSON.parse(
+						readFileSync(trust_store_path, 'utf-8'),
+					) as ProjectTrustStore)
+				: {};
 		return parsed &&
 			typeof parsed === 'object' &&
 			!Array.isArray(parsed)
@@ -171,6 +195,11 @@ export function write_project_trust_store(
 	store: ProjectTrustStore,
 	trust_store_path: string = default_project_trust_store_path(),
 ): void {
+	const settings_key = trust_settings_key(trust_store_path);
+	if (settings_key) {
+		write_trust_settings(settings_key, store);
+		return;
+	}
 	mkdirSync(dirname(trust_store_path), { recursive: true });
 	writeFileSync(
 		trust_store_path,

@@ -3,6 +3,10 @@ import {
 	parseFrontmatter,
 } from '@earendil-works/pi-coding-agent';
 import {
+	read_settings,
+	write_settings,
+} from '@spences10/pi-settings';
+import {
 	existsSync,
 	mkdirSync,
 	readdirSync,
@@ -134,9 +138,13 @@ function get_persisted_prompt_state_path(): string {
 }
 
 function read_prompt_presets_file(path: string): PromptPresetMap {
-	if (!existsSync(path)) return {};
-
 	try {
+		if (path === get_global_presets_path()) {
+			return normalize_prompt_presets(
+				read_settings().promptPresets?.global ?? {},
+			);
+		}
+		if (!existsSync(path)) return {};
 		return normalize_prompt_presets(
 			JSON.parse(readFileSync(path, 'utf-8')),
 		);
@@ -385,12 +393,14 @@ function normalize_prompt_preset_state(
 function read_persisted_prompt_states(
 	path = get_persisted_prompt_state_path(),
 ): PersistedPromptPresetStates {
-	if (!existsSync(path)) {
-		return { version: 1, projects: {} };
-	}
-
 	try {
-		const parsed = JSON.parse(readFileSync(path, 'utf-8')) as {
+		const parsed = (
+			path === get_persisted_prompt_state_path()
+				? (read_settings().promptPresets?.state ?? {})
+				: existsSync(path)
+					? JSON.parse(readFileSync(path, 'utf-8'))
+					: {}
+		) as {
 			version?: unknown;
 			projects?: unknown;
 		};
@@ -432,28 +442,32 @@ export function save_persisted_prompt_state(
 		layer_names: [],
 	};
 
+	const next = {
+		version: 1,
+		projects: Object.fromEntries(
+			Object.entries(persisted.projects).sort(([a], [b]) =>
+				a.localeCompare(b),
+			),
+		),
+	};
+	if (path === get_persisted_prompt_state_path()) {
+		const settings = read_settings();
+		write_settings({
+			...settings,
+			promptPresets: { ...settings.promptPresets, state: next },
+		});
+		return path;
+	}
+
 	const dir = dirname(path);
 	if (!existsSync(dir)) {
 		mkdirSync(dir, { recursive: true, mode: 0o700 });
 	}
 
 	const tmp = `${path}.tmp-${Date.now()}`;
-	writeFileSync(
-		tmp,
-		JSON.stringify(
-			{
-				version: 1,
-				projects: Object.fromEntries(
-					Object.entries(persisted.projects).sort(([a], [b]) =>
-						a.localeCompare(b),
-					),
-				),
-			},
-			null,
-			'\t',
-		) + '\n',
-		{ mode: 0o600 },
-	);
+	writeFileSync(tmp, JSON.stringify(next, null, '\t') + '\n', {
+		mode: 0o600,
+	});
 	renameSync(tmp, path);
 	return path;
 }

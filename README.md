@@ -843,11 +843,11 @@ dependency to `dependencies` instead.
 src/
   index.ts                 CLI entry point (citty + pi SDK)
   api.ts                   Programmatic API (create_my_pi + re-exports)
-  settings/                Canonical ~/.pi/agent/my-pi-settings.json loader/schema/migration
+  settings/                Root settings migration wrapper around @spences10/pi-settings
     current.ts             Current settings read/write only
     schema.ts              Canonical settings type, defaults, and normalization
-    legacy.ts              Legacy config discovery only; safe to remove after migration window
-    migrate.ts             One-way legacy-to-current migration and backup/move logic
+    legacy.ts              Legacy config discovery only; remove after two minor releases
+    migrate.ts             One-way legacy-to-current migration; remove with legacy.ts
   extensions/
     builtin-registry.ts    Built-in extension metadata, ordering, flags, and loaders
     manager/               Built-in extension manager; reads/writes via src/settings
@@ -856,6 +856,7 @@ src/
     hooks-resolution/      Claude-style hook resolution
 packages/
   pi-redact/               Installable Pi package for output redaction
+  pi-settings/             Shared canonical ~/.pi/agent/my-pi-settings.json store
   pi-telemetry/            Installable Pi package for SQLite telemetry
   pi-context/              Installable Pi package for context sidecar
   pi-mcp/                  Installable Pi package for MCP integration

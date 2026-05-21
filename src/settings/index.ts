@@ -1,5 +1,4 @@
 import {
-	current_settings_exists,
 	ensure_current_settings,
 	read_current_settings,
 	write_current_settings,
@@ -13,9 +12,8 @@ export { migrate_legacy_settings } from './migrate.js';
 export type { MyPiSettings } from './schema.js';
 
 export function load_settings(): MyPiSettings {
-	if (!current_settings_exists() && has_legacy_settings_files()) {
+	if (has_legacy_settings_files())
 		return migrate_legacy_settings().settings;
-	}
 	return ensure_current_settings();
 }
 
