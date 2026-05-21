@@ -1,5 +1,12 @@
 # @spences10/pi-skills
 
+## 0.0.27
+
+### Patch Changes
+
+- 90b34d2: Centralize user settings across packages while preserving portable MCP
+  server configuration in mcp.json.
+
 ## 0.0.26
 
 ### Patch Changes
