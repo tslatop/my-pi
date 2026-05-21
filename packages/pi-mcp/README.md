@@ -63,6 +63,28 @@ Servers are not connected at session startup by default. Use
 `/mcp connect <server>` or set `MY_PI_MCP_EAGER_CONNECT=1` to connect
 and discover tools eagerly.
 
+Keep `mcp.json` portable by putting my-pi activation rules in a
+separate policy file. Global policy lives at
+`~/.pi/agent/mcp-policy.json`; project policy lives at
+`.pi/mcp-policy.json` and overrides global entries by server name. A
+server with no policy keeps the default behavior. A server with an
+`activateWhen` policy is skipped entirely unless at least one
+criterion matches the current cwd or GitHub remote.
+
+```json
+{
+	"servers": {
+		"pm-platform": {
+			"activateWhen": {
+				"githubOrg": ["spences10"],
+				"githubRepo": ["spences10/my-pi"],
+				"cwdPrefix": ["/home/scott/repos/my-pi"]
+			}
+		}
+	}
+}
+```
+
 Server tools are registered as Pi tools using this naming format:
 
 ```text

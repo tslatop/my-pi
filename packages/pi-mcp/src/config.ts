@@ -1,4 +1,5 @@
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
 	existsSync,
@@ -18,6 +19,18 @@ import type {
 
 interface RawMcpConfigFile {
 	mcpServers: Record<string, RawMcpServerEntry>;
+}
+
+interface RawMcpPolicyFile {
+	servers?: Record<string, RawMcpPolicyEntry>;
+}
+
+interface RawMcpPolicyEntry {
+	activateWhen?: {
+		githubOrg?: unknown;
+		githubRepo?: unknown;
+		cwdPrefix?: unknown;
+	};
 }
 
 interface StoredMcpConfigFile extends RawMcpConfigFile {
@@ -210,12 +223,121 @@ function read_config(path: string): RawMcpConfigFile['mcpServers'] {
 	return read_config_file(path).mcpServers;
 }
 
+function read_policy_file(path: string): RawMcpPolicyFile {
+	if (!existsSync(path)) return { servers: {} };
+	const parsed = JSON.parse(
+		readFileSync(path, 'utf-8'),
+	) as RawMcpPolicyFile;
+	return { servers: parsed.servers ?? {} };
+}
+
+function as_string_array(
+	value: unknown,
+	label: string,
+): string[] | undefined {
+	if (value === undefined) return undefined;
+	const values = typeof value === 'string' ? [value] : value;
+	if (
+		!Array.isArray(values) ||
+		values.some((entry) => typeof entry !== 'string' || !entry.trim())
+	) {
+		throw new Error(
+			`Invalid MCP policy: ${label} must be a string or string array`,
+		);
+	}
+	return values.map((entry) => entry.trim());
+}
+
+function parse_github_repo(remote: string): string | undefined {
+	const trimmed = remote.trim().replace(/\.git$/, '');
+	const match =
+		/^git@github\.com:([^/]+)\/(.+)$/.exec(trimmed) ??
+		/^https:\/\/github\.com\/([^/]+)\/(.+)$/.exec(trimmed) ??
+		/^ssh:\/\/git@github\.com\/([^/]+)\/(.+)$/.exec(trimmed);
+	if (!match) return undefined;
+	return `${match[1]}/${match[2]}`.toLowerCase();
+}
+
+function get_github_repos(cwd: string): string[] {
+	try {
+		const output = execFileSync('git', ['remote', '-v'], {
+			cwd,
+			encoding: 'utf-8',
+			stdio: ['ignore', 'pipe', 'ignore'],
+		});
+		return [
+			...new Set(
+				output
+					.split('\n')
+					.map((line) => line.trim().split(/\s+/)[1])
+					.filter((remote): remote is string => Boolean(remote))
+					.map(parse_github_repo)
+					.filter((repo): repo is string => Boolean(repo)),
+			),
+		];
+	} catch {
+		return [];
+	}
+}
+
+function load_mcp_policy(
+	cwd: string,
+): Record<string, RawMcpPolicyEntry> {
+	return {
+		...read_policy_file(global_mcp_policy_path()).servers,
+		...read_policy_file(project_mcp_policy_path(cwd)).servers,
+	};
+}
+
+function policy_matches(
+	policy: RawMcpPolicyEntry | undefined,
+	cwd: string,
+	github_repos: string[],
+): boolean {
+	if (!policy?.activateWhen) return true;
+	const activate = policy.activateWhen;
+	const github_org = as_string_array(
+		activate.githubOrg,
+		'githubOrg',
+	)?.map((org) => org.toLowerCase());
+	const github_repo = as_string_array(
+		activate.githubRepo,
+		'githubRepo',
+	)?.map((repo) => repo.toLowerCase());
+	const cwd_prefix = as_string_array(activate.cwdPrefix, 'cwdPrefix');
+	const checks: boolean[] = [];
+	if (github_org) {
+		checks.push(
+			github_repos.some((repo) =>
+				github_org.includes(repo.split('/')[0]),
+			),
+		);
+	}
+	if (github_repo) {
+		checks.push(
+			github_repos.some((repo) => github_repo.includes(repo)),
+		);
+	}
+	if (cwd_prefix) {
+		checks.push(cwd_prefix.some((prefix) => cwd.startsWith(prefix)));
+	}
+	return checks.length === 0 || checks.some(Boolean);
+}
+
 function project_mcp_config_path(cwd: string): string {
 	return join(cwd, 'mcp.json');
 }
 
+function project_mcp_policy_path(cwd: string): string {
+	return join(cwd, '.pi', 'mcp-policy.json');
+}
+
 function global_mcp_config_path(): string {
 	return join(getAgentDir(), 'mcp.json');
+}
+
+function global_mcp_policy_path(): string {
+	return join(getAgentDir(), 'mcp-policy.json');
 }
 
 function mcp_backups_dir(): string {
@@ -303,17 +425,24 @@ export function load_mcp_config(
 		...Object.keys(project_servers),
 	]);
 
-	return Array.from(merged_names).map((name) => {
-		const project_server = project_servers[name];
-		if (project_server) {
-			return parse_server(
-				name,
-				project_server,
-				options.project_metadata_trusted !== false,
-			);
-		}
-		return parse_server(name, global_servers[name]);
-	});
+	const policies = load_mcp_policy(cwd);
+	const github_repos = get_github_repos(cwd);
+
+	return Array.from(merged_names)
+		.filter((name) =>
+			policy_matches(policies[name], cwd, github_repos),
+		)
+		.map((name) => {
+			const project_server = project_servers[name];
+			if (project_server) {
+				return parse_server(
+					name,
+					project_server,
+					options.project_metadata_trusted !== false,
+				);
+			}
+			return parse_server(name, global_servers[name]);
+		});
 }
 
 function find_server_config_path(

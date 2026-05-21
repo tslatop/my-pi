@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import {
 	existsSync,
@@ -290,6 +291,96 @@ describe('load_mcp_config', () => {
 			],
 		});
 		expect(get_project_mcp_config_info(cwd)?.hash).toHaveLength(64);
+	});
+
+	it('filters servers by MCP activation policy', () => {
+		const home = tmp_dir();
+		const cwd = tmp_dir();
+		dirs.push(home, cwd);
+		process.env.HOME = home;
+
+		const global_dir = join(home, '.pi', 'agent');
+		mkdirSync(global_dir, { recursive: true });
+		writeFileSync(
+			join(global_dir, 'mcp.json'),
+			JSON.stringify({
+				mcpServers: {
+					org: { command: 'org-cmd' },
+					repo: { command: 'repo-cmd' },
+					other: { command: 'other-cmd' },
+					unrestricted: { command: 'any-cmd' },
+				},
+			}),
+		);
+		writeFileSync(
+			join(global_dir, 'mcp-policy.json'),
+			JSON.stringify({
+				servers: {
+					org: { activateWhen: { githubOrg: ['spences10'] } },
+					repo: { activateWhen: { githubRepo: ['spences10/my-pi'] } },
+					other: {
+						activateWhen: { githubRepo: ['elsewhere/project'] },
+					},
+				},
+			}),
+		);
+		writeFileSync(join(cwd, '.gitignore'), '');
+		expect(() =>
+			execFileSync('git', ['init'], { cwd, stdio: 'ignore' }),
+		).not.toThrow();
+		expect(() =>
+			execFileSync(
+				'git',
+				[
+					'remote',
+					'add',
+					'origin',
+					'git@github.com:spences10/my-pi.git',
+				],
+				{ cwd, stdio: 'ignore' },
+			),
+		).not.toThrow();
+
+		expect(load_mcp_config(cwd).map((config) => config.name)).toEqual(
+			['org', 'repo', 'unrestricted'],
+		);
+	});
+
+	it('lets project MCP policy override global policy', () => {
+		const home = tmp_dir();
+		const cwd = tmp_dir();
+		dirs.push(home, cwd);
+		process.env.HOME = home;
+
+		const global_dir = join(home, '.pi', 'agent');
+		mkdirSync(global_dir, { recursive: true });
+		mkdirSync(join(cwd, '.pi'), { recursive: true });
+		writeFileSync(
+			join(global_dir, 'mcp.json'),
+			JSON.stringify({ mcpServers: { scoped: { command: 'cmd' } } }),
+		);
+		writeFileSync(
+			join(global_dir, 'mcp-policy.json'),
+			JSON.stringify({
+				servers: {
+					scoped: {
+						activateWhen: { githubRepo: ['elsewhere/project'] },
+					},
+				},
+			}),
+		);
+		writeFileSync(
+			join(cwd, '.pi', 'mcp-policy.json'),
+			JSON.stringify({
+				servers: {
+					scoped: { activateWhen: { cwdPrefix: cwd } },
+				},
+			}),
+		);
+
+		expect(load_mcp_config(cwd).map((config) => config.name)).toEqual(
+			['scoped'],
+		);
 	});
 
 	it('lets project config override global config by name', () => {
