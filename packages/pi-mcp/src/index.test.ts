@@ -203,6 +203,37 @@ describe('should_wait_for_mcp_connections', () => {
 });
 
 describe('MCP server lifecycle', () => {
+	it('connects enabled servers before the first agent turn', async () => {
+		process.env.MY_PI_MCP_PROJECT_CONFIG = 'allow';
+		const cwd = tmp_dir();
+		const server = await create_http_mcp_server();
+		try {
+			writeFileSync(
+				join(cwd, 'mcp.json'),
+				JSON.stringify({
+					mcpServers: {
+						demo: { transport: 'http', url: server.url },
+					},
+				}),
+			);
+
+			const { pi, events, tools } = create_test_pi();
+			await mcp(pi);
+			await events.get('before_agent_start')(
+				{ systemPromptOptions: { selectedTools: ['read', 'bash'] } },
+				{ cwd, hasUI: false, ui: { setStatus: vi.fn() } },
+			);
+
+			expect(server.get_initialize_count()).toBe(1);
+			expect(tools.has('mcp__demo__ping')).toBe(true);
+			expect(pi.setActiveTools).toHaveBeenCalledWith([
+				'mcp__demo__ping',
+			]);
+		} finally {
+			await server.close();
+		}
+	});
+
 	it('disconnects a connected server when disabled', async () => {
 		process.env.MY_PI_MCP_PROJECT_CONFIG = 'allow';
 		const cwd = tmp_dir();

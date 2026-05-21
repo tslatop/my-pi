@@ -286,8 +286,7 @@ export default async function mcp(pi: ExtensionAPI) {
 	pi.on('before_agent_start', async (event, ctx) => {
 		await ensure_servers(ctx.cwd, ctx);
 		if (!should_wait_for_mcp_connections(event)) {
-			if (should_eager_connect_mcp())
-				void connect_all_servers({ ctx });
+			await connect_all_servers({ ctx });
 			return event;
 		}
 
