@@ -59,6 +59,10 @@ values. Use `MY_PI_MCP_ENV_ALLOWLIST=NAME,OTHER_NAME` or the shared
 `MY_PI_CHILD_ENV_ALLOWLIST` to pass selected ambient variables
 through.
 
+Servers are not connected at session startup by default. Use
+`/mcp connect <server>` or set `MY_PI_MCP_EAGER_CONNECT=1` to connect
+and discover tools eagerly.
+
 Server tools are registered as Pi tools using this naming format:
 
 ```text
@@ -80,6 +84,7 @@ mcp__sqlite__execute_read_query
 /mcp list
 /mcp enable <server>
 /mcp disable <server>
+/mcp connect [server|all]
 /mcp backup                  # backup global + project MCP config
 /mcp restore [backup-file]   # restore from picker or filename/path
 /mcp profile list
@@ -100,7 +105,7 @@ loaded into global or project MCP config after modal confirmation.
 ## What it does
 
 - reads MCP server config
-- connects to stdio or HTTP MCP servers
+- connects to stdio or HTTP MCP servers on demand
 - performs the MCP `initialize` handshake
 - discovers tools via `tools/list`
 - registers each discovered MCP tool with Pi

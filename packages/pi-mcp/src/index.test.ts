@@ -80,6 +80,7 @@ function read_json(req: IncomingMessage): Promise<any> {
 
 async function create_http_mcp_server() {
 	let delete_count = 0;
+	let initialize_count = 0;
 	const server = createServer(async (req, res) => {
 		if (req.method === 'DELETE') {
 			delete_count += 1;
@@ -91,6 +92,7 @@ async function create_http_mcp_server() {
 		res.setHeader('content-type', 'application/json');
 		res.setHeader('mcp-session-id', 'session-123');
 		if (message.method === 'initialize') {
+			initialize_count += 1;
 			res.end(
 				JSON.stringify({
 					jsonrpc: '2.0',
@@ -139,6 +141,7 @@ async function create_http_mcp_server() {
 	return {
 		url: `http://127.0.0.1:${address.port}/mcp`,
 		get_delete_count: () => delete_count,
+		get_initialize_count: () => initialize_count,
 		close: () =>
 			new Promise<void>((resolve) => server.close(() => resolve())),
 	};
@@ -172,12 +175,12 @@ async function run_mcp_list(cwd: string): Promise<string> {
 }
 
 describe('should_wait_for_mcp_connections', () => {
-	it('waits when selected tools are unavailable', () => {
+	it('skips blocking when selected tools are unavailable', () => {
 		expect(
 			should_wait_for_mcp_connections({
 				systemPromptOptions: {},
 			} as any),
-		).toBe(true);
+		).toBe(false);
 	});
 
 	it('waits when an MCP tool is selected', () => {
@@ -220,10 +223,12 @@ describe('MCP server lifecycle', () => {
 				{},
 				{ cwd, hasUI: false, ui: {} },
 			);
-			await events.get('before_agent_start')(
-				{ systemPromptOptions: {} },
-				{ cwd, hasUI: false, ui: {} },
-			);
+			expect(server.get_initialize_count()).toBe(0);
+			await commands.get('mcp').handler('connect demo', {
+				cwd,
+				hasUI: false,
+				ui: { notify: vi.fn(), setStatus: vi.fn() },
+			});
 
 			await commands.get('mcp').handler('disable demo', {
 				cwd,
@@ -253,16 +258,18 @@ describe('MCP server lifecycle', () => {
 				}),
 			);
 
-			const { pi, events, tools } = create_test_pi();
+			const { pi, commands, events, tools } = create_test_pi();
 			await mcp(pi);
 			await events.get('session_start')(
 				{},
 				{ cwd, hasUI: false, ui: {} },
 			);
-			await events.get('before_agent_start')(
-				{ systemPromptOptions: {} },
-				{ cwd, hasUI: false, ui: {} },
-			);
+			expect(server.get_initialize_count()).toBe(0);
+			await commands.get('mcp').handler('connect demo', {
+				cwd,
+				hasUI: false,
+				ui: { notify: vi.fn(), setStatus: vi.fn() },
+			});
 
 			await vi.waitFor(() =>
 				expect(server.get_delete_count()).toBe(1),

@@ -17,7 +17,6 @@ import { get_project_mcp_config_load_decision } from './project-config-loader.js
 import { format_mcp_tool_result } from './result.js';
 import {
 	clear_mcp_idle_timer,
-	count_pending_enabled_servers,
 	create_server_states,
 	get_mcp_idle_timeout_ms,
 	remove_server_tools_from_active,
@@ -39,9 +38,12 @@ export function should_wait_for_mcp_connections(
 ): boolean {
 	const selected_tools = event.systemPromptOptions?.selectedTools;
 	return (
-		!selected_tools ||
-		selected_tools.some((tool) => tool.startsWith('mcp__'))
+		selected_tools?.some((tool) => tool.startsWith('mcp__')) ?? false
 	);
+}
+
+function should_eager_connect_mcp(): boolean {
+	return process.env.MY_PI_MCP_EAGER_CONNECT === '1';
 }
 
 export default async function mcp(pi: ExtensionAPI) {
@@ -271,25 +273,38 @@ export default async function mcp(pi: ExtensionAPI) {
 			server.error = undefined;
 		}
 		update_mcp_status(ctx, servers);
-		void connect_server(server, ctx);
+		if (should_eager_connect_mcp()) void connect_server(server, ctx);
 		return server;
 	};
 
 	pi.on('session_start', async (_event, ctx) => {
 		await ensure_servers(ctx.cwd, ctx);
 		update_mcp_status(ctx, servers);
-		void connect_all_servers({ ctx });
+		if (should_eager_connect_mcp()) void connect_all_servers({ ctx });
 	});
 
 	pi.on('before_agent_start', async (event, ctx) => {
 		await ensure_servers(ctx.cwd, ctx);
 		if (!should_wait_for_mcp_connections(event)) {
-			void connect_all_servers({ ctx });
+			if (should_eager_connect_mcp())
+				void connect_all_servers({ ctx });
 			return event;
 		}
 
-		const pending_server_count =
-			count_pending_enabled_servers(servers);
+		const selected_server_names = new Set(
+			(event.systemPromptOptions?.selectedTools ?? [])
+				.map((tool) => /^mcp__(.+)__[^_]+$/.exec(tool)?.[1])
+				.filter((name): name is string => Boolean(name)),
+		);
+		const target_servers = Array.from(servers.values()).filter(
+			(state) =>
+				state.enabled &&
+				(selected_server_names.size === 0 ||
+					selected_server_names.has(state.config.name)),
+		);
+		const pending_server_count = target_servers.filter(
+			(state) => state.status !== 'connected',
+		).length;
 		if (pending_server_count === 0) {
 			update_mcp_status(ctx, servers);
 			return event;
@@ -300,7 +315,9 @@ export default async function mcp(pi: ExtensionAPI) {
 			pending_server_count,
 		);
 		try {
-			await connect_all_servers({ ctx });
+			await Promise.allSettled(
+				target_servers.map((state) => connect_server(state, ctx)),
+			);
 			return event;
 		} finally {
 			restore_feedback();
@@ -310,7 +327,7 @@ export default async function mcp(pi: ExtensionAPI) {
 
 	pi.registerCommand('mcp', {
 		description:
-			'Manage MCP servers (modal, list, enable, disable, backup, restore, profiles)',
+			'Manage MCP servers (modal, list, enable, disable, connect, backup, restore, profiles)',
 		getArgumentCompletions: (prefix) => {
 			const parts = prefix.split(' ');
 			if (parts.length <= 1) {
@@ -319,6 +336,7 @@ export default async function mcp(pi: ExtensionAPI) {
 					'list',
 					'enable',
 					'disable',
+					'connect',
 					'backup',
 					'restore',
 					'profile',
@@ -332,7 +350,11 @@ export default async function mcp(pi: ExtensionAPI) {
 					.filter((s) => s.startsWith(parts[1] || ''))
 					.map((s) => ({ value: `profile ${s}`, label: s }));
 			}
-			if (parts[0] === 'enable' || parts[0] === 'disable') {
+			if (
+				parts[0] === 'enable' ||
+				parts[0] === 'disable' ||
+				parts[0] === 'connect'
+			) {
 				const name_prefix = parts[1] || '';
 				return Array.from(servers.keys())
 					.filter((n) => n.startsWith(name_prefix))
@@ -424,6 +446,32 @@ export default async function mcp(pi: ExtensionAPI) {
 					else ctx.ui.notify(text);
 					break;
 				}
+				case 'connect': {
+					const targets =
+						name && name !== 'all'
+							? [servers.get(name)].filter(
+									(server): server is ServerState => Boolean(server),
+								)
+							: Array.from(servers.values()).filter(
+									(server) => server.enabled,
+								);
+					if (targets.length === 0) {
+						ctx.ui.notify(
+							name
+								? `Unknown server: ${name}`
+								: 'No enabled MCP servers',
+							'warning',
+						);
+						return;
+					}
+					await Promise.allSettled(
+						targets.map((server) => connect_server(server, ctx)),
+					);
+					ctx.ui.notify(
+						`Connected ${targets.length} MCP server${targets.length === 1 ? '' : 's'}`,
+					);
+					break;
+				}
 				case 'enable': {
 					const server = servers.get(name);
 					if (!server) {
@@ -438,7 +486,7 @@ export default async function mcp(pi: ExtensionAPI) {
 					ctx.ui.notify(
 						server.status === 'connected'
 							? `Enabled ${name}`
-							: `Enabling ${name} and connecting in background`,
+							: `Enabled ${name}; use /mcp connect ${name} to connect now`,
 					);
 					break;
 				}
@@ -458,7 +506,7 @@ export default async function mcp(pi: ExtensionAPI) {
 				}
 				default:
 					ctx.ui.notify(
-						`Unknown subcommand: ${sub}. Use manage, list, enable, disable, backup, restore, or profile.`,
+						`Unknown subcommand: ${sub}. Use manage, list, enable, disable, connect, backup, restore, or profile.`,
 						'warning',
 					);
 			}
@@ -466,6 +514,7 @@ export default async function mcp(pi: ExtensionAPI) {
 	});
 
 	if (
+		should_eager_connect_mcp() &&
 		process.env.MY_PI_RUNTIME_MODE &&
 		process.env.MY_PI_RUNTIME_MODE !== 'interactive'
 	) {
