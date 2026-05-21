@@ -3,6 +3,8 @@ packages:
   - apps/*
   - packages/*
 
+minimumReleaseAge: 2880
+
 catalog:
   '@earendil-works/pi-ai': 0.75.3
   '@earendil-works/pi-coding-agent': 0.75.3
@@ -22,8 +24,6 @@ overrides:
   protobufjs: '7.5.8'
   miniflare>ws: '8.20.1'
   '@sveltejs/kit>cookie': '0.7.0'
-
-minimumReleaseAge: 2880
 
 allowBuilds:
   '@google/genai': true
