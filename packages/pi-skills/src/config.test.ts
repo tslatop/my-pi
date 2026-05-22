@@ -1,4 +1,5 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { write_package_settings } from '@spences10/pi-settings';
+import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -39,42 +40,38 @@ function test_config(
 
 describe('load_skills_config', () => {
 	let config_home: string;
-	let original_xdg: string | undefined;
+	let original_agent_dir: string | undefined;
 
 	beforeEach(() => {
 		config_home = join(
 			tmpdir(),
 			`my-pi-skills-config-${Date.now()}-${Math.random()}`,
 		);
-		original_xdg = process.env.XDG_CONFIG_HOME;
-		process.env.XDG_CONFIG_HOME = config_home;
+		original_agent_dir = process.env.PI_CODING_AGENT_DIR;
+		process.env.PI_CODING_AGENT_DIR = config_home;
 	});
 
 	afterEach(() => {
-		if (original_xdg === undefined)
-			delete process.env.XDG_CONFIG_HOME;
-		else process.env.XDG_CONFIG_HOME = original_xdg;
+		if (original_agent_dir === undefined)
+			delete process.env.PI_CODING_AGENT_DIR;
+		else process.env.PI_CODING_AGENT_DIR = original_agent_dir;
 		rmSync(config_home, { recursive: true, force: true });
 	});
 
 	it('migrates legacy global enablement into the default profile', () => {
-		mkdirSync(join(config_home, 'my-pi'), { recursive: true });
-		writeFileSync(
-			join(config_home, 'my-pi', 'skills.json'),
-			JSON.stringify({
-				version: 1,
-				defaults: 'all-enabled',
-				enabled: {
-					'ui@pi-native': true,
-					'legacy-auth@pi-native': false,
-				},
-				current_profile: 'focused',
-				profiles: {
-					default: { description: 'Custom default' },
-					focused: { extends: ['default'], exclude: ['legacy-*'] },
-				},
-			}),
-		);
+		write_package_settings('skills', {
+			version: 1,
+			defaults: 'all-enabled',
+			enabled: {
+				'ui@pi-native': true,
+				'legacy-auth@pi-native': false,
+			},
+			current_profile: 'focused',
+			profiles: {
+				default: { description: 'Custom default' },
+				focused: { extends: ['default'], exclude: ['legacy-*'] },
+			},
+		});
 
 		const config = load_skills_config();
 
@@ -92,27 +89,23 @@ describe('load_skills_config', () => {
 	});
 
 	it('loads context profile rules', () => {
-		mkdirSync(join(config_home, 'my-pi'), { recursive: true });
-		writeFileSync(
-			join(config_home, 'my-pi', 'skills.json'),
-			JSON.stringify({
-				version: 3,
-				enabled: {},
-				defaults: 'all-disabled',
-				current_profile: 'default',
-				profiles: {
-					default: {},
-					cloud: { include: ['cl-*', 'project:*'] },
+		write_package_settings('skills', {
+			version: 3,
+			enabled: {},
+			defaults: 'all-disabled',
+			current_profile: 'default',
+			profiles: {
+				default: {},
+				cloud: { include: ['cl-*', 'project:*'] },
+			},
+			contexts: [
+				{
+					name: 'cloud repos',
+					profile: 'cloud',
+					when: { cwd: '~/repos/cloud-lobsters/*' },
 				},
-				contexts: [
-					{
-						name: 'cloud repos',
-						profile: 'cloud',
-						when: { cwd: '~/repos/cloud-lobsters/*' },
-					},
-				],
-			}),
-		);
+			],
+		});
 
 		const config = load_skills_config();
 

@@ -1,3 +1,4 @@
+import { write_package_settings } from '@spences10/pi-settings';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -125,45 +126,43 @@ describe('create_skills_manager', () => {
 	});
 
 	it('uses context profiles to enable global skills without hardcoding project names', async () => {
-		const project = join(root, 'repos', 'cloud-lobsters', 'jupiter');
+		const project = join(root, 'repos', 'example-suite', 'app');
 		write_skill(
-			join(root, 'agent', 'skills', 'cl-duncan-table'),
-			'cl-duncan-table',
-			'Use for Cloud Lobsters tables.',
+			join(root, 'agent', 'skills', 'suite-table-helper'),
+			'suite-table-helper',
+			'Use for example suite tables.',
 		);
-		mkdirSync(join(root, '.config', 'my-pi'), { recursive: true });
-		writeFileSync(
-			join(root, '.config', 'my-pi', 'skills.json'),
-			JSON.stringify({
-				version: 3,
-				enabled: {},
-				defaults: 'all-disabled',
-				current_profile: 'default',
-				profiles: {
-					default: { include: [], exclude: [] },
-					cloud: { include: ['cl-*'], exclude: [] },
+		write_package_settings('skills', {
+			version: 3,
+			enabled: {},
+			defaults: 'all-disabled',
+			current_profile: 'default',
+			profiles: {
+				default: { include: [], exclude: [] },
+				suite: { include: ['suite-*'], exclude: [] },
+			},
+			contexts: [
+				{
+					name: 'example suite repos',
+					profile: 'suite',
+					when: { cwd: join(root, 'repos', 'example-suite', '*') },
 				},
-				contexts: [
-					{
-						name: 'cloud repos',
-						profile: 'cloud',
-						when: { cwd: join(root, 'repos', 'cloud-lobsters', '*') },
-					},
-				],
-			}),
-		);
+			],
+		});
 
 		const { create_skills_manager } = await import('./manager.js');
 
 		expect(
 			create_skills_manager({ cwd: join(root, 'other') })
 				.discover()
-				.find((skill) => skill.name === 'cl-duncan-table')?.enabled,
+				.find((skill) => skill.name === 'suite-table-helper')
+				?.enabled,
 		).toBe(false);
 		expect(
 			create_skills_manager({ cwd: project })
 				.discover()
-				.find((skill) => skill.name === 'cl-duncan-table')?.enabled,
+				.find((skill) => skill.name === 'suite-table-helper')
+				?.enabled,
 		).toBe(true);
 	});
 
