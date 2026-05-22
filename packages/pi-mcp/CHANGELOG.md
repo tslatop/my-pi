@@ -1,5 +1,14 @@
 # @spences10/pi-mcp
 
+## 0.0.36
+
+### Patch Changes
+
+- 6386671: Add explicit Pi peer dependency to project trust package
+  for clearer runtime expectations.
+- Updated dependencies [6386671]
+  - @spences10/pi-project-trust@0.0.12
+
 ## 0.0.35
 
 ### Patch Changes

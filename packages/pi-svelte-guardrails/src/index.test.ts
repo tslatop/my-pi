@@ -1,3 +1,4 @@
+import { write_package_settings } from '@spences10/pi-settings';
 import {
 	mkdirSync,
 	mkdtempSync,
@@ -21,12 +22,18 @@ import svelte_guardrails, {
 
 const original_config_path =
 	process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG;
+const original_agent_dir = process.env.PI_CODING_AGENT_DIR;
 
 afterEach(() => {
 	if (original_config_path === undefined) {
 		delete process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG;
 	} else {
 		process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG = original_config_path;
+	}
+	if (original_agent_dir === undefined) {
+		delete process.env.PI_CODING_AGENT_DIR;
+	} else {
+		process.env.PI_CODING_AGENT_DIR = original_agent_dir;
 	}
 });
 
@@ -168,9 +175,8 @@ EOF`;
 
 	it('warns without blocking in warn mode', async () => {
 		const dir = mkdtempSync(join(tmpdir(), 'svelte-guardrails-'));
-		const path = join(dir, 'config.json');
-		process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG = path;
-		writeFileSync(path, JSON.stringify({ mode: 'warn' }));
+		process.env.PI_CODING_AGENT_DIR = dir;
+		write_package_settings('svelteGuardrails', { mode: 'warn' });
 
 		const events = new Map<string, Function>();
 		svelte_guardrails({
@@ -205,7 +211,6 @@ EOF`;
 
 	it('loads global config with project-local overrides', () => {
 		const dir = mkdtempSync(join(tmpdir(), 'svelte-guardrails-'));
-		const path = join(dir, 'config.json');
 		const project = join(dir, 'project');
 		const project_config = join(
 			project,
@@ -213,11 +218,11 @@ EOF`;
 			'svelte-guardrails.json',
 		);
 		mkdirSync(join(project, '.pi'), { recursive: true });
-		process.env.MY_PI_SVELTE_GUARDRAILS_CONFIG = path;
-		writeFileSync(
-			path,
-			JSON.stringify({ blockEffect: false, allow: ['legacy/**'] }),
-		);
+		process.env.PI_CODING_AGENT_DIR = dir;
+		write_package_settings('svelteGuardrails', {
+			blockEffect: false,
+			allow: ['legacy/**'],
+		});
 		writeFileSync(project_config, JSON.stringify({ mode: 'warn' }));
 
 		expect(load_svelte_guardrails_config(project)).toEqual({
