@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 // CLI for my-pi — composable pi coding agent
-// User extension stacking started from https://github.com/disler/pi-vs-claude-code;
-// built-ins are now managed through my-pi's registry.
 
 import { defineCommand, renderUsage, runMain } from 'citty';
 import { existsSync, readFileSync } from 'node:fs';
@@ -61,7 +59,7 @@ NOTES
   - In non-interactive modes, my-pi keeps headless-capable built-ins like
     MCP, LSP, prompt presets, recall, nopeek, Omnisearch, SQLite tools, hooks, and secret redaction.
   - UI-only built-ins like session auto-naming are skipped.
-  - Repeat -e / --extension to stack multiple extensions.
+  - Repeat -e / --extension to compose multiple extensions.
 
 NESTED RUNS
 

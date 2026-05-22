@@ -1,6 +1,4 @@
 // Composable programmatic API for my-pi
-// User extension stacking started from pi-vs-claude-code-style `-e` layering;
-// built-ins are now managed through my-pi's registry.
 
 import {
 	clampThinkingLevel,

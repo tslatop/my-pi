@@ -11,14 +11,9 @@ Composable [pi](https://pi.dev) coding agent for humans and agents.
 
 Built on the
 [@earendil-works/pi-coding-agent](https://github.com/badlogic/pi-mono)
-SDK. Adds MCP server support, a managed extension registry, user
-extension stacking, LSP tools, prompt presets, local SQLite telemetry
-for evals, and a programmatic API.
-
-User extension stacking was originally inspired by
-[pi-vs-claude-code](https://github.com/disler/pi-vs-claude-code);
-my-pi now layers that pattern behind a registry-driven set of built-in
-extensions.
+SDK. Adds MCP server support, a managed extension registry, composable
+user extensions, LSP tools, prompt presets, local SQLite telemetry for
+evals, and a programmatic API.
 
 ## What this is for
 
@@ -62,7 +57,7 @@ directly as its own CLI.
 - **Git UI** — interactive source-control staging in the TUI.
 - **Local telemetry** — optional SQLite telemetry for evals, tool
   analysis, and operational debugging.
-- **Built-in registry + user extension stacking** — ship defaults,
+- **Built-in registry + composable user extensions** — ship defaults,
   manage built-ins with `/extensions`, and layer extra project or
   ad-hoc extensions on top.
 
@@ -394,18 +389,18 @@ Set the listed environment variables to `allow` or `trust` where
 supported to re-enable one feature intentionally while staying in safe
 mode.
 
-### Extension stacking
+### Additional extensions
 
 ```bash
 pnpx my-pi@latest -e ./ext/damage-control.ts -e ./ext/tool-counter.ts
 pnpx my-pi@latest --no-builtin -e ./ext/custom.ts "do something"
 ```
 
-Stack arbitrary Pi extensions via repeated `-e` / `--extension` flags.
-This is the part originally inspired by `pi-vs-claude-code`'s simple
-`pi -e one.ts -e two.ts` recipes. Use `--no-builtin` to skip my-pi's
-managed built-in extensions and run only Pi defaults plus the
-extensions you pass explicitly.
+Add project or ad-hoc Pi extensions with repeated `-e` / `--extension`
+flags. They are composed with the managed built-ins in the same
+runtime. Use `--no-builtin` to skip my-pi's managed built-in
+extensions and run only Pi defaults plus the extensions you pass
+explicitly.
 
 Built-in extension choices can also be saved interactively with
 `/extensions`. Startup flags like `--no-recall`, `--no-skills`, and
