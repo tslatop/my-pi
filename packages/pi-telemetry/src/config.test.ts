@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { get_settings_path } from '@spences10/pi-settings';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
 	get_default_telemetry_db_path,
@@ -24,6 +25,7 @@ function tmp_home(): string {
 describe('telemetry config', () => {
 	const homes: string[] = [];
 	const original_home = process.env.HOME;
+	const original_agent_dir = process.env.PI_CODING_AGENT_DIR;
 
 	afterEach(() => {
 		for (const home of homes.splice(0)) {
@@ -34,12 +36,18 @@ describe('telemetry config', () => {
 		} else {
 			process.env.HOME = original_home;
 		}
+		if (original_agent_dir === undefined) {
+			delete process.env.PI_CODING_AGENT_DIR;
+		} else {
+			process.env.PI_CODING_AGENT_DIR = original_agent_dir;
+		}
 	});
 
 	it('defaults to disabled when missing', () => {
 		const home = tmp_home();
 		homes.push(home);
 		process.env.HOME = home;
+		process.env.PI_CODING_AGENT_DIR = join(home, '.pi', 'agent');
 
 		expect(load_telemetry_config()).toEqual({
 			version: 1,
@@ -57,16 +65,17 @@ describe('telemetry config', () => {
 		const home = tmp_home();
 		homes.push(home);
 		process.env.HOME = home;
+		process.env.PI_CODING_AGENT_DIR = join(home, '.pi', 'agent');
 
 		save_telemetry_config({ version: 1, enabled: true });
 
-		const path = get_telemetry_config_path();
+		const path = get_settings_path();
 		expect(existsSync(path)).toBe(true);
 		expect(load_telemetry_config()).toEqual({
 			version: 1,
 			enabled: true,
 		});
-		expect(JSON.parse(readFileSync(path, 'utf-8'))).toEqual({
+		expect(JSON.parse(readFileSync(path, 'utf-8')).packages.telemetry).toEqual({
 			version: 1,
 			enabled: true,
 		});

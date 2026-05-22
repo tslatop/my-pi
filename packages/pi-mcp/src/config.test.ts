@@ -9,6 +9,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { write_settings } from '@spences10/pi-settings';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
 	create_mcp_config_backup,
@@ -312,18 +313,20 @@ describe('load_mcp_config', () => {
 				},
 			}),
 		);
-		writeFileSync(
-			join(global_dir, 'mcp-policy.json'),
-			JSON.stringify({
-				servers: {
-					org: { activateWhen: { githubOrg: ['spences10'] } },
-					repo: { activateWhen: { githubRepo: ['spences10/my-pi'] } },
-					other: {
-						activateWhen: { githubRepo: ['elsewhere/project'] },
+		write_settings({
+			version: 1,
+			mcp: {
+				policy: {
+					servers: {
+						org: { activateWhen: { githubOrg: ['spences10'] } },
+						repo: { activateWhen: { githubRepo: ['spences10/my-pi'] } },
+						other: {
+							activateWhen: { githubRepo: ['elsewhere/project'] },
+						},
 					},
 				},
-			}),
-		);
+			},
+		});
 		writeFileSync(join(cwd, '.gitignore'), '');
 		expect(() =>
 			execFileSync('git', ['init'], { cwd, stdio: 'ignore' }),
@@ -359,16 +362,18 @@ describe('load_mcp_config', () => {
 			join(global_dir, 'mcp.json'),
 			JSON.stringify({ mcpServers: { scoped: { command: 'cmd' } } }),
 		);
-		writeFileSync(
-			join(global_dir, 'mcp-policy.json'),
-			JSON.stringify({
-				servers: {
-					scoped: {
-						activateWhen: { githubRepo: ['elsewhere/project'] },
+		write_settings({
+			version: 1,
+			mcp: {
+				policy: {
+					servers: {
+						scoped: {
+							activateWhen: { githubRepo: ['elsewhere/project'] },
+						},
 					},
 				},
-			}),
-		);
+			},
+		});
 		writeFileSync(
 			join(cwd, '.pi', 'mcp-policy.json'),
 			JSON.stringify({
