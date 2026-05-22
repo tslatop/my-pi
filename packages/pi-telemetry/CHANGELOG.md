@@ -1,5 +1,12 @@
 # @spences10/pi-telemetry
 
+## 0.0.23
+
+### Patch Changes
+
+- 6386671: Add explicit Pi peer dependency to project trust package
+  for clearer runtime expectations.
+
 ## 0.0.22
 
 ### Patch Changes

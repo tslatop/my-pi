@@ -1,5 +1,12 @@
 # @spences10/pi-project-trust
 
+## 0.0.12
+
+### Patch Changes
+
+- 6386671: Add explicit Pi peer dependency to project trust package
+  for clearer runtime expectations.
+
 ## 0.0.11
 
 ### Patch Changes
