@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.63
+
+### Patch Changes
+
+- df2e2ef: Fix built-in extension tests isolation and make legacy settings
+  migration robust across filesystems.
+
 ## 0.1.62
 
 ### Patch Changes
@@ -765,6 +772,7 @@
   session transfer prompts.
 
   The `/handoff` command now:
+
   - summarizes the current branch conversation with the active model
   - asks the user to review and edit the generated prompt
   - creates a new session linked to the current one
