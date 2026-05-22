@@ -4,9 +4,11 @@ import {
 	write_settings,
 } from '@spences10/pi-settings';
 import {
+	copyFileSync,
 	existsSync,
 	mkdirSync,
 	renameSync,
+	unlinkSync,
 	writeFileSync,
 } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
@@ -30,6 +32,23 @@ function backup_path_for(
 ): string {
 	const parent = basename(dirname(original_path));
 	return join(backup_dir, `${parent}-${basename(original_path)}`);
+}
+
+function move_file_to_backup(source: string, target: string): void {
+	try {
+		renameSync(source, target);
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			'code' in error &&
+			error.code === 'EXDEV'
+		) {
+			copyFileSync(source, target);
+			unlinkSync(source);
+			return;
+		}
+		throw error;
+	}
 }
 
 export function migrate_legacy_settings(): SettingsMigrationResult {
@@ -109,7 +128,7 @@ export function migrate_legacy_settings(): SettingsMigrationResult {
 	for (const entry of entries) {
 		if (!existsSync(entry.path)) continue;
 		const target = backup_path_for(entry.path, backup_dir);
-		renameSync(entry.path, target);
+		move_file_to_backup(entry.path, target);
 		moved_files.push(entry.path);
 	}
 

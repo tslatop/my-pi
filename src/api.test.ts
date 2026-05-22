@@ -127,10 +127,12 @@ describe('create_lazy_builtin_extension_factory', () => {
 		const xdg_config_home = mkdtempSync(
 			join(tmpdir(), 'my-pi-api-config-'),
 		);
+		const agent_dir = mkdtempSync(join(tmpdir(), 'my-pi-api-agent-'));
 		let loaded = 0;
 
 		try {
 			process.env.XDG_CONFIG_HOME = xdg_config_home;
+			process.env.PI_CODING_AGENT_DIR = agent_dir;
 			mkdirSync(join(xdg_config_home, 'my-pi'), {
 				recursive: true,
 			});
@@ -156,12 +158,19 @@ describe('create_lazy_builtin_extension_factory', () => {
 			expect(loaded).toBe(0);
 		} finally {
 			rmSync(xdg_config_home, { recursive: true, force: true });
+			rmSync(agent_dir, { recursive: true, force: true });
 		}
 	});
 
 	it('loads enabled built-ins only when the wrapper runs', async () => {
+		const xdg_config_home = mkdtempSync(
+			join(tmpdir(), 'my-pi-api-config-'),
+		);
+		const agent_dir = mkdtempSync(join(tmpdir(), 'my-pi-api-agent-'));
 		let loaded = 0;
 		let ran = 0;
+		process.env.XDG_CONFIG_HOME = xdg_config_home;
+		process.env.PI_CODING_AGENT_DIR = agent_dir;
 		const extension = create_lazy_builtin_extension_factory(
 			'mcp',
 			async () => {
@@ -173,11 +182,16 @@ describe('create_lazy_builtin_extension_factory', () => {
 			new Set(),
 		);
 
-		expect(loaded).toBe(0);
-		await extension({} as never);
+		try {
+			expect(loaded).toBe(0);
+			await extension({} as never);
 
-		expect(loaded).toBe(1);
-		expect(ran).toBe(1);
+			expect(loaded).toBe(1);
+			expect(ran).toBe(1);
+		} finally {
+			rmSync(xdg_config_home, { recursive: true, force: true });
+			rmSync(agent_dir, { recursive: true, force: true });
+		}
 	});
 
 	it('skips enabled built-ins when their package cannot load', async () => {
