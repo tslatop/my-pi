@@ -444,6 +444,9 @@ importers:
 
   packages/pi-project-trust:
     dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: '*'
+        version: 0.75.3(ws@8.20.1)(zod@4.4.3)
       '@spences10/pi-settings':
         specifier: workspace:*
         version: link:../pi-settings

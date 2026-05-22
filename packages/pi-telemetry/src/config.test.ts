@@ -75,7 +75,9 @@ describe('telemetry config', () => {
 			version: 1,
 			enabled: true,
 		});
-		expect(JSON.parse(readFileSync(path, 'utf-8')).packages.telemetry).toEqual({
+		expect(
+			JSON.parse(readFileSync(path, 'utf-8')).packages.telemetry,
+		).toEqual({
 			version: 1,
 			enabled: true,
 		});

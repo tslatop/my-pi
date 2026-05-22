@@ -45,6 +45,9 @@
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": "*"
+	},
 	"engines": {
 		"node": ">=24.15.0"
 	}

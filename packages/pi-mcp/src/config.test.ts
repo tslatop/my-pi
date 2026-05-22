@@ -319,7 +319,9 @@ describe('load_mcp_config', () => {
 				policy: {
 					servers: {
 						org: { activateWhen: { githubOrg: ['spences10'] } },
-						repo: { activateWhen: { githubRepo: ['spences10/my-pi'] } },
+						repo: {
+							activateWhen: { githubRepo: ['spences10/my-pi'] },
+						},
 						other: {
 							activateWhen: { githubRepo: ['elsewhere/project'] },
 						},
