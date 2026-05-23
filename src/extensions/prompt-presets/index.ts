@@ -3,33 +3,26 @@ import {
 	type ExtensionCommandContext,
 	type ExtensionContext,
 } from '@earendil-works/pi-coding-agent';
-import type { SettingItem } from '@earendil-works/pi-tui';
-import { show_settings_modal } from '@spences10/pi-tui-modal';
 import { existsSync } from 'node:fs';
 import {
 	format_active_details,
 	format_summary,
 	get_prompt_source_label,
-	list_base_presets,
-	list_layer_presets,
 } from './catalog.js';
+import { get_prompt_preset_completions } from './completions.js';
 import {
 	DEFAULT_BASE_PROMPT_PRESET_NAME,
 	DEFAULT_PROMPT_PRESETS,
 } from './defaults.js';
 import { set_status } from './footer.js';
 import { format_prompt_preset_help, is_subcommand } from './help.js';
+import { show_prompt_preset_manager } from './manager.js';
+import { build_active_prompt_blocks } from './prompt-blocks.js';
 import {
-	DISABLED,
-	ENABLED,
 	get_last_preset_state,
-	NONE_BASE_ID,
 	normalize_active_state,
 	parse_preset_flag,
 	persist_state,
-	SELECTED,
-	sets_equal,
-	UNSELECTED,
 } from './state.js';
 import {
 	get_global_presets_dir,
@@ -48,14 +41,14 @@ import type {
 } from './types.js';
 
 export {
-	DEFAULT_BASE_PROMPT_PRESET_NAME,
-	DEFAULT_PROMPT_PRESETS,
-} from './defaults.js';
-export {
 	get_current_thinking_level,
 	get_default_footer_thinking_level,
 	render_footer_status_line,
 } from '@spences10/pi-footer';
+export {
+	DEFAULT_BASE_PROMPT_PRESET_NAME,
+	DEFAULT_PROMPT_PRESETS,
+} from './defaults.js';
 export {
 	load_persisted_prompt_state,
 	load_prompt_presets,
@@ -322,124 +315,15 @@ export default async function prompt_presets(pi: ExtensionAPI) {
 	async function show_manager(
 		ctx: ExtensionCommandContext,
 	): Promise<void> {
-		const base_presets = list_base_presets(presets);
-		const layer_presets = list_layer_presets(presets);
-		if (base_presets.length === 0 && layer_presets.length === 0) {
-			ctx.ui.notify('No prompt presets available', 'warning');
-			return;
-		}
-
-		const initial_base = active_base_name;
-		const initial_layers = new Set(active_layers);
-		let selected_base = active_base_name;
-		const enabled_layers = new Set(active_layers);
-
-		const items: SettingItem[] = [];
-		const base_ids = new Set<string>();
-		const layer_ids = new Set<string>();
-
-		items.push({
-			id: '__header_base__',
-			label: `── Base presets (${base_presets.length + 1}) ──`,
-			description: '',
-			currentValue: '',
-		});
-		items.push({
-			id: NONE_BASE_ID,
-			label: '(none)',
-			description: 'No active base preset',
-			currentValue: UNSELECTED,
-			values: [SELECTED, UNSELECTED],
-		});
-		base_ids.add(NONE_BASE_ID);
-
-		for (const preset of base_presets) {
-			items.push({
-				id: preset.name,
-				label: preset.name,
-				description: [
-					`${get_prompt_source_label(preset.source)} • ${preset.description ?? 'base preset'}`,
-				].join('\n'),
-				currentValue: UNSELECTED,
-				values: [SELECTED, UNSELECTED],
-			});
-			base_ids.add(preset.name);
-		}
-
-		items.push({
-			id: '__header_layers__',
-			label: `── Prompt layers (${layer_presets.length}) ──`,
-			description: '',
-			currentValue: '',
-		});
-		for (const preset of layer_presets) {
-			items.push({
-				id: preset.name,
-				label: preset.name,
-				description: [
-					`${get_prompt_source_label(preset.source)} • ${preset.description ?? 'layer'}`,
-				].join('\n'),
-				currentValue: DISABLED,
-				values: [ENABLED, DISABLED],
-			});
-			layer_ids.add(preset.name);
-		}
-
-		function sync_values() {
-			for (const item of items) {
-				if (base_ids.has(item.id)) {
-					const is_selected =
-						(item.id === NONE_BASE_ID && !selected_base) ||
-						item.id === selected_base;
-					item.currentValue = is_selected ? SELECTED : UNSELECTED;
-				} else if (layer_ids.has(item.id)) {
-					item.currentValue = enabled_layers.has(item.id)
-						? ENABLED
-						: DISABLED;
-				}
-			}
-		}
-
-		sync_values();
-
-		await show_settings_modal(ctx, {
-			title: 'Prompt presets',
-			subtitle: () =>
-				`base: ${selected_base ?? '(none)'} • ${enabled_layers.size} layer(s) enabled`,
-			items,
-			max_visible: Math.min(Math.max(items.length + 4, 8), 24),
-			enable_search: true,
-			on_change: (id, new_value) => {
-				if (id.startsWith('__header_')) return;
-
-				if (base_ids.has(id)) {
-					selected_base =
-						new_value === SELECTED && id !== NONE_BASE_ID
-							? id
-							: undefined;
-					sync_values();
-					return;
-				}
-
-				if (layer_ids.has(id)) {
-					if (new_value === ENABLED) {
-						enabled_layers.add(id);
-					} else {
-						enabled_layers.delete(id);
-					}
-					sync_values();
-				}
+		await show_prompt_preset_manager(
+			ctx,
+			{ presets, active_base_name, active_layers },
+			(selected_base, enabled_layers) => {
+				commit_state(ctx, selected_base, enabled_layers, {
+					notify: 'Updated prompt preset selection',
+				});
 			},
-		});
-
-		if (
-			selected_base !== initial_base ||
-			!sets_equal(initial_layers, enabled_layers)
-		) {
-			commit_state(ctx, selected_base, enabled_layers, {
-				notify: 'Updated prompt preset selection',
-			});
-		}
+		);
 	}
 
 	pi.registerFlag('preset', {
@@ -453,78 +337,8 @@ export default async function prompt_presets(pi: ExtensionAPI) {
 	>[1] = {
 		description:
 			'Manage prompt presets and layers. Try: /prompt-preset help, /prompt-preset export-defaults, /prompt-preset edit-global terse',
-		getArgumentCompletions: (prefix) => {
-			const trimmed = prefix.trim();
-			const parts = trimmed ? trimmed.split(/\s+/) : [];
-			const base_names = list_base_presets(presets).map(
-				(preset) => preset.name,
-			);
-			const layer_names = list_layer_presets(presets).map(
-				(preset) => preset.name,
-			);
-			const all_names = [...base_names, ...layer_names];
-
-			if (parts.length <= 1) {
-				const query = parts[0] ?? '';
-				const subcommands = [
-					'help',
-					'list',
-					'show',
-					'clear',
-					'edit',
-					'edit-global',
-					'export-defaults',
-					'delete',
-					'reset',
-					'reload',
-					'base',
-					'enable',
-					'disable',
-					'toggle',
-				];
-				return [
-					...subcommands
-						.filter((item) => item.startsWith(query))
-						.map((item) => ({ value: item, label: item })),
-					...all_names
-						.filter((item) => item.startsWith(query))
-						.map((item) => ({ value: item, label: item })),
-				];
-			}
-
-			const command = parts[0];
-			const query = parts.slice(1).join(' ');
-			if (command === 'base') {
-				return base_names
-					.filter((item) => item.startsWith(query))
-					.map((item) => ({ value: `base ${item}`, label: item }));
-			}
-			if (['enable', 'disable', 'toggle'].includes(command)) {
-				return layer_names
-					.filter((item) => item.startsWith(query))
-					.map((item) => ({
-						value: `${command} ${item}`,
-						label: item,
-					}));
-			}
-			if (command === 'edit' || command === 'edit-global') {
-				return all_names
-					.filter((item) => item.startsWith(query))
-					.map((item) => ({
-						value: `${command} ${item}`,
-						label: item,
-					}));
-			}
-			if (['delete', 'reset'].includes(command)) {
-				return all_names
-					.filter((item) => item.startsWith(query))
-					.map((item) => ({
-						value: `${command} ${item}`,
-						label: item,
-					}));
-			}
-			return null;
-		},
+		getArgumentCompletions: (prefix) =>
+			get_prompt_preset_completions(presets, prefix),
 		handler: async (args, ctx) => {
 			const trimmed = args.trim();
 			if (!trimmed) {
@@ -756,30 +570,11 @@ export default async function prompt_presets(pi: ExtensionAPI) {
 	});
 
 	pi.on('before_agent_start', async (event) => {
-		const blocks: string[] = [];
-		const base = get_base(active_base_name);
-		if (base?.instructions.trim()) {
-			blocks.push(
-				`## Active Base Prompt: ${base.name}\n${base.instructions.trim()}`,
-			);
-		}
-
-		const layer_blocks = [...active_layers]
-			.sort()
-			.map((name) => presets[name])
-			.filter((preset): preset is LoadedPromptPreset =>
-				Boolean(preset?.instructions.trim()),
-			)
-			.map(
-				(preset) =>
-					`### ${preset.name}\n${preset.instructions.trim()}`,
-			);
-		if (layer_blocks.length > 0) {
-			blocks.push(
-				`## Active Prompt Layers\n\n${layer_blocks.join('\n\n')}`,
-			);
-		}
-
+		const blocks = build_active_prompt_blocks(
+			presets,
+			active_base_name,
+			active_layers,
+		);
 		if (blocks.length === 0) return;
 		return {
 			systemPrompt: `${event.systemPrompt}\n\n${blocks.join('\n\n')}`,
