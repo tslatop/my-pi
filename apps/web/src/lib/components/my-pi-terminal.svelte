@@ -3,9 +3,9 @@
 </script>
 
 <script lang="ts">
-	import "./my-pi-terminal/styles.css";
 	import Caret from "./my-pi-terminal/caret.svelte";
 	import StatusBar from "./my-pi-terminal/status-bar.svelte";
+	import "./my-pi-terminal/styles.css";
 	import TerminalTurn from "./my-pi-terminal/terminal-turn.svelte";
 	import type { Metrics, RenderedTurn, Turn } from "./my-pi-terminal/types";
 

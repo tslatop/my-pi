@@ -32,7 +32,11 @@
 			<span>R{format_k(metrics.ram)}</span>
 			<span>${metrics.cost.toFixed(3)}</span>
 			<span>(sub)</span>
-			<span>{((metrics.ctx_used / metrics.ctx_max) * 100).toFixed(1)}%/{format_k(metrics.ctx_max)}</span>
+			<span
+				>{((metrics.ctx_used / metrics.ctx_max) * 100).toFixed(1)}%/{format_k(
+					metrics.ctx_max,
+				)}</span
+			>
 		</div>
 		<div class="mcp-status">MCP 5/5 connected</div>
 	</div>

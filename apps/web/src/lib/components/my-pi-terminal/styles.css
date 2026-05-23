@@ -185,10 +185,18 @@
 	white-space: pre-wrap;
 }
 .diff-line.removed {
-	background: color-mix(in srgb, var(--afterglow-terminal-red) 16%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--afterglow-terminal-red) 16%,
+		transparent
+	);
 }
 .diff-line.added {
-	background: color-mix(in srgb, var(--afterglow-terminal-green) 14%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--afterglow-terminal-green) 14%,
+		transparent
+	);
 }
 .diff-line.removed .sign {
 	color: var(--afterglow-terminal-red);
