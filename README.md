@@ -1,890 +1,163 @@
 # my-pi
 
 [![Semgrep](https://github.com/spences10/my-pi/actions/workflows/semgrep.yml/badge.svg)](https://github.com/spences10/my-pi/actions/workflows/semgrep.yml)
-
 [![built with vite+](https://img.shields.io/badge/built%20with-Vite+-646CFF?logo=vite&logoColor=white)](https://viteplus.dev)
-[![tested with vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![tested with vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest)](https://vitest.dev)
 
-Composable [pi](https://pi.dev) coding agent for humans and agents.
+My curated [Pi](https://pi.dev) distribution: a ready-to-run
+coding-agent CLI with MCP, LSP, skills, recall, redaction, telemetry,
+team mode, prompt presets, and other handy extensions prewired.
 
 ![my-pi package preview](./assets/pi-package-preview.png)
 
 Built on the
 [@earendil-works/pi-coding-agent](https://github.com/badlogic/pi-mono)
-SDK. Adds MCP server support, a managed extension registry, composable
-user extensions, LSP tools, prompt presets, local SQLite telemetry for
-evals, and a programmatic API.
+SDK. Use the full distribution directly, or install individual
+`@spences10/pi-*` packages into your own Pi setup.
 
-## What this is for
-
-`my-pi` is a composable Pi-based coding-agent harness for local agent
-work, eval runs, and agent-ops experiments. The default CLI combines
-MCP, LSP, skills, prompt presets, secret-safe tooling, local
-telemetry, session recall, and optional team-mode orchestration.
-
-The main design goal is repeatability: run an agent task, capture
-structured telemetry, preserve session context, and reuse the same
-configuration in interactive, print, JSON, RPC, or SDK-driven flows.
-
-## Not a Pi package
-
-Do not install this with `pi install npm:my-pi`.
-
-`my-pi` is an opinionated Pi distribution/CLI. Install the individual
-`@spences10/pi-*` packages as Pi packages instead, or run `my-pi`
-directly as its own CLI.
-
-## Features
-
-- **Pi-native CLI + SDK wrapper** — interactive TUI, print mode, JSON
-  mode, and programmatic runtime creation.
-- **MCP integration** — stdio and HTTP/streamable-HTTP servers from
-  `mcp.json`, auto-registered as Pi tools.
-- **Built-in LSP tools** — diagnostics, hover, definitions,
-  references, and document symbols via language servers.
-- **Managed skills** — discover, enable, disable, import, and sync
-  Pi-native skills.
-- **Guardrails** — default-enabled Svelte and coding-preference checks
-  that block configured anti-patterns before agents write them.
-- **Prompt presets** — base presets plus additive prompt layers with
-  per-project persistence.
-- **Secret redaction** — redact API keys and other sensitive output
-  before the model sees tool results.
-- **Context sidecar** — SQLite FTS storage for oversized tool output,
-  with scoped retrieval commands.
-- **Recall** — teach the model to use `pirecall` for prior-session
-  context.
-- **Git UI** — interactive source-control staging in the TUI.
-- **Local telemetry** — optional SQLite telemetry for evals, tool
-  analysis, and operational debugging.
-- **Built-in registry + composable user extensions** — ship defaults,
-  manage built-ins with `/extensions`, and layer extra project or
-  ad-hoc extensions on top.
-
-## Requirements
-
-- **Node.js `>=24.15.0` minimum.** my-pi uses native `node:sqlite`
-  through the context sidecar and telemetry packages, and uses Node's
-  built-in TypeScript type stripping for small local scripts.
-- **Node 24 is used in CI.** `node:sqlite` is a release-candidate Node
-  API line, so CI runs the current Node 24 line while the code keeps
-  SQLite usage small and synchronous.
-- **SQLite warning policy:** the `my-pi` CLI suppresses Node's
-  expected `node:sqlite` `ExperimentalWarning` before built-ins load.
-  Standalone package/API consumers own their process warning policy
-  until Node marks `node:sqlite` stable.
-- **pnpm 11** is used for local development. End users can run with
-  `pnpx`, `npx`, or `bunx`.
-
-## Get Started
+## Quick start
 
 ```bash
 pnpx my-pi@latest
 # or: npx my-pi@latest / bunx my-pi@latest
 ```
 
-With pnpm's build-script approval gate, use explicit build allowances
-if you want a warning-free `pnpx` install:
+## Two ways to use my-pi
 
-```bash
-pnpm dlx --allow-build=@google/genai --allow-build=koffi --allow-build=protobufjs my-pi@latest
-```
+### 1. Run the full distribution
 
-### API Keys
-
-Pi handles authentication natively via `AuthStorage`. Options (in
-priority order):
-
-1. **`pi auth`** — interactive login, stores credentials in
-   `~/.pi/agent/auth.json`
-2. **Environment variables** — `ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`,
-   `XIAOMI_API_KEY`, `CLOUDFLARE_API_KEY` + `CLOUDFLARE_ACCOUNT_ID`,
-   etc.
-3. **OAuth** — supported for providers that offer it
-
-Xiaomi MiMo Token Plan is available through Pi's built-in `xiaomi`
-provider:
-
-```bash
-XIAOMI_API_KEY=... pnpx my-pi@latest -m xiaomi/mimo-v2.5-pro "summarize this repo"
-```
-
-Cloudflare Workers AI model IDs contain slashes. Pass the provider and
-model together when needed:
-
-```bash
-CLOUDFLARE_API_KEY=... CLOUDFLARE_ACCOUNT_ID=... \
-  pnpx my-pi@latest -m cloudflare-workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast "summarize this repo"
-```
-
-## Usage
-
-### Interactive mode (full TUI)
+Use `my-pi` if you want the complete, opinionated setup:
 
 ```bash
 pnpx my-pi@latest
 ```
 
-Pi's full terminal UI with editor, `/commands`, model switching
-(`Ctrl+L`), session tree (`/tree`), and message queuing.
+This is its own CLI wrapper around Pi. Do not install the root package
+with `pi install npm:my-pi`.
 
-### Print mode (one-shot)
+### 2. Install individual Pi packages
+
+Most extensions in this repo are also published as normal Pi packages:
 
 ```bash
-pnpx my-pi@latest "your prompt here"
+pi install npm:@spences10/pi-lsp
+pi install npm:@spences10/pi-mcp
+pi install npm:@spences10/pi-redact
+```
+
+Use this path if you already have your own Pi setup and only want
+selected features. Package READMEs are the source of truth for install
+instructions, commands, configuration, and runtime behavior.
+
+## What you get
+
+- **Pi-native CLI + SDK wrapper** — interactive TUI, print mode, JSON
+  mode, RPC mode, and programmatic runtime creation.
+- **Project-aware MCP tools** — stdio and HTTP/streamable-HTTP servers
+  from `mcp.json`, scoped so sensitive or noisy tools only load for
+  the projects and orgs where they belong.
+- **Project-aware skills** — discover, enable, disable, import, and
+  sync Pi-native skills, with different skill sets per project.
+- **LSP tools** — diagnostics, hover, definitions, references, and
+  document symbols via language servers.
+- **Context sidecar** — local SQLite storage for oversized tool
+  output, keeping long results searchable without flooding chat
+  context.
+- **Guardrails** — Svelte and coding-preference checks that block
+  configured anti-patterns before agents write them.
+- **Prompt presets** — base presets plus additive prompt layers with
+  per-project persistence.
+- **Secret safety** — redaction plus reminders to use secret-safe
+  environment loading.
+- **Recall and telemetry** — local support for prior-session lookup,
+  evals, latency analysis, and operational debugging.
+- **Git UI** — interactive source-control staging and commit support.
+- **Team mode** — local RPC teammate orchestration with tasks and
+  mailboxes.
+- **Themes and TUI helpers** — visual polish and shared modal
+  primitives.
+
+## Requirements
+
+- Node.js `>=24.15.0`
+- pnpm 11 for local development
+- Pi authentication via `pi auth`, provider environment variables, or
+  supported OAuth flows
+
+`my-pi` uses native `node:sqlite` through context and telemetry
+packages. The CLI suppresses Node's expected `node:sqlite`
+`ExperimentalWarning`; standalone package/API consumers own their
+process warning policy until Node marks it stable.
+
+## Common usage
+
+```bash
+# full TUI
+pnpx my-pi@latest
+
+# one-shot print mode
+pnpx my-pi@latest "summarize this repo"
 pnpx my-pi@latest -P "explicit print mode"
-# or: npx my-pi@latest ... / bunx my-pi@latest ...
-```
 
-### JSON output (for agents)
-
-```bash
+# NDJSON events for scripts/agents
 pnpx my-pi@latest --json "list all TODO comments"
-echo "plan a login page" | pnpx my-pi@latest --json
-```
 
-Outputs NDJSON events — one JSON object per line — for programmatic
-consumption by other agents or scripts.
-
-In non-interactive modes (`"prompt"`, `-P`, `--json`), my-pi keeps
-headless-capable built-ins like MCP, LSP, prompt presets, recall,
-nopeek, Omnisearch, SQLite tools, hooks, and secret redaction enabled,
-while skipping UI-only built-ins like session auto-naming.
-
-### RPC and team mode
-
-```bash
+# RPC mode for team/agent orchestration
 pnpx my-pi@latest --mode rpc
 ```
 
-RPC mode speaks Pi's JSONL protocol over stdin/stdout. The built-in
-team mode extension adds `/team` for local orchestration:
-
-```text
-/team create demo
-/team spawn alice "claim one task and report back"
-/team task add alice: inspect the failing test
-/team dm alice status?
-/team status
-```
-
-Team state is stored under `~/.pi/agent/teams-local` by default, or
-`MY_PI_TEAM_MODE_ROOT` when set.
-
-### Local telemetry (SQLite)
-
-Telemetry is **disabled by default**. When enabled, my-pi records
-operational telemetry for each run in a local SQLite database. This is
-intended for eval harnesses, latency analysis, tool failure analysis,
-and local debugging. Telemetry captures structured operational data;
-`pirecall` complements it by retrieving the surrounding session
-transcript and prior-work context.
-
-```bash
-pnpx my-pi@latest --telemetry --json "solve this task"
-pnpx my-pi@latest --telemetry --telemetry-db ./tmp/evals.db --json "run case"
-```
-
-By default the database lives at:
-
-```text
-~/.pi/agent/telemetry.db
-```
-
-You can relocate the whole Pi auth/config/session directory for
-sandboxed or CI runs with either:
-
-```bash
-pnpx my-pi@latest --agent-dir /work/pi-agent --telemetry --json "run case"
-```
-
-or:
-
-```bash
-PI_CODING_AGENT_DIR=/work/pi-agent pnpx my-pi@latest --telemetry --json "run case"
-```
-
-Use the interactive command to inspect or persist the setting:
-
-```text
-/telemetry status
-/telemetry stats
-/telemetry query run=<eval-run-id> success=true limit=10
-/telemetry export ./tmp/eval-runs.json suite=smoke
-/telemetry on
-/telemetry off
-/telemetry path
-```
-
-Recommended eval env vars for correlation:
-
-- `MY_PI_EVAL_RUN_ID`
-- `MY_PI_EVAL_CASE_ID`
-- `MY_PI_EVAL_ATTEMPT`
-- `MY_PI_EVAL_SUITE`
-
-A typical eval loop is:
-
-1. Create a stable eval run/case id.
-2. Run my-pi with `--telemetry`, usually with an isolated
-   `PI_CODING_AGENT_DIR` and `--untrusted` for reproducibility.
-3. Query or export telemetry for timings, tool calls, provider
-   requests, and success/failure state.
-4. Use `pirecall` to inspect the transcript context around the same
-   task when the structured rows are not enough.
-5. Compare attempts by `MY_PI_EVAL_RUN_ID`, `MY_PI_EVAL_CASE_ID`,
-   `MY_PI_EVAL_ATTEMPT`, and `MY_PI_EVAL_SUITE`.
-
-Example:
-
-```bash
-export MY_PI_EVAL_RUN_ID="smoke-$(date +%Y%m%d-%H%M%S)"
-export MY_PI_EVAL_CASE_ID="readme-review"
-export MY_PI_EVAL_ATTEMPT=1
-export MY_PI_EVAL_SUITE="smoke"
-
-PI_CODING_AGENT_DIR="$PWD/.tmp/pi-agent" \
-  pnpx my-pi@latest \
-  --untrusted \
-  --telemetry \
-  --telemetry-db "$PWD/.tmp/evals.db" \
-  --json "review the README and report the top issue"
-
-pnpx pirecall sync --json
-pnpx pirecall recall "readme-review smoke" --json
-```
-
-For repeatable local cases after `pnpm run build`, use the TypeScript
-wrapper script:
-
-```bash
-pnpm run eval:local -- \
-  --suite smoke \
-  --case readme-review \
-  --prompt "review the README and report the top issue"
-```
-
-It sets `MY_PI_EVAL_*`, uses an isolated `.tmp/pi-agent`, writes
-telemetry to `.tmp/evals.db`, and passes `--untrusted` by default. Add
-extra my-pi flags after `--`, for example `-- --model openai:gpt-5`.
-
-For assertion-backed regression gates, run the committed smoke suite
-after `pnpm run build`:
-
-```bash
-pnpm run eval:suite
-pnpm run eval:suite -- --case no-mcp-removes-mcp-tools
-pnpm run eval:suite -- --json
-```
-
-Suites live in `evals/*.json`. Each case declares a command plus
-objective assertions for exit code and expected/forbidden stdout,
-stderr, or combined output. Cases can declare required environment
-variable names; missing values are reported as skips without printing
-secret values.
-
-Recorded tables:
-
-- `runs`
-- `turns`
-- `tool_calls`
-- `provider_requests`
-
-A telemetry export is JSON with one object per run and nested
-summaries for turns, tool calls, and provider requests, keyed by
-run/eval ids so it can be compared with the matching `pirecall`
-transcript.
-
-Query and export helpers:
-
-- `/telemetry query ...` shows recent run summaries
-- `/telemetry export [path] ...` writes matching runs as JSON
-- supported filters: `run=` / `eval_run_id=`, `case=` /
-  `eval_case_id=`, `suite=` / `eval_suite=`,
-  `success=true|false|null`, `limit=<n>`
-- `/telemetry query` defaults to `limit=20`
-- `/telemetry export` auto-generates a timestamped JSON file when no
-  path is provided
-
-Schema notes:
-
-- source of truth: `packages/pi-telemetry/src/schema.sql`
-- current telemetry schema version: `1`
-- schema version is tracked with `PRAGMA user_version`
-- unversioned local telemetry databases are initialized/upgraded to v1
-  on open
-- newer unsupported schema versions fail fast instead of silently
-  downgrading
-- opens the database in WAL mode: `PRAGMA journal_mode = WAL`
-- waits up to 5s on lock contention: `PRAGMA busy_timeout = 5000`
-
-CLI flags `--telemetry` and `--no-telemetry` override only the current
-process. `/telemetry on` and `/telemetry off` update the saved default
-for future sessions.
-
-### Sandbox / CI auth and config isolation
-
-If you run my-pi in containers, CI, or ephemeral sandboxes, changing
-`HOME` often hides the usual `~/.pi/agent/auth.json` credentials. Use
-a stable agent directory instead of relying on `HOME` alone.
-
-Recommended options:
-
-1. Pass provider API keys directly via environment variables.
-2. Set `--agent-dir /path/to/pi-agent` for the process.
-3. Or set `PI_CODING_AGENT_DIR=/path/to/pi-agent` in the environment.
-
-The agent directory holds Pi-managed state such as:
-
-- `auth.json`
-- `settings.json`
-- `sessions/`
-- `telemetry.db`
-- `telemetry.json`
-- `mcp.json`, MCP backups, and MCP profiles
-- project trust stores for MCP, hooks, LSP binaries, and project
-  resources
-- imported Pi-native skills under `skills/`
-
-Intentional exceptions: my-pi still reads user-local Claude
-skill/plugin sources from `~/.claude` when the skills extension is
-enabled. Those are upstream sources for discovery/import, not
-Pi-managed state. Use `--no-skills` or `--untrusted` for hermetic
-sandbox runs.
-
-During runtime startup my-pi temporarily exposes the effective agent
-directory through `PI_CODING_AGENT_DIR` for built-in extension
-compatibility. SDK-created runtimes restore values they changed when
-`runtime.dispose()` completes.
-
-A practical sandbox command looks like:
-
-```bash
-PI_CODING_AGENT_DIR=/work/pi-agent \
-ANTHROPIC_API_KEY=... \
-pnpx my-pi@latest --untrusted --telemetry --json "run eval case"
-
-# Cloudflare Workers AI needs both values:
-CLOUDFLARE_API_KEY=... CLOUDFLARE_ACCOUNT_ID=... \
-pnpx my-pi@latest -m cloudflare-workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast --json "run eval case"
-```
-
-### Untrusted repo safe mode
-
-Use `--untrusted` in unknown repositories, evals, or sandboxes. It
-keeps built-ins available but starts with conservative
-project-resource defaults:
-
-- skips project-local MCP config (`MY_PI_MCP_PROJECT_CONFIG=skip`)
-- skips Claude-style project hooks (`MY_PI_HOOKS_CONFIG=skip`)
-- uses global LSP binaries instead of project-local binaries
-  (`MY_PI_LSP_PROJECT_BINARY=global`)
-- skips project prompt presets (`MY_PI_PROMPT_PRESETS_PROJECT=skip`)
-- skips project-local `.pi/skills` and `.claude/skills`
-  (`MY_PI_PROJECT_SKILLS=skip`)
-- clears optional child-process env allowlists unless they were set
-  explicitly
-
-Set the listed environment variables to `allow` or `trust` where
-supported to re-enable one feature intentionally while staying in safe
-mode.
-
-### Additional extensions
-
-```bash
-pnpx my-pi@latest -e ./ext/damage-control.ts -e ./ext/tool-counter.ts
-pnpx my-pi@latest --no-builtin -e ./ext/custom.ts "do something"
-```
-
-Add project or ad-hoc Pi extensions with repeated `-e` / `--extension`
-flags. They are composed with the managed built-ins in the same
-runtime. Use `--no-builtin` to skip my-pi's managed built-in
-extensions and run only Pi defaults plus the extensions you pass
-explicitly.
-
-Built-in extension choices can also be saved interactively with
-`/extensions`. Startup flags like `--no-recall`, `--no-skills`, and
-`--no-svelte-guardrails` still force-disable those extensions for the
-current process only. The built-in registry in
-`src/extensions/builtin-registry.ts` is the source of truth for
-built-in order, API option names, disable flags, labels, and
-runtime-mode constraints. SDK users can disable built-ins with options
-such as `create_my_pi({ svelte_guardrails: false })`.
-
-### Themes
-
-`my-pi` bundles `@spences10/pi-themes` and loads that theme pack into
-the runtime automatically. Vanilla Pi users can install it separately
-with `pi install npm:@spences10/pi-themes`. Pick a theme in
-`/settings`, or persist one via Pi settings JSON:
-
-```json
-{
-	"theme": "tokyo-night"
-}
-```
-
-### Stdin piping
-
-```bash
-echo "review this code" | pnpx my-pi@latest
-cat plan.md | pnpx my-pi@latest --json
-```
-
-When stdin is piped, it's read as the prompt and print mode runs
-automatically.
-
-### Programmatic API
-
-```ts
-import { create_my_pi, runPrintMode } from 'my-pi';
-
-const runtime = await create_my_pi({
-	agent_dir: './tmp/pi-agent',
-	extensions: ['./my-ext.ts'],
-	runtime_mode: 'json',
-	telemetry: true,
-	telemetry_db_path: './tmp/evals.db',
-});
-await runPrintMode(runtime, {
-	mode: 'json',
-	initialMessage: 'hello',
-	initialImages: [],
-	messages: [],
-});
-```
-
-## MCP Servers
-
-MCP servers are configured via `mcp.json` files and managed as a pi
-extension. Stdio servers are spawned on startup, HTTP servers are
-connected remotely, and their tools are registered via
-`pi.registerTool()`.
-
-### Global config
-
-`~/.pi/agent/mcp.json` — available to all projects:
-
-```json
-{
-	"mcpServers": {
-		"mcp-sqlite-tools": {
-			"command": "npx",
-			"args": ["-y", "mcp-sqlite-tools"]
-		}
-	}
-}
-```
-
-### Project config
-
-`./mcp.json` in the project root — overrides global servers by name:
-
-```json
-{
-	"mcpServers": {
-		"my-search": {
-			"command": "npx",
-			"args": ["-y", "some-mcp-server"],
-			"env": {
-				"API_KEY": "..."
-			}
-		}
-	}
-}
-```
-
-HTTP MCP servers are supported too:
-
-```json
-{
-	"mcpServers": {
-		"my-http-mcp": {
-			"type": "http",
-			"url": "https://myproject.com/api/mcp",
-			"headers": {
-				"Authorization": "Bearer ..."
-			}
-		}
-	}
-}
-```
-
-Use `"type": "http"` or `"type": "streamable-http"` for remote MCP
-servers. If `url` is present, my-pi treats the entry as HTTP.
-
-Global MCP config is loaded automatically. Project-local `mcp.json` is
-untrusted by default; interactive sessions prompt before loading it
-and headless sessions skip it unless `MY_PI_MCP_PROJECT_CONFIG=allow`
-or `MY_PI_MCP_PROJECT_CONFIG=trust` is set. If both configs define the
-same server name, the trusted project config wins.
-
-Use `/mcp` in interactive mode to open the searchable MCP server
-modal. Enter/Space toggles servers on or off, updates the active tool
-set, and persists the choice as `disabled`/`enabled` in `mcp.json`.
-Use `/mcp backup`, `/mcp restore`, and `/mcp profile ...` to back up,
-restore, save, and load reusable MCP server sets.
-
-### Hooks
-
-Claude-style hooks are discovered from `.claude/settings.json`,
-`.rulesync/hooks.json`, and `.pi/hooks.json`. `PreToolUse` hooks run
-before a tool executes and can block by exiting with code `2` or by
-printing JSON like `{ "decision": "block", "reason": "..." }`.
-`PostToolUse` and `PostToolUseFailure` hooks run after tool execution.
-Because hook commands run through `bash -lc`, project hook config is
-untrusted by default. Interactive sessions show the hook source files
-and commands before allowing execution; headless sessions skip hooks
-unless `MY_PI_HOOKS_CONFIG=allow` or `MY_PI_HOOKS_CONFIG=trust` is
-set. Trusted hook approvals are remembered per project directory and
-hook-config hash.
-
-Hook commands receive a restricted child-process environment by
-default: baseline shell variables plus `CLAUDE_PROJECT_DIR`. Use
-`MY_PI_HOOKS_ENV_ALLOWLIST=NAME,OTHER_NAME` or the shared
-`MY_PI_CHILD_ENV_ALLOWLIST` to pass selected ambient variables
-through.
-
-### Commands
-
-In interactive mode:
-
-- `/mcp list` — show connected servers and tool counts
-- `/mcp enable <server>` — enable a disabled server's tools
-- `/mcp disable <server>` — disable a server's tools
-- `/extensions` — open the built-in extensions manager
-- `/extensions list` — print built-in extensions with saved/effective
-  state
-- `/extensions enable|disable|toggle` — without a key, open the
-  interactive toggle list
-- `/extensions enable <key>` / `/extensions disable <key>` — toggle a
-  built-in extension
-- `/skills` — open the interactive Pi/GitHub skills manager
-- `/skills add <owner/repo> <skill[@ref]>` — install a GitHub-hosted
-  skill through `gh skill` when GitHub CLI support is available
-- `/skills update --dry-run|--all` — check or apply GitHub skill
-  updates through `gh skill update`
-- `/skill-importer` — open the external Claude/plugin skill importer
-- `/skill-importer list` — show importable external skills and
-  imported copies with sync status
-- `/skill-importer import <key|name>` — copy an external skill into
-  Pi-native storage
-- `/skill-importer sync <key|name>` — sync an imported copy to
-  upstream
-- `/skill-importer delete <key|name>` — delete only an imported copy
-  with importer metadata
-- `/skills refresh` — rescan skill directories
-- `/skills defaults <all-enabled|all-disabled>` — set default policy
-- `/prompt-preset` — open the prompt preset manager (base presets +
-  layers); `/preset` is a short alias
-- `/prompt-preset help` — show examples and common prompt preset
-  commands
-- `/prompt-preset <name>` — activate a base preset or toggle a layer
-- `/prompt-preset base <name>` — activate a base preset directly
-- `/prompt-preset enable <layer>` / `/prompt-preset disable <layer>` —
-  toggle a prompt layer directly
-- `/prompt-preset edit <name>` — edit or create a project preset in
-  `.pi/presets/<name>.md`
-- `/prompt-preset edit-global <name>` — edit or create a global preset
-  in `~/.pi/agent/presets/<name>.md`
-- `/prompt-preset export-defaults` — copy built-in presets to editable
-  global Markdown files
-- `/prompt-preset export-defaults project` — copy built-in presets to
-  editable project Markdown files
-- `/prompt-preset delete <name>` — delete a project-local preset
-- `/prompt-preset reset <name>` — remove a project-local override and
-  fall back to user/built-in if available
-- `/prompt-preset clear` — clear the active base preset and all layers
-- `/lsp status|list|restart` — inspect or restart language server
-  state
-- `/redact-stats` — show how many secrets were redacted this session
-- `/context` / `/context list [limit]` — browse recent context sidecar
-  sources in the current project/session scope
-- `/context stats` / `/context-stats` — inspect scoped/global context
-  sidecar stats and active retention policy
-- `/context settings` — configure context sidecar retention, storage,
-  and capture-threshold presets
-- `/context purge [days|expired]` — purge old or expired context
-  sidecar entries
-- `/telemetry status|stats|query|export|on|off|path` — inspect, query,
-  export, or toggle local SQLite telemetry
-
-### How it works
-
-1. Pi extension loads `mcp.json` configs (global + project)
-2. Connects to each MCP server using stdio or HTTP transport
-3. Performs the MCP `initialize` handshake
-4. Calls `tools/list` to discover available tools
-5. Registers each tool via `pi.registerTool()` as
-   `mcp__<server>__<tool>`
-6. `/mcp enable/disable` toggles tools via `pi.setActiveTools()`
-7. Built-in extension state can be managed via `/extensions` and is
-   persisted in `~/.pi/agent/my-pi-settings.json`
-8. Cleanup on `session_shutdown`
-
-## Secret Redaction
-
-The secret redaction extension automatically redacts secrets (API
-keys, tokens, passwords, private keys) from tool output before the LLM
-sees them. Detection patterns come from
-[nopeek](https://github.com/spences10/nopeek). This is a defensive
-last-mile guard, not a substitute for secret hygiene: prefer `nopeek`
-for loading credentials and avoid printing secrets in the first place.
-
-The redactor intentionally errs on the side of caution, which means it
-can occasionally hide benign metadata such as URLs or documentation
-examples. If that happens in a trusted local context, inspect the file
-directly or temporarily run with `--no-filter`; do not disable the
-filter when reading unknown logs, `.env` files, or untrusted command
-output.
-
-Use `/redact-stats` to see how many secrets were caught. Disable with
-`--no-filter`.
-
-## Prompt Presets
-
-Prompt presets append runtime instructions to the system prompt
-through a built-in extension. They are split into:
-
-- **base presets** — one active at a time
-- **prompt layers** — additive checkboxes you can combine
-
-Built-in base presets:
-
-- `terse` — short, direct, no fluff
-- `standard` — clear and concise with key context
-- `detailed` — more explanation when nuance matters
-
-Built-in layers:
-
-- `no-purple-prose`
-- `bullets`
-- `clarify-first`
-- `include-risks`
-
-Preset sources are merged in this order:
-
-1. built-in defaults
-2. `~/.pi/agent/presets.json`
-3. `~/.pi/agent/presets/*.md`
-4. `.pi/presets.json`
-5. `.pi/presets/*.md`
-
-Project presets override global/default presets with the same name.
-Strings in JSON are treated as base presets by default. Object entries
-may set `kind: "base"` or `kind: "layer"`. Markdown preset files use
-the filename as the preset name and optional frontmatter:
-
-```markdown
----
-kind: base
-description: Short, direct, no fluff
----
-
-Be concise and direct.
-```
-
-Use `/prompt-preset export-defaults` to copy built-in presets to
-`~/.pi/agent/presets/*.md` for editing, or
-`/prompt-preset export-defaults project` to write `.pi/presets/*.md`.
-`/prompt-preset edit <name>` writes a project Markdown preset;
-`/prompt-preset edit-global <name>` writes a global one. `/preset` is
-a short alias for `/prompt-preset`.
-
-CLI layering is supported too:
-
-- `--preset terse,no-purple-prose,bullets`
-- `--system-prompt "You are terse and technical."`
-- `--append-system-prompt "Prefer one short paragraph."`
-
-Interactive sessions default to `terse` unless a project has a saved
-selection. `/preset` selections are restored on later sessions for the
-same project via `~/.pi/agent/prompt-preset-state.json`;
-`/preset clear` persists no active preset for that project.
-
-This repo also includes an example `.pi/presets.json` with sample base
-presets and layers.
-
-## LSP Integration
-
-The built-in LSP extension adds Pi tools for:
-
-- diagnostics
-- hover
-- definitions
-- references
-- document symbols
-
-You still need the underlying language server binaries installed.
-`my-pi` prefers project-local binaries from `node_modules/.bin` and
-otherwise falls back to whatever is on `PATH`.
-
-For the main TypeScript / JavaScript / Svelte workflow, install:
-
-```bash
-pnpm add -D typescript typescript-language-server svelte-language-server
-```
-
-That covers:
-
-- TypeScript / JavaScript via `typescript-language-server`
-- Svelte via `svelteserver`
-
-`my-pi` can also use other language servers if you already have them
-installed and available on `PATH`, including:
-
-- Python via `python-lsp-server`
-- Go via `gopls`
-- Rust via `rust-analyzer`
-- Ruby via `solargraph`
-- Java via `jdtls`
-- Lua via `lua-language-server`
-
-Use `/lsp status` to inspect active server state and
-`/lsp restart all` or `/lsp restart <language>` to clear cached
-clients.
-
-## Session Recall
-
-The recall package nudges the model to use `pnpx pirecall` or
-`npx pirecall` when the user references prior work or when historical
-project context would help. It also triggers `pirecall sync --json` on
-session start and shutdown when the local recall database exists.
+Pi handles model authentication natively. For provider-specific model
+examples, see the Pi docs and the relevant extension/package README.
 
 ## Reusable Pi packages
 
-This repo is a pnpm workspace. The `my-pi` harness depends on reusable
-Pi packages via `workspace:*`, and those packages can also be
-published and installed into vanilla `pi` independently. Shared helper
-packages such as `@spences10/pi-child-env`,
-`@spences10/pi-project-trust`, and `@spences10/pi-tui-modal` are
-published only as dependencies and are not Pi packages to install via
-`pi install`.
+Install the full distribution with `pnpx my-pi@latest`, or install
+selected extensions into vanilla Pi:
 
 ```bash
-pi install npm:@spences10/pi-redact
-pi install npm:@spences10/pi-telemetry
-pi install npm:@spences10/pi-context
-pi install npm:@spences10/pi-mcp
-pi install npm:@spences10/pi-lsp
-pi install npm:@spences10/pi-git-ui
-pi install npm:@spences10/pi-confirm-destructive
-pi install npm:@spences10/pi-coding-preferences
-pi install npm:@spences10/pi-skills
-pi install npm:@spences10/pi-recall
-pi install npm:@spences10/pi-nopeek
-pi install npm:@spences10/pi-omnisearch
-pi install npm:@spences10/pi-sqlite-tools
-pi install npm:@spences10/pi-svelte-guardrails
-pi install npm:@spences10/pi-team-mode
-pi install npm:@spences10/pi-themes
+# Bash/Zsh/Fish
+pi install npm:@spences10/pi-{context,lsp,team-mode}
 ```
 
-- [`@spences10/pi-redact`](./packages/pi-redact/README.md) — output
-  redaction and `/redact-stats`
-- [`@spences10/pi-telemetry`](./packages/pi-telemetry/README.md) —
-  local SQLite telemetry and `/telemetry`
-- [`@spences10/pi-context`](./packages/pi-context/README.md) — scoped,
-  redacted SQLite FTS overflow cache for oversized text output from
-  read/bash/LSP and direct MCP results
-- [`@spences10/pi-mcp`](./packages/pi-mcp/README.md) — MCP server
-  integration and `/mcp`
-- [`@spences10/pi-lsp`](./packages/pi-lsp/README.md) — LSP-backed
-  diagnostics and symbol tools
-- [`@spences10/pi-git-ui`](./packages/pi-git-ui/README.md) —
-  interactive source-control staging UI
-- [`@spences10/pi-confirm-destructive`](./packages/pi-confirm-destructive/README.md)
-  — destructive action confirmations
-- [`@spences10/pi-coding-preferences`](./packages/pi-coding-preferences/README.md)
-  — configurable coding-workflow guardrails
-- [`@spences10/pi-skills`](./packages/pi-skills/README.md) — skill
-  management, import, and sync
-- [`@spences10/pi-recall`](./packages/pi-recall/README.md) — pirecall
-  reminder and background sync
-- [`@spences10/pi-nopeek`](./packages/pi-nopeek/README.md) — nopeek
-  reminder for secret-safe environment loading
-- [`@spences10/pi-omnisearch`](./packages/pi-omnisearch/README.md) —
-  mcp-omnisearch reminder for verified web research
-- [`@spences10/pi-sqlite-tools`](./packages/pi-sqlite-tools/README.md)
-  — mcp-sqlite-tools reminder for safer SQLite database work
-- [`@spences10/pi-svelte-guardrails`](./packages/pi-svelte-guardrails/README.md)
-  — default-enabled Svelte pattern guardrails that block discouraged
-  writes like `$effect`; install separately in vanilla Pi with
-  `pi install npm:@spences10/pi-svelte-guardrails`
-- [`@spences10/pi-team-mode`](./packages/pi-team-mode/README.md) —
-  local orchestrator/team mode with RPC teammates, tasks, and
-  mailboxes
-- [`@spences10/pi-themes`](./packages/pi-themes/README.md) — bundled
-  theme pack for Pi
+Full package list here:
 
-Each package README is the entry point for install instructions,
-commands, runtime behavior, and development notes.
+| Package                                                                            | Purpose                                                    |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [`@spences10/pi-coding-preferences`](./packages/pi-coding-preferences/README.md)   | Configurable coding-workflow guardrails                    |
+| [`@spences10/pi-confirm-destructive`](./packages/pi-confirm-destructive/README.md) | Destructive action confirmations                           |
+| [`@spences10/pi-context`](./packages/pi-context/README.md)                         | Scoped SQLite FTS overflow cache for oversized tool output |
+| [`@spences10/pi-git-ui`](./packages/pi-git-ui/README.md)                           | Interactive source-control staging UI                      |
+| [`@spences10/pi-lsp`](./packages/pi-lsp/README.md)                                 | LSP-backed diagnostics and symbol tools                    |
+| [`@spences10/pi-mcp`](./packages/pi-mcp/README.md)                                 | MCP server integration and `/mcp`                          |
+| [`@spences10/pi-nopeek`](./packages/pi-nopeek/README.md)                           | `nopeek` reminder for secret-safe environment loading      |
+| [`@spences10/pi-omnisearch`](./packages/pi-omnisearch/README.md)                   | `mcp-omnisearch` reminder for verified web research        |
+| [`@spences10/pi-recall`](./packages/pi-recall/README.md)                           | `pirecall` reminder and background sync                    |
+| [`@spences10/pi-redact`](./packages/pi-redact/README.md)                           | Output redaction and `/redact-stats`                       |
+| [`@spences10/pi-skills`](./packages/pi-skills/README.md)                           | Skill management, import, and sync                         |
+| [`@spences10/pi-sqlite-tools`](./packages/pi-sqlite-tools/README.md)               | `mcp-sqlite-tools` reminder for safer SQLite database work |
+| [`@spences10/pi-svelte-guardrails`](./packages/pi-svelte-guardrails/README.md)     | Svelte pattern guardrails                                  |
+| [`@spences10/pi-team-mode`](./packages/pi-team-mode/README.md)                     | Local team mode with RPC teammates, tasks, and mailboxes   |
+| [`@spences10/pi-telemetry`](./packages/pi-telemetry/README.md)                     | Local SQLite telemetry and `/telemetry`                    |
+| [`@spences10/pi-themes`](./packages/pi-themes/README.md)                           | Bundled theme pack for Pi                                  |
 
-## Monorepo build model
+Shared helper packages such as `@spences10/pi-child-env`,
+`@spences10/pi-project-trust`, `@spences10/pi-settings`, and
+`@spences10/pi-tui-modal` are published as dependencies and are not
+packages to install via `pi install`.
 
-Workspace package ordering comes from `workspace:*` dependencies in
-each `packages/*/package.json`. Root `build`, `check`, and `test`
-first run package `build:self` scripts through pnpm's filtered
-workspace graph, so sibling `dist` output is fresh before root packing
-or tests. Individual package `build`, `check`, and `test` scripts use
-the package name from `$npm_package_name^...` to build transitive
-workspace dependencies from metadata, then run their local `*:self`
-task. Do not hand-code sibling package names into scripts; add the
-dependency to `dependencies` instead.
+## Project structure
 
-## Project Structure
-
-```
+```text
+apps/
+  web/                     Landing page for discovering my-pi and its packages
 src/
-  index.ts                 CLI entry point (citty + pi SDK)
-  api.ts                   Programmatic API (create_my_pi + re-exports)
-  settings/                Root settings migration wrapper around @spences10/pi-settings
-    current.ts             Current settings read/write only
-    schema.ts              Canonical settings type, defaults, and normalization
-    legacy.ts              Legacy config discovery only; remove after two minor releases
-    migrate.ts             One-way legacy-to-current migration; remove with legacy.ts
-  extensions/
-    builtin-registry.ts    Built-in extension metadata, ordering, flags, and loaders
-    manager/               Built-in extension manager; reads/writes via src/settings
-    prompt-presets/        Runtime prompt preset selection and editing
-    session-name/          Session auto-naming
-    hooks-resolution/      Claude-style hook resolution
+  index.ts                 CLI entry point
+  api.ts                   Programmatic API
+  extensions/              Root-only built-ins and distro wiring
 packages/
-  pi-redact/               Installable Pi package for output redaction
-  pi-settings/             Shared canonical ~/.pi/agent/my-pi-settings.json store
-  pi-telemetry/            Installable Pi package for SQLite telemetry
-  pi-context/              Installable Pi package for context sidecar
-  pi-mcp/                  Installable Pi package for MCP integration
-  pi-lsp/                  Installable Pi package for LSP tools
-  pi-git-ui/               Installable Pi package for source-control staging UI
-  pi-confirm-destructive/  Installable Pi package for destructive action confirmations
-  pi-coding-preferences/   Installable Pi package for coding workflow guardrails
-  pi-svelte-guardrails/    Installable Pi package for Svelte pattern guardrails
-  pi-skills/               Installable Pi package for skill management
-  pi-recall/               Installable Pi package for pirecall reminders
-  pi-nopeek/               Installable Pi package for nopeek reminders
-  pi-omnisearch/           Installable Pi package for mcp-omnisearch reminders
-  pi-sqlite-tools/         Installable Pi package for mcp-sqlite-tools reminders
-  pi-team-mode/            Installable Pi package for team orchestration
-  pi-themes/               Installable Pi theme pack
-  pi-child-env/            Shared support package, not a Pi package
-  pi-project-trust/        Shared support package, not a Pi package
-  pi-tui-modal/            Shared support package, not a Pi package
+  pi-*/                    Reusable Pi packages and shared support packages
 .pi/
-  presets.json             Optional project prompt presets (JSON)
-  presets/*.md             Optional project prompt presets (Markdown files)
+  presets.json             Optional project prompt presets
+  presets/*.md             Optional project prompt preset files
 mcp.json                   Project MCP server config
 ```
-
-## Development
-
-```bash
-pnpm run dev        # Watch mode
-pnpm run check      # Lint + type check
-pnpm run test       # Run tests
-pnpm run build      # Production build
-```
-
-## License
-
-MIT
