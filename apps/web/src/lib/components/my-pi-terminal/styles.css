@@ -17,7 +17,8 @@
 	--terminal-max-width: 1680px;
 	--terminal-font-size: clamp(0.9rem, 1.8vw, 1.38rem);
 	--terminal-small-font-size: 0.82em;
-	--terminal-shadow: 0 20px 40px rgb(0 0 0 / 32%), 0 2px 8px rgb(0 0 0 / 22%);
+	--terminal-shadow:
+		0 20px 40px rgb(0 0 0 / 32%), 0 2px 8px rgb(0 0 0 / 22%);
 
 	background: var(--afterglow-elevated-surface-background);
 	border: 1px solid var(--afterglow-border-variant);
@@ -25,7 +26,8 @@
 	font-family: var(--font-mono);
 	font-size: var(--terminal-font-size);
 	line-height: 1.55;
-	padding: var(--terminal-padding-block) var(--terminal-padding-inline);
+	padding: var(--terminal-padding-block)
+		var(--terminal-padding-inline);
 	border-radius: var(--terminal-radius);
 	width: 100%;
 	max-width: var(--terminal-max-width);
