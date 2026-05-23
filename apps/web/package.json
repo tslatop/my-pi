@@ -8,7 +8,7 @@
 		"build": "wrangler types && vp exec vite build",
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
 		"prepare": "vp exec svelte-kit sync || echo ''",
-		"check": "wrangler types --check && vp exec svelte-kit sync && vp exec svelte-check --tsconfig ./tsconfig.json",
+		"check": "wrangler types --include-env=false --check && vp exec svelte-kit sync && vp exec svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "vp exec svelte-kit sync && vp exec svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "oxfmt --check \"**/*.svelte\"",
 		"format": "oxfmt \"**/*.svelte\"",

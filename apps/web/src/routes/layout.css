@@ -73,6 +73,20 @@
 }
 
 @layer base {
+	:focus-visible {
+		outline: 2px solid var(--afterglow-terminal-cyan);
+		outline-offset: 4px;
+	}
+
+	::selection {
+		background: color-mix(
+			in srgb,
+			var(--afterglow-terminal-magenta) 42%,
+			transparent
+		);
+		color: var(--afterglow-text);
+	}
+
 	body {
 		margin: 0;
 		background:
@@ -100,5 +114,16 @@
 		font-feature-settings:
 			'ss01' 1,
 			'ss02' 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::before,
+	::after {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
 	}
 }

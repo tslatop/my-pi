@@ -123,3 +123,47 @@ export const detail_lines = [
 		'Use project-aware agent skills, previous-session recall, local telemetry, and RPC teammate orchestration for longer coding tasks.',
 	],
 ] as const;
+
+export const compose_lines = [
+	[
+		'Full distribution',
+		'Run my-pi when you want the complete opinionated agent stack prewired.',
+		'pnpx my-pi@latest',
+	],
+	[
+		'Select packages',
+		'Install only the extensions your existing Pi setup needs, from LSP to MCP to team mode.',
+		'pi install npm:@spences10/pi-lsp',
+	],
+	[
+		'Project tools',
+		'Layer MCP servers, project-aware skills, prompt presets, and local context per workspace.',
+		'mcp.json + .pi/presets.json',
+	],
+] as const;
+
+export const package_lines = [
+	'context',
+	'lsp',
+	'mcp',
+	'redact',
+	'recall',
+	'skills',
+	'team-mode',
+	'telemetry',
+] as const;
+
+export const safety_lines = [
+	[
+		'Local-first context',
+		'Oversized output lands in a searchable SQLite sidecar instead of bloating the active prompt.',
+	],
+	[
+		'Secret-aware workflows',
+		'Redaction and nopeek reminders keep credentials out of model-visible logs where possible.',
+	],
+	[
+		'Destructive-action friction',
+		'Confirmations and coding preferences add review points before risky edits or commands.',
+	],
+] as const;

@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { buttonVariants, cn, type ButtonProps } from './variants.js';
+	import {
+		buttonVariants,
+		cn,
+		type ButtonProps,
+	} from './variants.js';
 
 	let {
 		class: className,
