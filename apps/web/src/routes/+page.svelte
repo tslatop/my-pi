@@ -189,7 +189,7 @@ export function guard(event: RequestEvent) {
 						</Card.Title>
 					</Card.Header>
 					<Card.Content class="px-0">
-						<p class="leading-7 text-muted group-hover:text-foreground/85">
+						<p class="text-base leading-7 text-foreground/75 group-hover:text-foreground/90 sm:text-lg">
 							{detail_body}
 						</p>
 					</Card.Content>
@@ -207,7 +207,7 @@ export function guard(event: RequestEvent) {
 				</Badge>
 				<p
 					id="demo-heading"
-					class="mt-5 text-base leading-8 text-muted sm:text-lg"
+					class="mx-auto mt-5 max-w-[62ch] text-lg leading-8 text-foreground/85 sm:text-xl"
 				>
 					Uses recall, LSP diagnostics, context receipts, and terminal tools in
 					one flow.
@@ -233,7 +233,7 @@ export function guard(event: RequestEvent) {
 				>
 					Install the distro, or add the exact Pi extensions you need.
 				</h2>
-				<p class="mt-5 text-base leading-8 text-muted sm:text-lg">
+				<p class="mx-auto mt-5 max-w-[62ch] text-lg leading-8 text-foreground/85 sm:text-xl">
 					MCP servers and skill profiles can activate by cwd, GitHub org, or
 					GitHub repo, so each workspace gets the right tools.
 				</p>
@@ -255,7 +255,7 @@ export function guard(event: RequestEvent) {
 							</Card.Title>
 						</Card.Header>
 						<Card.Content class="space-y-5 px-0">
-							<p class="min-h-14 leading-7 text-muted">
+							<p class="min-h-16 text-base leading-7 text-foreground/75 sm:text-lg sm:leading-8">
 								{compose_body}
 							</p>
 							<div class="flex items-stretch gap-2">
@@ -360,7 +360,7 @@ export function guard(event: RequestEvent) {
 							</Card.Title>
 						</Card.Header>
 						<Card.Content class="px-0">
-							<p class="leading-7 text-muted">{safety_body}</p>
+							<p class="text-base leading-7 text-foreground/75 sm:text-lg sm:leading-8">{safety_body}</p>
 						</Card.Content>
 					</Card.Root>
 				{/each}
