@@ -55,6 +55,9 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
         version: 0.75.3
+      '@spences10/pi-handoff':
+        specifier: workspace:*
+        version: link:packages/pi-handoff
       '@spences10/pi-project-trust':
         specifier: workspace:*
         version: link:packages/pi-project-trust
@@ -111,9 +114,6 @@ importers:
       '@spences10/pi-git-ui':
         specifier: workspace:*
         version: link:packages/pi-git-ui
-      '@spences10/pi-handoff':
-        specifier: workspace:*
-        version: link:packages/pi-handoff
       '@spences10/pi-lsp':
         specifier: workspace:*
         version: link:packages/pi-lsp
