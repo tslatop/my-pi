@@ -89,7 +89,10 @@ resource discovery. Project skills are enabled by default when project
 resources are allowed, and can still be excluded by profile rules.
 
 Profiles can also be selected by context without hardcoding project
-names in code. Example:
+names in code. Contexts support `cwd`, `github_org`, and `github_repo`
+predicates; matching any configured predicate activates the profile.
+Camel-case `githubOrg` and `githubRepo` are accepted on load and
+normalized to snake case. Example:
 
 ```json
 {
@@ -97,7 +100,11 @@ names in code. Example:
 		{
 			"name": "client-workspace",
 			"profile": "client-projects",
-			"when": { "cwd": "~/repos/client-projects/*" }
+			"when": {
+				"cwd": "~/repos/client-projects/*",
+				"github_org": "client-org",
+				"github_repo": ["client-org/app"]
+			}
 		}
 	],
 	"profiles": {

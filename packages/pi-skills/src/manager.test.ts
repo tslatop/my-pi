@@ -1,4 +1,5 @@
 import { write_package_settings } from '@spences10/pi-settings';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -21,6 +22,15 @@ function write_skill(
 		join(base_dir, 'SKILL.md'),
 		`---\nname: ${name}\ndescription: ${description}\n---\n\n# ${name}\n`,
 	);
+}
+
+function add_github_remote(project: string, remote: string): void {
+	mkdirSync(project, { recursive: true });
+	execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+	execFileSync('git', ['remote', 'add', 'origin', remote], {
+		cwd: project,
+		stdio: 'ignore',
+	});
 }
 
 describe('create_skills_manager', () => {
@@ -164,6 +174,87 @@ describe('create_skills_manager', () => {
 				.find((skill) => skill.name === 'suite-table-helper')
 				?.enabled,
 		).toBe(true);
+	});
+
+	it('uses github org contexts to enable global skills', async () => {
+		const project = join(root, 'repos', 'my-pi');
+		add_github_remote(project, 'git@github.com:spences10/my-pi.git');
+		write_skill(
+			join(root, 'agent', 'skills', 'spences-tooling'),
+			'spences-tooling',
+			'Use for spences10 repos.',
+		);
+		write_package_settings('skills', {
+			version: 3,
+			enabled: {},
+			defaults: 'all-disabled',
+			current_profile: 'default',
+			profiles: {
+				default: { include: [], exclude: [] },
+				spences: { include: ['spences-*'], exclude: [] },
+			},
+			contexts: [
+				{
+					profile: 'spences',
+					when: { github_org: 'spences10' },
+				},
+			],
+		});
+
+		const { create_skills_manager } = await import('./manager.js');
+
+		expect(
+			create_skills_manager({ cwd: project })
+				.discover()
+				.find((skill) => skill.name === 'spences-tooling')?.enabled,
+		).toBe(true);
+		expect(
+			create_skills_manager({ cwd: join(root, 'other') })
+				.discover()
+				.find((skill) => skill.name === 'spences-tooling')?.enabled,
+		).toBe(false);
+	});
+
+	it('uses github repo contexts to enable global skills', async () => {
+		const project = join(root, 'repos', 'my-pi');
+		add_github_remote(
+			project,
+			'https://github.com/spences10/my-pi.git',
+		);
+		write_skill(
+			join(root, 'agent', 'skills', 'repo-tooling'),
+			'repo-tooling',
+			'Use for a specific repo.',
+		);
+		write_package_settings('skills', {
+			version: 3,
+			enabled: {},
+			defaults: 'all-disabled',
+			current_profile: 'default',
+			profiles: {
+				default: { include: [], exclude: [] },
+				repo: { include: ['repo-*'], exclude: [] },
+			},
+			contexts: [
+				{
+					profile: 'repo',
+					when: { github_repo: 'spences10/my-pi' },
+				},
+			],
+		});
+
+		const { create_skills_manager } = await import('./manager.js');
+
+		expect(
+			create_skills_manager({ cwd: project })
+				.discover()
+				.find((skill) => skill.name === 'repo-tooling')?.enabled,
+		).toBe(true);
+		expect(
+			create_skills_manager({ cwd: join(root, 'other') })
+				.discover()
+				.find((skill) => skill.name === 'repo-tooling')?.enabled,
+		).toBe(false);
 	});
 
 	it('can disable project skill injection for untrusted repos', async () => {

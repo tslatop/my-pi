@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, rmSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import {
@@ -148,6 +149,45 @@ function require_profile_name(name: string): string {
 	return normalized;
 }
 
+function string_values(
+	value: string | string[] | undefined,
+): string[] {
+	if (!value) return [];
+	return Array.isArray(value) ? value : [value];
+}
+
+function parse_github_repo(remote: string): string | undefined {
+	const trimmed = remote.trim().replace(/\.git$/, '');
+	const match =
+		/^git@github\.com:([^/]+)\/(.+)$/.exec(trimmed) ??
+		/^https:\/\/github\.com\/([^/]+)\/(.+)$/.exec(trimmed) ??
+		/^ssh:\/\/git@github\.com\/([^/]+)\/(.+)$/.exec(trimmed);
+	if (!match) return undefined;
+	return `${match[1]}/${match[2]}`.toLowerCase();
+}
+
+function get_github_repos(cwd: string): string[] {
+	try {
+		const output = execFileSync('git', ['remote', '-v'], {
+			cwd,
+			encoding: 'utf-8',
+			stdio: ['ignore', 'pipe', 'ignore'],
+		});
+		return [
+			...new Set(
+				output
+					.split('\n')
+					.map((line) => line.trim().split(/\s+/)[1])
+					.filter((remote): remote is string => Boolean(remote))
+					.map(parse_github_repo)
+					.filter((repo): repo is string => Boolean(repo)),
+			),
+		];
+	} catch {
+		return [];
+	}
+}
+
 export function create_skills_manager(
 	options: { cwd?: string; project_skills_enabled?: boolean } = {},
 ): SkillsManager {
@@ -166,22 +206,39 @@ export function create_skills_manager(
 		return managed_cache;
 	}
 
-	function context_cwd_values(rule: SkillContextRule): string[] {
-		const value = rule.when.cwd;
-		if (!value) return [];
-		return Array.isArray(value) ? value : [value];
+	function context_matches(
+		rule: SkillContextRule,
+		github_repos: string[],
+	): boolean {
+		const cwd_matches = string_values(rule.when.cwd).some((pattern) =>
+			glob_matches(pattern, cwd),
+		);
+		const github_orgs = string_values(rule.when.github_org).map(
+			(org) => org.toLowerCase(),
+		);
+		const github_repos_to_match = string_values(
+			rule.when.github_repo,
+		).map((repo) => repo.toLowerCase());
+		const github_org_matches = github_orgs.length
+			? github_repos.some((repo) =>
+					github_orgs.includes(repo.split('/')[0] ?? ''),
+				)
+			: false;
+		const github_repo_matches = github_repos_to_match.length
+			? github_repos.some((repo) =>
+					github_repos_to_match.includes(repo),
+				)
+			: false;
+		return cwd_matches || github_org_matches || github_repo_matches;
 	}
 
 	function get_active_profile(): string {
 		const from_env = process.env[SKILLS_PROFILE_ENV]?.trim();
 		if (from_env) return require_profile_name(from_env);
+		const github_repos = get_github_repos(cwd);
 		for (const context of config.contexts) {
 			if (!config.profiles[context.profile]) continue;
-			if (
-				context_cwd_values(context).some((pattern) =>
-					glob_matches(pattern, cwd),
-				)
-			) {
+			if (context_matches(context, github_repos)) {
 				return context.profile;
 			}
 		}

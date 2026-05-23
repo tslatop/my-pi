@@ -102,7 +102,11 @@ describe('load_skills_config', () => {
 				{
 					name: 'cloud repos',
 					profile: 'cloud',
-					when: { cwd: '~/repos/cloud-lobsters/*' },
+					when: {
+						cwd: '~/repos/cloud-lobsters/*',
+						githubOrg: 'cloud-lobsters',
+						githubRepo: ['cloud-lobsters/platform'],
+					},
 				},
 			],
 		});
@@ -113,7 +117,11 @@ describe('load_skills_config', () => {
 			{
 				name: 'cloud repos',
 				profile: 'cloud',
-				when: { cwd: '~/repos/cloud-lobsters/*' },
+				when: {
+					cwd: '~/repos/cloud-lobsters/*',
+					github_org: 'cloud-lobsters',
+					github_repo: ['cloud-lobsters/platform'],
+				},
 			},
 		]);
 	});

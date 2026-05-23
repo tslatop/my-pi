@@ -19,6 +19,8 @@ export interface SkillContextRule {
 	profile: string;
 	when: {
 		cwd?: string | string[];
+		github_org?: string | string[];
+		github_repo?: string | string[];
 	};
 }
 
@@ -131,8 +133,17 @@ function normalize_contexts(value: unknown): SkillContextRule[] {
 				? (parsed.when as Record<string, unknown>)
 				: undefined;
 		const cwd = when ? string_array_or_string(when.cwd) : undefined;
-		if (!profile || !cwd) continue;
-		const rule: SkillContextRule = { profile, when: { cwd } };
+		const github_org = when
+			? string_array_or_string(when.github_org ?? when.githubOrg)
+			: undefined;
+		const github_repo = when
+			? string_array_or_string(when.github_repo ?? when.githubRepo)
+			: undefined;
+		if (!profile || (!cwd && !github_org && !github_repo)) continue;
+		const rule: SkillContextRule = { profile, when: {} };
+		if (cwd) rule.when.cwd = cwd;
+		if (github_org) rule.when.github_org = github_org;
+		if (github_repo) rule.when.github_repo = github_repo;
 		if (typeof parsed.name === 'string' && parsed.name.trim()) {
 			rule.name = parsed.name.trim();
 		}
