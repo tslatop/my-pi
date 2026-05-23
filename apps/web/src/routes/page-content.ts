@@ -3,7 +3,7 @@ import type { SchemaOrgProps, SeoConfig } from 'svead';
 export const seo_config: SeoConfig = {
 	title: 'My-Pi',
 	description:
-		'A ready-to-run Pi coding-agent CLI distribution with MCP integration, LSP tools, agent skills, searchable context, recall, redaction, telemetry, and team mode.',
+		'A ready-to-run Pi CLI distribution with scoped MCP tools, project skills, context reduction, recall, LSP tools, redaction, telemetry, and team mode.',
 	url: 'https://github.com/spences10/my-pi',
 	website: 'github.com/spences10/my-pi',
 	site_name: 'My-Pi',
@@ -22,27 +22,27 @@ export const logo_lines = [
 export const faq_lines = [
 	[
 		'What is my-pi?',
-		'my-pi is a ready-to-run Pi coding-agent distribution for terminal-first development. It bundles the Pi CLI and SDK with MCP integration, LSP tools, skills, recall, redaction, telemetry, prompt presets, team mode, and project guardrails so you can start with a complete agent workflow instead of wiring every extension by hand.',
+		'my-pi is a Pi coding-agent distribution for terminal-first development. It wires MCP tools, LSP diagnostics, project skills, recall, context reduction, redaction, telemetry, and team mode into one install.',
 	],
 	[
 		'Is my-pi different from Pi?',
-		'Yes. Pi is the underlying coding-agent CLI and SDK. my-pi is an opinionated layer on top: it chooses defaults, preloads useful extensions, and publishes the same building blocks as reusable @spences10/pi-* packages for people who prefer to assemble their own setup.',
+		'Yes. Pi is the underlying coding-agent CLI and SDK. my-pi is the prewired distribution: it sets defaults, enables the extension stack, and publishes the same building blocks as reusable @spences10/pi-* packages.',
 	],
 	[
 		'Can I install only part of my-pi?',
 		'Yes. Most features are available as standalone packages. You can run the full distro with pnpx my-pi@latest, or install focused pieces such as @spences10/pi-lsp, @spences10/pi-mcp, @spences10/pi-context, or @spences10/pi-team-mode into an existing Pi installation.',
 	],
 	[
-		'Does my-pi support MCP servers?',
-		'Yes. It loads stdio and HTTP MCP servers from project configuration, then exposes those tools to the agent in the active workspace. That lets you add search, browser automation, SQLite inspection, custom internal tools, and other MCP capabilities without hardcoding them into the distro.',
+		'Does my-pi support scoped MCP servers?',
+		'Yes. MCP servers can load globally or per project, with activation policies for cwd, GitHub org, and GitHub repo. That keeps org-specific search, browser, SQLite, or internal tools available only where they belong.',
 	],
 	[
 		'Does my-pi include language-server tools?',
 		'Yes. The LSP extension gives agents diagnostics, hover information, definitions, references, and document symbols through project language servers. The goal is safer edits: agents can inspect types and file-level errors before reporting that work is complete.',
 	],
 	[
-		'How does my-pi handle large tool output?',
-		'Large command output and MCP responses can be indexed into a local SQLite context sidecar. Instead of flooding the active conversation, the output stays searchable and retrievable by chunk, which keeps long coding sessions usable while preserving access to detailed logs.',
+		'How does my-pi reduce context usage?',
+		'Large command output, reads, MCP responses, and LSP dumps can move into local searchable context. The agent gets a compact receipt, then searches or retrieves chunks only when needed. Current global context stats show 91.7% reduction and 10.6 MiB saved from chat.',
 	],
 	[
 		'Does my-pi help protect secrets?',
@@ -50,7 +50,7 @@ export const faq_lines = [
 	],
 	[
 		'Can my-pi run multiple agents?',
-		'Yes. Team mode can coordinate local RPC teammates with tasks, mailboxes, status, and optional worktrees. It is built for longer coding jobs where one lead session delegates research, review, tests, or implementation without losing track of what each teammate is doing.',
+		'Yes. Team mode creates local RPC teammates, tracks tasks and dependencies, sends mailbox messages, shows status, and can spawn mutating teammates in isolated git worktrees. Use it to delegate research, review, tests, or implementation without losing coordination.',
 	],
 ] as const;
 
@@ -61,7 +61,7 @@ export const page_schema: SchemaOrgProps['schema'] = [
 		applicationCategory: 'DeveloperApplication',
 		operatingSystem: 'Linux, macOS, Windows',
 		description:
-			'Pi coding-agent CLI distribution with MCP integration, LSP tools, agent skills, searchable context, recall, redaction, telemetry, and team mode.',
+			'Pi CLI distribution with scoped MCP tools, project skills, context reduction, recall, LSP tools, redaction, telemetry, and team mode.',
 		offers: {
 			'@type': 'Offer',
 			price: '0',
@@ -75,14 +75,14 @@ export const page_schema: SchemaOrgProps['schema'] = [
 		programmingLanguage: 'TypeScript',
 		runtimePlatform: 'Node.js',
 		description:
-			'Source code for the my-pi Pi coding-agent CLI distribution and reusable Pi packages.',
+			'Source code for the my-pi Pi CLI distribution and reusable Pi extension packages.',
 	},
 	{
 		'@type': 'WebSite',
 		name: 'my-pi',
 		url: 'https://github.com/spences10/my-pi',
 		description:
-			'Landing page for discovering my-pi, a ready-to-run Pi coding-agent CLI distribution and reusable Pi packages.',
+			'Landing page for my-pi, a prewired Pi CLI distribution and reusable Pi packages.',
 	},
 	{
 		'@type': 'FAQPage',
@@ -99,45 +99,45 @@ export const page_schema: SchemaOrgProps['schema'] = [
 
 export const detail_lines = [
 	[
-		'Pi coding-agent CLI',
-		'A ready-to-run Pi distribution for terminal coding workflows, with TUI, print mode, JSON events, RPC mode, and SDK wiring included.',
+		'Pi CLI distribution',
+		'Runs the Pi coding-agent stack from the terminal: TUI, print mode, JSON events, RPC mode, SDK wiring, and the bundled my-pi extension set.',
 	],
 	[
-		'MCP integration',
-		'Connect stdio and HTTP MCP servers from project config so coding agents can use search, databases, browsers, and custom developer tools.',
+		'Scoped MCP activation',
+		'Load stdio or HTTP MCP servers globally or per project, with activation rules for cwd, GitHub org, and GitHub repo.',
 	],
 	[
 		'LSP agent tools',
 		'Expose language-server diagnostics, hover, definitions, references, and document symbols directly to the agent for safer code edits.',
 	],
 	[
-		'Searchable context sidecar',
-		'Keep oversized command output and MCP responses in local SQLite full-text search instead of flooding the active conversation.',
+		'Context reduction',
+		'Move oversized command output, reads, MCP responses, and LSP dumps into searchable local context. Current global stats: 91.7% reduction and 10.6 MiB saved from chat.',
 	],
 	[
 		'Secret and command guardrails',
-		'Add redaction, secret-loading reminders, destructive-command confirmations, and configurable coding preferences to reduce risky agent behavior.',
+		'Redact tool output, remind agents to use nopeek for env files, and require confirmation before destructive commands.',
 	],
 	[
 		'Skills, recall, and team mode',
-		'Use project-aware agent skills, previous-session recall, local telemetry, and RPC teammate orchestration for longer coding tasks.',
+		'Activate skills by cwd, GitHub org, or repo; recall previous sessions; and coordinate RPC teammates with tasks, mailboxes, status, and worktrees.',
 	],
 ] as const;
 
 export const compose_lines = [
 	[
 		'Full distribution',
-		'Run my-pi when you want the complete opinionated agent stack prewired.',
+		'Run my-pi when you want MCP, LSP, context, recall, skills, redaction, telemetry, and team mode prewired.',
 		'pnpx my-pi@latest',
 	],
 	[
 		'Select packages',
-		'Install only the extensions your existing Pi setup needs, from LSP to MCP to team mode.',
+		'Install only the extensions your existing Pi setup needs: LSP, MCP, context, skills, recall, or team mode.',
 		'pi install npm:@spences10/pi-lsp',
 	],
 	[
 		'Project tools',
-		'Layer MCP servers, project-aware skills, prompt presets, and local context per workspace.',
+		'Activate MCP servers and skill profiles by cwd, GitHub org, or GitHub repo.',
 		'mcp.json + .pi/presets.json',
 	],
 ] as const;
@@ -155,15 +155,15 @@ export const package_lines = [
 
 export const safety_lines = [
 	[
-		'Local-first context',
-		'Oversized output lands in a searchable SQLite sidecar instead of bloating the active prompt.',
+		'Context reduction',
+		'Oversized output moves into searchable local context instead of bloating the active prompt.',
 	],
 	[
 		'Secret-aware workflows',
-		'Redaction and nopeek reminders keep credentials out of model-visible logs where possible.',
+		'Redaction and nopeek reminders steer agents away from exposing .env values and service tokens.',
 	],
 	[
 		'Destructive-action friction',
-		'Confirmations and coding preferences add review points before risky edits or commands.',
+		'Confirmations add an explicit stop before risky shell commands or file operations.',
 	],
 ] as const;

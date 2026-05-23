@@ -203,14 +203,14 @@ export function guard(event: RequestEvent) {
 					variant="outline"
 					class="border-magenta/60 bg-magenta/10 font-mono tracking-[0.24em] text-magenta uppercase"
 				>
-					Live session
+					Session playback
 				</Badge>
 				<p
 					id="demo-heading"
 					class="mt-5 text-base leading-8 text-muted sm:text-lg"
 				>
-					Recall prior context, check types through LSP, edit with a diff, and
-					run tests — all in the terminal.
+					Uses recall, LSP diagnostics, context receipts, and terminal tools in
+					one flow.
 				</p>
 			</div>
 
@@ -231,11 +231,11 @@ export function guard(event: RequestEvent) {
 					id="compose-heading"
 					class="mt-5 text-3xl leading-none font-black tracking-tighter text-foreground sm:text-5xl"
 				>
-					Use the full stack, then snap in the agent pieces you need.
+					Install the distro, or add the exact Pi extensions you need.
 				</h2>
 				<p class="mt-5 text-base leading-8 text-muted sm:text-lg">
-					my-pi works like a small agent system: start with the distro, compose
-					focused packages, then bind it to each workspace.
+					MCP servers and skill profiles can activate by cwd, GitHub org, or
+					GitHub repo, so each workspace gets the right tools.
 				</p>
 			</div>
 
@@ -340,7 +340,7 @@ export function guard(event: RequestEvent) {
 				<h2
 					class="mt-5 text-3xl leading-none font-black tracking-tighter text-foreground sm:text-5xl"
 				>
-					Powerful agent workflows should still feel controlled.
+					Keep secrets, destructive commands, and large output under control.
 				</h2>
 			</div>
 
@@ -378,7 +378,7 @@ export function guard(event: RequestEvent) {
 				<h2
 					class="mt-5 text-3xl leading-none font-black tracking-tighter text-foreground sm:text-5xl"
 				>
-					Questions people search before trying a coding-agent CLI.
+					What the included extensions actually do.
 				</h2>
 			</div>
 
