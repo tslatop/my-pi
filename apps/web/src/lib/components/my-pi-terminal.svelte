@@ -17,7 +17,7 @@
 		effort = "high",
 		prompt_mode = "terse",
 		conversation = [],
-		typing_speed = 14,
+		typing_speed = 30,
 		autoplay = true,
 		loop = false,
 		on_complete,
@@ -108,7 +108,7 @@
 		for (let i = 0; i < conversation.length; i++) {
 			if (cancelled || my_run !== run_id) return;
 			const turn = conversation[i];
-			await sleep(turn.delay ?? 350);
+			await sleep(turn.delay ?? 650);
 			if (cancelled || my_run !== run_id) return;
 
 			if (turn.role === "user") {
@@ -117,7 +117,7 @@
 					input_text = turn.text.slice(0, ch);
 					await sleep(typing_speed);
 				}
-				await sleep(250);
+				await sleep(450);
 				input_text = "";
 				rendered = [...rendered, { ...turn, id: `t-${i}` }];
 				bump(turn);
@@ -126,14 +126,14 @@
 				for (let ch = 0; ch <= turn.text.length; ch++) {
 					if (cancelled || my_run !== run_id) return;
 					active = { turn, visible: turn.text.slice(0, ch) };
-					await sleep(Math.max(3, typing_speed * 0.5));
+					await sleep(Math.max(8, typing_speed * 0.8));
 				}
 				active = null;
 				rendered = [...rendered, { ...turn, id: `t-${i}` }];
 				bump(turn);
 			} else if (turn.role === "working") {
 				working = { text: turn.text ?? "Working..." };
-				await sleep(turn.duration ?? 900);
+				await sleep(turn.duration ?? 1400);
 				if (cancelled || my_run !== run_id) return;
 				working = null;
 			} else {
@@ -146,7 +146,7 @@
 		on_complete?.();
 
 		if (loop && !cancelled && my_run === run_id) {
-			await sleep(2000);
+			await sleep(2800);
 			if (!cancelled && my_run === run_id) play();
 		}
 	}

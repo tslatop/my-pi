@@ -215,7 +215,7 @@ export function guard(event: RequestEvent) {
 			</div>
 
 			<div class="mt-10">
-				<MyPiTerminal conversation={demo_conversation} loop typing_speed={12} />
+				<MyPiTerminal conversation={demo_conversation} loop typing_speed={32} />
 			</div>
 		</section>
 
