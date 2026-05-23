@@ -1,4 +1,3 @@
-import { create_child_process_env } from '@spences10/pi-child-env';
 import {
 	spawn,
 	type ChildProcessWithoutNullStreams,
@@ -7,7 +6,20 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { StringDecoder } from 'node:string_decoder';
 import { capture_process_identity } from './process-identity.js';
+import {
+	build_rpc_teammate_args,
+	resolve_rpc_command,
+} from './rpc/command.js';
+import { create_rpc_teammate_env } from './rpc/env.js';
+import {
+	json_line,
+	next_rpc_request_id,
+	normalize_member_name,
+} from './rpc/protocol.js';
 import { TeamStore, type TeamWorkspaceMode } from './store.js';
+
+export { build_rpc_teammate_args } from './rpc/command.js';
+export { create_rpc_teammate_env } from './rpc/env.js';
 
 export interface RpcTeammateOptions {
 	team_id: string;
@@ -33,125 +45,6 @@ interface PendingRequest {
 	resolve: (value: any) => void;
 	reject: (error: Error) => void;
 	timer: NodeJS.Timeout;
-}
-
-let next_request_id = 1;
-
-function next_id(): string {
-	return `team-rpc-${next_request_id++}`;
-}
-
-function json_line(value: unknown): string {
-	return `${JSON.stringify(value)}\n`;
-}
-
-function normalize_member_name(value: string): string {
-	const trimmed = value.trim();
-	if (
-		!trimmed ||
-		trimmed === '.' ||
-		trimmed === '..' ||
-		!/^[a-zA-Z0-9_.-]+$/.test(trimmed)
-	) {
-		throw new Error(
-			'member must contain only letters, numbers, dots, underscores, and hyphens',
-		);
-	}
-	return trimmed;
-}
-
-interface RpcCommand {
-	command: string;
-	prefix_args: string[];
-	disable_builtin_team_mode: boolean;
-}
-
-function is_my_pi_command(value: string): boolean {
-	const name = value.split(/[\\/]/).pop()?.toLowerCase();
-	return ['my-pi', 'my-pi.js', 'my-pi.cmd', 'my-pi.ps1'].includes(
-		name ?? '',
-	);
-}
-
-function resolve_rpc_command(
-	override: string | undefined,
-): RpcCommand {
-	if (override?.trim()) {
-		const command = override.trim();
-		return {
-			command,
-			prefix_args: [],
-			disable_builtin_team_mode: is_my_pi_command(command),
-		};
-	}
-	if (process.argv[1]) {
-		return {
-			command: process.execPath,
-			prefix_args: [process.argv[1]],
-			disable_builtin_team_mode: true,
-		};
-	}
-	return {
-		command: 'pi',
-		prefix_args: [],
-		disable_builtin_team_mode: false,
-	};
-}
-
-export function build_rpc_teammate_args(
-	options: Pick<
-		RpcTeammateOptions,
-		| 'extension_path'
-		| 'model'
-		| 'thinking'
-		| 'system_prompt'
-		| 'tools'
-		| 'skills'
-	>,
-	session_dir: string,
-	command: Pick<
-		RpcCommand,
-		'prefix_args' | 'disable_builtin_team_mode'
-	>,
-): string[] {
-	const args = [
-		...command.prefix_args,
-		'--mode',
-		'rpc',
-		'--session-dir',
-		session_dir,
-	];
-	if (command.disable_builtin_team_mode) args.push('--no-team-mode');
-	args.push('-e', options.extension_path);
-	if (options.model) args.push('--model', options.model);
-	if (options.thinking) args.push('--thinking', options.thinking);
-	if (options.system_prompt)
-		args.push('--append-system-prompt', options.system_prompt);
-	if (options.tools?.length)
-		args.push('--tools', options.tools.join(','));
-	for (const skill of options.skills ?? [])
-		args.push('--skill', skill);
-	return args;
-}
-
-export function create_rpc_teammate_env(
-	options: Pick<RpcTeammateOptions, 'team_root' | 'extension_path'>,
-	team_id: string,
-	member: string,
-	source_env: NodeJS.ProcessEnv = process.env,
-): NodeJS.ProcessEnv {
-	const normalized_member = normalize_member_name(member);
-	return create_child_process_env({
-		profile: 'team-mode',
-		source_env,
-		explicit_env: {
-			MY_PI_TEAM_MODE_ROOT: options.team_root,
-			MY_PI_ACTIVE_TEAM_ID: team_id,
-			MY_PI_TEAM_MEMBER: normalized_member,
-			MY_PI_TEAM_ROLE: 'teammate',
-			MY_PI_TEAM_EXTENSION_PATH: options.extension_path,
-		},
-	});
 }
 
 export class RpcTeammate {
@@ -377,7 +270,7 @@ export class RpcTeammate {
 	): Promise<any> {
 		if (!this.proc || this.closed)
 			throw new Error(`Teammate ${this.member} is not running`);
-		const id = next_id();
+		const id = next_rpc_request_id();
 		return new Promise((resolve, reject) => {
 			const timer = setTimeout(() => {
 				this.pending.delete(id);
