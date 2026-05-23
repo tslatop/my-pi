@@ -13,7 +13,7 @@ catalog:
   '@vitest/coverage-v8': 4.1.6
   typebox: ^1.1.38
   typescript: ^6.0.3
-  vite-plus: ^0.1.21
+  vite-plus: ^0.1.22
   vitest: 4.1.6
 
 # Temporary/security pins. See docs/dependency-overrides.md.

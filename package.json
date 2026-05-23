@@ -76,7 +76,7 @@
 		"@resvg/resvg-js": "^2.6.2",
 		"@types/node": "catalog:",
 		"@vitest/coverage-v8": "catalog:",
-		"vite-plus": "^0.1.21",
+		"vite-plus": "^0.1.22",
 		"vitest": "catalog:"
 	},
 	"optionalDependencies": {
