@@ -39,6 +39,31 @@ JSON:
 - Solarized Dark
 - Tokyo Night
 
+## Bring your own themes
+
+Keep personal, team, or brand-specific themes outside this default pack.
+Pi loads custom themes from `~/.pi/agent/themes/*.json`, project-local
+`.pi/themes/*.json`, `--theme <path>`, or any installed package with a
+`pi.themes` manifest entry.
+
+A minimal standalone theme package looks like this:
+
+```json
+{
+	"name": "@your-scope/pi-your-themes",
+	"files": ["themes", "README.md"],
+	"pi": {
+		"themes": ["./themes"]
+	}
+}
+```
+
+Put theme JSON files in `themes/`, publish the package, then install it:
+
+```bash
+pi install npm:@your-scope/pi-your-themes
+```
+
 ## Development
 
 This package is included in the Vite+ workspace, but its package-level
