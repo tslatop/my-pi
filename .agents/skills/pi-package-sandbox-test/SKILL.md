@@ -1,9 +1,14 @@
 ---
 name: pi-package-sandbox-test
-# prettier-ignore
-description: Use when verifying that published Pi packages from this repository install and load for normal Pi users without the repository wrapper. Applies to pi.dev package compatibility checks, release validation, Daytona sandbox tests, and package installability audits.
-# prettier-ignore
-compatibility: Requires Node.js, pnpx, network access, ralph-town Daytona sandbox access, npm registry access, and vanilla Pi via @earendil-works/pi-coding-agent.
+description:
+  'Use when verifying that published Pi packages from this repository
+  install and load for normal Pi users without the repository wrapper.
+  Applies to pi.dev package compatibility checks, release validation,
+  Daytona sandbox tests, and package installability audits.'
+compatibility:
+  'Requires Node.js, pnpx, network access, ralph-town Daytona sandbox
+  access, npm registry access, and vanilla Pi via
+  @earendil-works/pi-coding-agent.'
 ---
 
 # Pi Package Sandbox Test
