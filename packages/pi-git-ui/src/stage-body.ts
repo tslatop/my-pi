@@ -33,6 +33,11 @@ import {
 	state_label,
 	status_code,
 } from './render.js';
+import {
+	build_discard_confirmation,
+	build_stage_actions,
+	next_action_index,
+} from './stage-action-menu.js';
 import { render_stage } from './stage-render.js';
 import type { ActionItem } from './stage-types.js';
 
@@ -445,74 +450,21 @@ export class GitStageBody implements ModalBody, Focusable {
 			this.message = 'No file selected.';
 			return;
 		}
-		const actions: ActionItem[] = [
-			{
-				action_label: 'stage file',
-				action_description:
-					'Stage all worktree changes for this file',
-				run: () => void this.stage_selected(),
-			},
-			{
-				action_label: 'unstage file',
-				action_description: 'Remove this file from the index',
-				run: () => void this.unstage_selected(),
-			},
-			{
-				action_label: 'stage hunk',
-				action_description: 'Stage the selected unstaged hunk',
-				run: () => void this.stage_selected_hunk(),
-			},
-			{
-				action_label: 'unstage hunk',
-				action_description: 'Unstage the selected staged hunk',
-				run: () => void this.unstage_selected_hunk(),
-			},
-			{
-				action_label: 'stage line',
-				action_description: 'Stage the selected changed line',
-				run: () => void this.stage_selected_line(),
-			},
-			{
-				action_label: 'unstage line',
-				action_description: 'Unstage the selected changed line',
-				run: () => void this.unstage_selected_line(),
-			},
-			{
-				action_label: 'discard file',
-				action_description:
-					'Discard unstaged worktree changes for this file',
-				run: () => this.open_discard_confirmation(file),
-			},
-			{
-				action_label: 'commit',
-				action_description: 'Commit currently staged changes',
-				run: () => this.open_commit_composer(),
-			},
-			{
-				action_label: 'amend commit',
-				action_description: 'Amend HEAD with staged changes',
-				run: () => this.open_commit_composer(true),
-			},
-			{
-				action_label: 'repository',
-				action_description:
-					'Show branches, log, stashes, and remotes',
-				run: () => void this.open_repo_overview(),
-			},
-			{
-				action_label: 'refresh',
-				action_description: 'Reload git status and diff',
-				run: () => void this.load(file.path),
-			},
-		];
-		if (file.state === 'conflicted') {
-			actions.unshift({
-				action_label: 'conflict help',
-				action_description: 'Show safe conflict resolution steps',
-				run: () => this.show_conflict_help(file),
-			});
-		}
-		this.actions = actions;
+		this.actions = build_stage_actions(file, {
+			stage_file: () => void this.stage_selected(),
+			unstage_file: () => void this.unstage_selected(),
+			stage_hunk: () => void this.stage_selected_hunk(),
+			unstage_hunk: () => void this.unstage_selected_hunk(),
+			stage_line: () => void this.stage_selected_line(),
+			unstage_line: () => void this.unstage_selected_line(),
+			discard_file: (selected) =>
+				this.open_discard_confirmation(selected),
+			commit: () => this.open_commit_composer(),
+			amend_commit: () => this.open_commit_composer(true),
+			repository: () => void this.open_repo_overview(),
+			refresh: (path) => void this.load(path),
+			conflict_help: (selected) => this.show_conflict_help(selected),
+		});
 		this.selected_action = 0;
 	}
 
@@ -521,15 +473,13 @@ export class GitStageBody implements ModalBody, Focusable {
 			this.actions = undefined;
 			return;
 		}
-		if (key_is_up(data)) {
-			this.selected_action = Math.max(0, this.selected_action - 1);
-			return;
-		}
-		if (key_is_down(data)) {
-			this.selected_action = Math.min(
-				(this.actions?.length ?? 1) - 1,
-				this.selected_action + 1,
-			);
+		const next = next_action_index(
+			this.selected_action,
+			this.actions?.length ?? 1,
+			data,
+		);
+		if (next !== this.selected_action) {
+			this.selected_action = next;
 			return;
 		}
 		if (data !== '\r' && data !== '\n') return;
@@ -558,21 +508,13 @@ export class GitStageBody implements ModalBody, Focusable {
 	}
 
 	private open_discard_confirmation(file: GitFile): void {
-		this.actions = [
-			{
-				action_label: 'confirm discard',
-				action_description:
-					'Permanently remove unstaged worktree changes',
-				run: () => void this.discard_file(file),
+		this.actions = build_discard_confirmation(
+			file,
+			(selected) => void this.discard_file(selected),
+			() => {
+				this.actions = undefined;
 			},
-			{
-				action_label: 'cancel',
-				action_description: 'Keep changes',
-				run: () => {
-					this.actions = undefined;
-				},
-			},
-		];
+		);
 		this.selected_action = 1;
 	}
 
