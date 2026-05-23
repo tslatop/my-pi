@@ -15,6 +15,8 @@
 	--terminal-padding-block: 1.25rem;
 	--terminal-padding-inline: 1.5rem;
 	--terminal-max-width: 1680px;
+	--terminal-font-size: clamp(0.9rem, 1.8vw, 1.38rem);
+	--terminal-small-font-size: 0.82em;
 	--terminal-shadow: 0 20px 40px rgb(0 0 0 / 32%), 0 2px 8px rgb(0 0 0 / 22%);
 
 	background: var(--afterglow-elevated-surface-background);
@@ -23,7 +25,7 @@
 	font-family:
 		"Victor Mono Variable", "Victor Mono", "JetBrains Mono Variable",
 		"JetBrains Mono", "Fira Code", var(--font-mono);
-	font-size: clamp(0.78rem, 1.45vw, 1rem);
+	font-size: var(--terminal-font-size);
 	line-height: 1.55;
 	padding: var(--terminal-padding-block) var(--terminal-padding-inline);
 	border-radius: var(--terminal-radius);
@@ -81,7 +83,6 @@
 .file-head,
 .bash-head {
 	margin-bottom: 0.4rem;
-	font-size: 19px;
 }
 .file-verb {
 	color: var(--afterglow-text);
@@ -101,7 +102,6 @@
 .code {
 	padding: 0.4rem 0 0.4rem 1.25rem;
 	color: var(--afterglow-text);
-	font-size: 19px;
 	line-height: 1.55;
 }
 .code-line {
@@ -138,7 +138,7 @@
 }
 .collapse {
 	color: var(--afterglow-comment);
-	font-size: 17px;
+	font-size: var(--terminal-small-font-size);
 }
 .kbd {
 	color: var(--afterglow-text-muted);
@@ -155,7 +155,6 @@
 	margin: 0;
 	padding: 0.25rem 0 0.25rem 1.25rem;
 	color: var(--afterglow-comment);
-	font-size: 19px;
 	line-height: 1.55;
 	white-space: pre-wrap;
 	font-family: inherit;
@@ -163,12 +162,11 @@
 .bash-exit {
 	padding-left: 1.25rem;
 	color: var(--afterglow-terminal-red);
-	font-size: 16px;
+	font-size: var(--terminal-small-font-size);
 	margin-top: 2px;
 }
 
 .diff-body {
-	font-size: 19px;
 	line-height: 1.55;
 	padding-left: 1.25rem;
 }
@@ -204,7 +202,6 @@
 .working {
 	margin: 0.75rem 0;
 	color: var(--afterglow-comment);
-	font-size: 19px;
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -253,7 +250,6 @@
 	align-items: flex-start;
 	gap: 2rem;
 	margin-top: 0.5rem;
-	font-size: clamp(0.9rem, 1.8vw, 1.38rem);
 	line-height: 1.45;
 	color: var(--afterglow-terminal-magenta);
 }
