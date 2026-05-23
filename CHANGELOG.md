@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.66
+
+### Patch Changes
+
+- 142849f: Ensure the default-enabled handoff built-in installs with
+  my-pi so pnpx startups do not skip it.
+
 ## 0.1.65
 
 ### Patch Changes

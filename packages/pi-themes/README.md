@@ -41,10 +41,10 @@ JSON:
 
 ## Bring your own themes
 
-Keep personal, team, or brand-specific themes outside this default pack.
-Pi loads custom themes from `~/.pi/agent/themes/*.json`, project-local
-`.pi/themes/*.json`, `--theme <path>`, or any installed package with a
-`pi.themes` manifest entry.
+Keep personal, team, or brand-specific themes outside this default
+pack. Pi loads custom themes from `~/.pi/agent/themes/*.json`,
+project-local `.pi/themes/*.json`, `--theme <path>`, or any installed
+package with a `pi.themes` manifest entry.
 
 A minimal standalone theme package looks like this:
 
@@ -58,7 +58,8 @@ A minimal standalone theme package looks like this:
 }
 ```
 
-Put theme JSON files in `themes/`, publish the package, then install it:
+Put theme JSON files in `themes/`, publish the package, then install
+it:
 
 ```bash
 pi install npm:@your-scope/pi-your-themes
