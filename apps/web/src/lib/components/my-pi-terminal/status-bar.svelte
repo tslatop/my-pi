@@ -24,27 +24,24 @@
 <div class="status-bar">
 	<div class="status-left">
 		<div>
-			{cwd} <span class="muted">({branch})</span>
+			{cwd} <span class="git-branch">(↯ {branch} ?1 ↟1)</span>
 		</div>
 		<div class="metrics">
-			<span class="muted">↑</span>{format_k(metrics.up)}
-			<span class="muted">↓</span>{format_k(metrics.down)}
-			<span class="muted">R</span>{format_k(metrics.ram)}
-			<span class="muted">${metrics.cost.toFixed(3)}</span>
-			<span class="muted">(sub)</span>
-			<span class="yellow-hi"
-				>{((metrics.ctx_used / metrics.ctx_max) * 100).toFixed(1)}%/{format_k(
-					metrics.ctx_max,
-				)}</span
-			>
+			<span>↑{format_k(metrics.up)}</span>
+			<span>↓{format_k(metrics.down)}</span>
+			<span>R{format_k(metrics.ram)}</span>
+			<span>${metrics.cost.toFixed(3)}</span>
+			<span>(sub)</span>
+			<span>{((metrics.ctx_used / metrics.ctx_max) * 100).toFixed(1)}%/{format_k(metrics.ctx_max)}</span>
 		</div>
+		<div class="mcp-status">MCP 5/5 connected</div>
 	</div>
 	<div class="status-right">
+		<div class="session-name">my-pi-terminal-layout</div>
 		<div>
-			<span class="muted">({provider})</span>
 			{model} <span class="sep">·</span>
-			<span class="fg">{effort}</span>
+			<span>{effort}</span>
 		</div>
-		<div class="muted prompt-mode">prompt:{prompt_mode}</div>
+		<div class="prompt-mode">prompt:{prompt_mode} +1</div>
 	</div>
 </div>
