@@ -1,5 +1,14 @@
 # my-pi
 
+## 0.1.67
+
+### Patch Changes
+
+- ad291b2: Split prompt preset completions, manager UI, and prompt
+  block building into tested focused modules.
+- 09fc2b7: Add repo-specific boundary checker enforcing package
+  architecture rules and advisory large-file warnings.
+
 ## 0.1.66
 
 ### Patch Changes

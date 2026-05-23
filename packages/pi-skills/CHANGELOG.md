@@ -1,5 +1,12 @@
 # @spences10/pi-skills
 
+## 0.0.28
+
+### Patch Changes
+
+- 7b9e885: Add GitHub org/repo context matching for project-aware
+  skill profile activation, with tests and documentation.
+
 ## 0.0.27
 
 ### Patch Changes

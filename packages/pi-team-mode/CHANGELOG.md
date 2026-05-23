@@ -1,5 +1,12 @@
 # @spences10/pi-team-mode
 
+## 0.0.30
+
+### Patch Changes
+
+- 1d72ec7: Split team-mode RPC runner helpers into focused command,
+  environment, and protocol modules with co-located tests.
+
 ## 0.0.29
 
 ### Patch Changes

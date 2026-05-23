@@ -1,5 +1,13 @@
 # @spences10/pi-confirm-destructive
 
+## 0.0.16
+
+### Patch Changes
+
+- 63119f7: Split destructive confirmation internals into focused
+  modules while preserving extension behavior and public assessment
+  exports.
+
 ## 0.0.15
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @spences10/pi-mcp
 
+## 0.0.37
+
+### Patch Changes
+
+- 7fb22f9: Split MCP config implementation into focused modules while
+  preserving public API and existing behavior.
+- Updated dependencies [59f41de]
+- Updated dependencies [8e07202]
+  - @spences10/pi-context@0.0.24
+
 ## 0.0.36
 
 ### Patch Changes

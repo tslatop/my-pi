@@ -1,5 +1,12 @@
 # @spences10/pi-git-ui
 
+## 0.0.12
+
+### Patch Changes
+
+- a1da478: Extract Git staging action menu helpers into a tested
+  module and simplify stage body logic.
+
 ## 0.0.11
 
 ### Patch Changes
