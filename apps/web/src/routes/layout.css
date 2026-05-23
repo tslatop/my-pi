@@ -51,7 +51,8 @@
 @theme inline {
 	--font-sans: system-ui, sans-serif;
 	--font-serif: Georgia, serif;
-	--font-mono: 'SFMono-Regular', Consolas, monospace;
+	--font-mono:
+		'Victor Mono Variable', 'Victor Mono', 'SFMono-Regular', Consolas, monospace;
 
 	--color-background: var(--afterglow-background);
 	--color-surface: var(--afterglow-elevated-surface-background);

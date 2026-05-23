@@ -126,19 +126,19 @@ export const detail_lines = [
 
 export const compose_lines = [
 	[
-		'Full distribution',
-		'Run my-pi when you want MCP, LSP, context, recall, skills, redaction, telemetry, and team mode prewired.',
+		'Run my-pi',
+		'Use the CLI when you want Pi with MCP, LSP, context reduction, recall, skills, redaction, telemetry, and team mode already wired together.',
 		'pnpx my-pi@latest',
 	],
 	[
-		'Select packages',
-		'Install only the extensions your existing Pi setup needs: LSP, MCP, context, skills, recall, or team mode.',
+		'Add one extension',
+		'Already have a Pi setup? Install the same feature packages one at a time: LSP, MCP, context, skills, recall, team mode, and more.',
 		'pi install npm:@spences10/pi-lsp',
 	],
 	[
-		'Project tools',
-		'Activate MCP servers and skill profiles by cwd, GitHub org, or GitHub repo.',
-		'mcp.json + .pi/presets.json',
+		'Scope by workspace',
+		'Load MCP servers from mcp.json and activate skill profiles only for matching directories, GitHub orgs, or GitHub repos.',
+		'mcp.json + skill profiles',
 	],
 ] as const;
 

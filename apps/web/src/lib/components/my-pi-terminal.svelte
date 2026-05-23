@@ -22,11 +22,11 @@
 		loop = false,
 		on_complete,
 		initial_metrics = {
-			up: 364_000,
-			down: 26_000,
-			ram: 4_100_000,
-			cost: 2.335,
-			ctx_used: 201_280,
+			up: 115_000,
+			down: 5_700,
+			ram: 691_000,
+			cost: 1.09,
+			ctx_used: 36_176,
 			ctx_max: 272_000,
 		},
 	}: {

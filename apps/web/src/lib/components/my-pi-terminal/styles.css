@@ -22,9 +22,7 @@
 	background: var(--afterglow-elevated-surface-background);
 	border: 1px solid var(--afterglow-border-variant);
 	color: var(--afterglow-text);
-	font-family:
-		"Victor Mono Variable", "Victor Mono", "JetBrains Mono Variable",
-		"JetBrains Mono", "Fira Code", var(--font-mono);
+	font-family: var(--font-mono);
 	font-size: var(--terminal-font-size);
 	line-height: 1.55;
 	padding: var(--terminal-padding-block) var(--terminal-padding-inline);

@@ -7,9 +7,7 @@
 	import * as Card from "$lib/components/ui/card/index.js";
 	import {
 		ArrowSquareOutIcon,
-		CheckIcon,
 		CodeIcon,
-		CopyIcon,
 		GithubLogoIcon,
 		HardDrivesIcon,
 		KeyIcon,
@@ -122,20 +120,6 @@ export function guard(event: RequestEvent) {
 			delay: 300,
 		},
 	];
-
-	let copied_index = $state<number | null>(null);
-	let copy_timer: ReturnType<typeof setTimeout>;
-
-	async function copy_command(command: string, index: number) {
-		try {
-			await navigator.clipboard.writeText(command);
-			copied_index = index;
-			clearTimeout(copy_timer);
-			copy_timer = setTimeout(() => (copied_index = null), 2000);
-		} catch {
-			// clipboard unavailable; no-op
-		}
-	}
 </script>
 
 <Head {seo_config} />
@@ -189,7 +173,9 @@ export function guard(event: RequestEvent) {
 						</Card.Title>
 					</Card.Header>
 					<Card.Content class="px-0">
-						<p class="text-base leading-7 text-foreground/75 group-hover:text-foreground/90 sm:text-lg">
+						<p
+							class="text-base leading-7 text-foreground/75 group-hover:text-foreground/90 sm:text-lg"
+						>
 							{detail_body}
 						</p>
 					</Card.Content>
@@ -231,11 +217,13 @@ export function guard(event: RequestEvent) {
 					id="compose-heading"
 					class="mt-5 text-3xl leading-none font-black tracking-tighter text-foreground sm:text-5xl"
 				>
-					Install the distro, or add the exact Pi extensions you need.
+					Start with the CLI. Keep the parts that fit your workflow.
 				</h2>
-				<p class="mx-auto mt-5 max-w-[62ch] text-lg leading-8 text-foreground/85 sm:text-xl">
-					MCP servers and skill profiles can activate by cwd, GitHub org, or
-					GitHub repo, so each workspace gets the right tools.
+				<p
+					class="mx-auto mt-5 max-w-[62ch] text-lg leading-8 text-foreground/85 sm:text-xl"
+				>
+					Run the prewired my-pi command, install individual extensions into Pi,
+					or bind tools and skills to specific repos and orgs.
 				</p>
 			</div>
 
@@ -255,30 +243,16 @@ export function guard(event: RequestEvent) {
 							</Card.Title>
 						</Card.Header>
 						<Card.Content class="space-y-5 px-0">
-							<p class="min-h-16 text-base leading-7 text-foreground/75 sm:text-lg sm:leading-8">
+							<p
+								class="min-h-16 text-base leading-7 text-foreground/75 sm:text-lg sm:leading-8"
+							>
 								{compose_body}
 							</p>
-							<div class="flex items-stretch gap-2">
-								<code
-									class="block flex-1 overflow-x-auto border border-border-muted bg-background/80 px-3 py-2 font-mono text-sm text-cyan"
-								>
-									{compose_command}
-								</code>
-								<button
-									type="button"
-									onclick={() => copy_command(compose_command, index)}
-									class="flex shrink-0 items-center justify-center border border-border-muted bg-background/80 px-3 text-muted transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan"
-									aria-label={copied_index === index
-										? "Copied to clipboard"
-										: `Copy: ${compose_command}`}
-								>
-									{#if copied_index === index}
-										<CheckIcon class="size-4 text-green" weight="bold" />
-									{:else}
-										<CopyIcon class="size-4" />
-									{/if}
-								</button>
-							</div>
+							<code
+								class="block overflow-x-auto whitespace-nowrap border border-border-muted bg-background/80 px-3 py-2 font-mono text-sm text-cyan"
+							>
+								{compose_command}
+							</code>
 						</Card.Content>
 					</Card.Root>
 				{/each}
@@ -303,7 +277,7 @@ export function guard(event: RequestEvent) {
 								id="package-grid-heading"
 								class="mt-4 text-2xl leading-none font-black tracking-tighter text-foreground sm:text-4xl"
 							>
-								One distribution, many agent building blocks.
+								The same features are available as reusable Pi packages.
 							</Card.Title>
 						</div>
 						<a
@@ -360,7 +334,11 @@ export function guard(event: RequestEvent) {
 							</Card.Title>
 						</Card.Header>
 						<Card.Content class="px-0">
-							<p class="text-base leading-7 text-foreground/75 sm:text-lg sm:leading-8">{safety_body}</p>
+							<p
+								class="text-base leading-7 text-foreground/75 sm:text-lg sm:leading-8"
+							>
+								{safety_body}
+							</p>
 						</Card.Content>
 					</Card.Root>
 				{/each}
