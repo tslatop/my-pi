@@ -1,7 +1,26 @@
 <script lang="ts">
+	import MyPiTerminal, {
+		type Turn,
+	} from "$lib/components/my-pi-terminal.svelte";
 	import * as Accordion from "$lib/components/ui/accordion/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
+	import {
+		ArrowSquareOutIcon,
+		CheckIcon,
+		CodeIcon,
+		CopyIcon,
+		GithubLogoIcon,
+		HardDrivesIcon,
+		KeyIcon,
+		MagnifyingGlassIcon,
+		PackageIcon,
+		PlugsConnectedIcon,
+		ShieldCheckIcon,
+		TerminalWindowIcon,
+		UsersThreeIcon,
+		WarningIcon,
+	} from "phosphor-svelte";
 	import { Head, SchemaOrg } from "svead";
 	import {
 		compose_lines,
@@ -13,6 +32,110 @@
 		safety_lines,
 		seo_config,
 	} from "./page-content.js";
+
+	const detail_icons = [
+		TerminalWindowIcon,
+		PlugsConnectedIcon,
+		CodeIcon,
+		MagnifyingGlassIcon,
+		ShieldCheckIcon,
+		UsersThreeIcon,
+	];
+
+	const safety_icons = [HardDrivesIcon, KeyIcon, WarningIcon];
+
+	const demo_conversation: Turn[] = [
+		{
+			role: "user",
+			text: "add a token-bucket rate limiter to the public API guard, then run the unit tests",
+			delay: 300,
+		},
+		{
+			role: "working",
+			text: "recalling previous session…",
+			duration: 1100,
+			delay: 200,
+		},
+		{
+			role: "assistant",
+			text: "Recall has notes from yesterday: the limiter belongs in the route guard, keyed by client IP. Adding a token bucket and wiring it in.",
+			delay: 250,
+		},
+		{
+			role: "read",
+			path: "src/lib/server/guard.ts",
+			range: "1-9",
+			code: `import type { RequestEvent } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+
+export function guard(event: RequestEvent) {
+  // auth + validation runs here
+  return event;
+}`,
+			lines_below: 23,
+			total_lines: 32,
+			delay: 300,
+		},
+		{
+			role: "bash",
+			command: "pi lsp diagnostics src/lib/server/guard.ts",
+			output: "0 errors · 0 warnings · 4 symbols",
+			exit_code: 0,
+			delay: 250,
+		},
+		{
+			role: "diff",
+			path: "src/lib/server/guard.ts",
+			hunks: [
+				{
+					line_number: 3,
+					after: [
+						"const buckets = new Map<string, number>();",
+						"const LIMIT = 60;",
+						"",
+					],
+				},
+				{
+					line_number: 6,
+					before: ["  // auth + validation runs here"],
+					after: [
+						"  const ip = event.getClientAddress();",
+						"  const left = buckets.get(ip) ?? LIMIT;",
+						"  if (left <= 0) throw error(429, 'rate limited');",
+						"  buckets.set(ip, left - 1);",
+					],
+				},
+			],
+			delay: 350,
+		},
+		{
+			role: "bash",
+			command: "pnpm test:unit -- --run",
+			output:
+				" Test Files  3 passed (3)\n      Tests  18 passed (18)\n   Duration  1.42s",
+			exit_code: 0,
+			delay: 300,
+		},
+		{
+			role: "assistant",
+			text: "Done — limiter in place, LSP shows the file clean, all 18 tests green. Want me to open a PR or hand it to a teammate for review?",
+			delay: 300,
+		},
+	];
+
+	let copied_index = $state<number | null>(null);
+	let copy_timer: ReturnType<typeof setTimeout>;
+
+	async function copy_command(command: string, index: number) {
+		try {
+			await navigator.clipboard.writeText(command);
+			copied_index = index;
+			clearTimeout(copy_timer);
+			copy_timer = setTimeout(() => (copied_index = null), 2000);
+		} catch {
+			// clipboard unavailable; no-op
+		}
+	}
 </script>
 
 <Head {seo_config} />
@@ -51,11 +174,16 @@
 
 	<section class="mx-auto max-w-7xl pt-6 pb-24 sm:pb-32 lg:pt-16">
 		<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-			{#each detail_lines as [detail_title, detail_body] (detail_title)}
+			{#each detail_lines as [detail_title, detail_body], index (detail_title)}
+				{@const DetailIcon = detail_icons[index]}
 				<Card.Root
 					class="group border border-border-muted bg-surface/70 p-6 transition hover:border-accent hover:bg-element-hover/45"
 				>
-					<Card.Header class="px-0">
+					<Card.Header class="gap-4 px-0">
+						<DetailIcon
+							class="size-8 text-cyan transition group-hover:text-accent"
+							weight="duotone"
+						/>
 						<Card.Title class="font-mono text-lg font-bold text-foreground">
 							{detail_title}
 						</Card.Title>
@@ -68,6 +196,28 @@
 				</Card.Root>
 			{/each}
 		</div>
+
+		<section class="mx-auto mt-20 max-w-7xl" aria-labelledby="demo-heading">
+			<div class="mx-auto max-w-3xl text-center">
+				<Badge
+					variant="outline"
+					class="border-magenta/60 bg-magenta/10 font-mono tracking-[0.24em] text-magenta uppercase"
+				>
+					Live session
+				</Badge>
+				<p
+					id="demo-heading"
+					class="mt-5 text-base leading-8 text-muted sm:text-lg"
+				>
+					Recall prior context, check types through LSP, edit with a diff, and
+					run tests — all in the terminal.
+				</p>
+			</div>
+
+			<div class="mt-10">
+				<MyPiTerminal conversation={demo_conversation} loop typing_speed={12} />
+			</div>
+		</section>
 
 		<section class="mx-auto mt-20 max-w-6xl" aria-labelledby="compose-heading">
 			<div class="mx-auto max-w-3xl text-center">
@@ -108,11 +258,27 @@
 							<p class="min-h-14 leading-7 text-muted">
 								{compose_body}
 							</p>
-							<code
-								class="block overflow-x-auto border border-border-muted bg-background/80 px-3 py-2 font-mono text-sm text-cyan"
-							>
-								{compose_command}
-							</code>
+							<div class="flex items-stretch gap-2">
+								<code
+									class="block flex-1 overflow-x-auto border border-border-muted bg-background/80 px-3 py-2 font-mono text-sm text-cyan"
+								>
+									{compose_command}
+								</code>
+								<button
+									type="button"
+									onclick={() => copy_command(compose_command, index)}
+									class="flex shrink-0 items-center justify-center border border-border-muted bg-background/80 px-3 text-muted transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan"
+									aria-label={copied_index === index
+										? "Copied to clipboard"
+										: `Copy: ${compose_command}`}
+								>
+									{#if copied_index === index}
+										<CheckIcon class="size-4 text-green" weight="bold" />
+									{:else}
+										<CopyIcon class="size-4" />
+									{/if}
+								</button>
+							</div>
 						</Card.Content>
 					</Card.Root>
 				{/each}
@@ -179,11 +345,16 @@
 			</div>
 
 			<div class="mt-10 grid gap-4 md:grid-cols-3">
-				{#each safety_lines as [safety_title, safety_body] (safety_title)}
+				{#each safety_lines as [safety_title, safety_body], index (safety_title)}
+					{@const SafetyIcon = safety_icons[index]}
 					<Card.Root
-						class="border border-border-muted bg-surface/70 p-6 transition hover:border-green/70 hover:bg-element-hover/35"
+						class="group border border-border-muted bg-surface/70 p-6 transition hover:border-green/70 hover:bg-element-hover/35"
 					>
-						<Card.Header class="px-0">
+						<Card.Header class="gap-4 px-0">
+							<SafetyIcon
+								class="size-8 text-green transition group-hover:text-green"
+								weight="duotone"
+							/>
 							<Card.Title class="font-mono text-lg font-bold text-foreground">
 								{safety_title}
 							</Card.Title>
@@ -234,6 +405,40 @@
 		</section>
 	</section>
 </main>
+
+<footer class="border-t border-border-muted bg-surface/40">
+	<div
+		class="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12"
+	>
+		<p class="font-mono text-sm text-muted">
+			<span class="text-foreground">my-pi</span>
+			<span class="text-border-muted">·</span> Pi coding-agent CLI distribution
+		</p>
+		<nav
+			class="flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-sm"
+			aria-label="Footer"
+		>
+			<a
+				class="inline-flex items-center gap-2 text-muted transition hover:text-accent"
+				href="https://github.com/spences10/my-pi"
+			>
+				<GithubLogoIcon class="size-4 shrink-0" /> GitHub
+			</a>
+			<a
+				class="inline-flex items-center gap-2 text-muted transition hover:text-accent"
+				href="https://www.npmjs.com/package/my-pi"
+			>
+				<PackageIcon class="size-4 shrink-0" /> npm
+			</a>
+			<a
+				class="inline-flex items-center gap-2 text-muted transition hover:text-accent"
+				href="https://github.com/spences10/my-pi#reusable-pi-packages"
+			>
+				<ArrowSquareOutIcon class="size-4 shrink-0" /> Packages
+			</a>
+		</nav>
+	</div>
+</footer>
 
 <style>
 	.logo-gradient {

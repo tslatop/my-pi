@@ -522,10 +522,10 @@
 <style>
 	.term-wrap {
 		position: relative;
-		min-height: clamp(34rem, 58vw, 44rem);
+		height: clamp(34rem, 58vw, 44rem);
 		padding: 0;
 		display: flex;
-		align-items: center;
+		align-items: stretch;
 		justify-content: center;
 		text-align: left;
 	}
