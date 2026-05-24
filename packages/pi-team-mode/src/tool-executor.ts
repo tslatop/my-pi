@@ -1,16 +1,10 @@
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 import { profile_prompt } from './command-parser.js';
-import {
-	format_messages,
-	format_status,
-	format_task_detail,
-	format_teams_list,
-} from './formatting.js';
+import { format_status, format_teams_list } from './formatting.js';
 import type { TeammateProfile } from './profiles.js';
 import { RpcTeammate } from './rpc-runner.js';
 import {
 	attached_member_names,
-	deliver_message_to_runner,
 	get_team_status,
 	get_team_statuses,
 	shutdown_orphaned_member,
@@ -25,6 +19,11 @@ import {
 	validate_team_tool_params,
 	type TeamToolParams as TeamToolParamsType,
 } from './team-tool-params.js';
+import { execute_message_action } from './tools/message-actions.js';
+import {
+	execute_task_action,
+	require_arg,
+} from './tools/task-actions.js';
 import {
 	get_team_ui_mode,
 	get_team_ui_style,
@@ -52,15 +51,6 @@ export interface TeamToolExecutorDeps {
 		cwd: string,
 		name: string | undefined,
 	) => TeammateProfile | undefined;
-}
-
-function require_arg(
-	value: string | undefined,
-	name: string,
-): string {
-	const trimmed = value?.trim();
-	if (!trimmed) throw new Error(`${name} is required`);
-	return trimmed;
 }
 
 function require_lead_for_teammate_spawn(
@@ -444,195 +434,28 @@ export async function execute_team_tool(
 				details: { ...status, waiting: false, member: member_name },
 			};
 		}
-		case 'task_create': {
-			const task = await store.create_task(require_team_id(), {
-				title: require_arg(params.title, 'title'),
-				description: params.description,
-				assignee: params.assignee,
-				depends_on: params.depends_on,
+		case 'task_create':
+		case 'task_list':
+		case 'task_get':
+		case 'task_update':
+		case 'task_claim_next':
+			return execute_task_action(params, {
+				ctx,
+				store,
+				runners,
+				team_id,
+				require_team_id,
 			});
-			set_team_ui(ctx, store, team_id, runners);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: `Created task #${task.id}: ${task.title}`,
-					},
-				],
-				details: { task },
-			};
-		}
-		case 'task_list': {
-			const tasks = store.list_tasks(require_team_id());
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: format_status(
-							await get_team_status(
-								store,
-								require_team_id(),
-								runners,
-							),
-						),
-					},
-				],
-				details: { tasks },
-			};
-		}
-		case 'task_get': {
-			const task = store.load_task(
-				require_team_id(),
-				require_arg(params.task_id, 'task_id'),
-			);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: format_task_detail(task),
-					},
-				],
-				details: { task },
-			};
-		}
-		case 'task_update': {
-			const task = await store.update_task(
-				require_team_id(),
-				require_arg(params.task_id, 'task_id'),
-				{
-					title: params.title,
-					description: params.description,
-					status: params.task_status,
-					assignee: params.clear_assignee ? null : params.assignee,
-					depends_on: params.depends_on,
-					result: params.clear_result ? null : params.result,
-				},
-			);
-			set_team_ui(ctx, store, team_id, runners);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: `Updated task #${task.id}`,
-					},
-				],
-				details: { task },
-			};
-		}
-		case 'task_claim_next': {
-			const task = await store.claim_next_task(
-				require_team_id(),
-				require_arg(params.assignee ?? params.member, 'assignee'),
-			);
-			set_team_ui(ctx, store, team_id, runners);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: task
-							? `Claimed task #${task.id}: ${task.title}`
-							: 'No ready pending tasks',
-					},
-				],
-				details: { task },
-			};
-		}
-		case 'message_send': {
-			const active = require_team_id();
-			const message = await store.send_message(active, {
-				from: params.from ?? own_member,
-				to: require_arg(params.to, 'to'),
-				body: require_arg(params.message, 'message'),
-				urgent: params.urgent,
-				reply_to: params.reply_to,
-				ttl_ms: params.ttl_ms,
-				requires_ack: params.requires_ack,
-			});
-			const runner = runners.get(message.to);
-			if (runner?.is_running) {
-				await deliver_message_to_runner(
-					store,
-					active,
-					runner,
-					message,
-				);
-			}
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: `Sent message ${message.id} to ${message.to}`,
-					},
-				],
-				details: { message },
-			};
-		}
-		case 'message_list': {
-			const messages = store.list_messages(
-				require_team_id(),
-				require_arg(params.member ?? params.to, 'member'),
-			);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: format_messages(messages),
-					},
-				],
-				details: { messages },
-			};
-		}
-		case 'message_wait': {
-			const message = await store.wait_for_message(
-				require_team_id(),
-				require_arg(params.member ?? params.to, 'member'),
-				{
-					reply_to: params.reply_to,
-					from: params.from,
-					timeout_ms: params.timeout_ms,
-					include_read: params.include_read,
-				},
-			);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: message
-							? format_messages([message])
-							: 'No matching message before timeout.',
-					},
-				],
-				details: { message },
-			};
-		}
+		case 'message_send':
+		case 'message_list':
+		case 'message_wait':
 		case 'message_read':
-		case 'message_ack': {
-			const active = require_team_id();
-			const member = require_arg(
-				params.member ?? params.to,
-				'member',
-			);
-			const messages =
-				params.action === 'message_read'
-					? await store.mark_messages_read(
-							active,
-							member,
-							params.message_ids,
-						)
-					: await store.acknowledge_messages(
-							active,
-							member,
-							params.message_ids,
-						);
-			return {
-				content: [
-					{
-						type: 'text' as const,
-						text: format_messages(messages),
-					},
-				],
-				details: { messages },
-			};
-		}
+		case 'message_ack':
+			return execute_message_action(params, {
+				store,
+				runners,
+				own_member,
+				require_team_id,
+			});
 	}
 }
