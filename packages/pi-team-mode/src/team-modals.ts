@@ -16,11 +16,7 @@ import {
 	format_task_status,
 	summarize_result,
 } from './formatting.js';
-export {
-	present_completed_task_results,
-	show_team_dashboard_modal,
-} from './modals/dashboard.js';
-export { show_team_member_actions_modal } from './modals/member-actions.js';
+import { show_team_member_picker } from './modals/member-picker.js';
 import { get_team_statuses } from './runner-orchestration.js';
 import {
 	TeamStore,
@@ -36,6 +32,11 @@ import {
 	TEAM_UI_ENV,
 	TEAM_UI_STYLE_ENV,
 } from './ui-status.js';
+export {
+	present_completed_task_results,
+	show_team_dashboard_modal,
+} from './modals/dashboard.js';
+export { show_team_member_actions_modal } from './modals/member-actions.js';
 
 function get_latest_team_for_cwd(
 	store: TeamStore,
@@ -395,23 +396,6 @@ export async function show_team_task_action_modal(
 		footer: 'enter runs action • esc back',
 	});
 	return selected as TeamTaskModalAction | undefined;
-}
-
-async function show_team_member_picker(
-	ctx: ExtensionCommandContext,
-	status: TeamStatus,
-	options: { title: string; subtitle?: string },
-): Promise<string | undefined> {
-	return await show_picker_modal(ctx, {
-		title: options.title,
-		subtitle: options.subtitle,
-		items: status.members.map((member) => ({
-			value: member.name,
-			label: member.name,
-			description: `${member.role} • ${format_member_status(member)}`,
-		})),
-		empty_message: 'No members yet. Add one first.',
-	});
 }
 
 export async function prompt_team_name(

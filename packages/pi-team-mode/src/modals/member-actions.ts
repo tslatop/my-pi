@@ -14,6 +14,7 @@ import {
 } from '../runner-orchestration.js';
 import type { TeamStatus, TeamStore } from '../store.js';
 import { set_team_ui } from '../ui-status.js';
+import { show_team_member_picker } from './member-picker.js';
 
 export type TeamMemberModalAction =
 	| 'dm'
@@ -21,23 +22,6 @@ export type TeamMemberModalAction =
 	| 'steer'
 	| 'wait'
 	| 'shutdown';
-
-async function show_team_member_picker(
-	ctx: ExtensionCommandContext,
-	status: TeamStatus,
-	options: { title: string; subtitle?: string },
-): Promise<string | undefined> {
-	return await show_picker_modal(ctx, {
-		title: options.title,
-		subtitle: options.subtitle,
-		items: status.members.map((member) => ({
-			value: member.name,
-			label: member.name,
-			description: `${member.role} • ${format_member_status(member)}`,
-		})),
-		empty_message: 'No members yet. Add one first.',
-	});
-}
 
 async function show_team_member_action_modal(
 	ctx: ExtensionCommandContext,
@@ -215,5 +199,3 @@ async function run_member_modal_action(
 		);
 	}
 }
-
-export { show_team_member_picker };
