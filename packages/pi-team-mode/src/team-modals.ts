@@ -1,38 +1,27 @@
 import type { ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
-import { watch, type FSWatcher } from 'node:fs';
 import {
-	getKeybindings,
-	Key,
-	matchesKey,
-	truncateToWidth,
 	type SelectItem,
 	type SettingItem,
 } from '@earendil-works/pi-tui';
 import {
 	show_confirm_modal,
 	show_input_modal,
-	show_modal,
 	show_picker_modal,
 	show_settings_modal,
 } from '@spences10/pi-tui-modal';
 import {
-	collect_session_usage,
-	collect_team_mailboxes,
-	format_completed_task_results,
 	format_member_status,
 	format_status_counts,
 	format_task_detail,
 	format_task_status,
-	format_team_dashboard,
 	summarize_result,
 } from './formatting.js';
-import { RpcTeammate } from './rpc-runner.js';
-import {
-	deliver_message_to_runner,
-	get_team_status,
-	get_team_statuses,
-	shutdown_orphaned_member,
-} from './runner-orchestration.js';
+export {
+	present_completed_task_results,
+	show_team_dashboard_modal,
+} from './modals/dashboard.js';
+export { show_team_member_actions_modal } from './modals/member-actions.js';
+import { get_team_statuses } from './runner-orchestration.js';
 import {
 	TeamStore,
 	type TeamConfig,
@@ -42,7 +31,6 @@ import type { TeamUiMode, TeamUiStyle } from './team-tool-params.js';
 import {
 	get_team_ui_mode,
 	get_team_ui_style,
-	has_modal_ui,
 	set_team_ui,
 	show_team_text_modal,
 	TEAM_UI_ENV,
@@ -493,190 +481,6 @@ export async function prompt_task_create(
 	};
 }
 
-type TeamMemberModalAction =
-	| 'dm'
-	| 'send'
-	| 'steer'
-	| 'wait'
-	| 'shutdown';
-
-async function show_team_member_action_modal(
-	ctx: ExtensionCommandContext,
-	member: TeamStatus['members'][number],
-	runner: RpcTeammate | undefined,
-): Promise<TeamMemberModalAction | undefined> {
-	const is_running = runner?.is_running;
-	const is_orphaned = member.status === 'running_orphaned';
-	const items: SelectItem[] = [
-		{
-			value: 'dm',
-			label: 'Send mailbox DM',
-			description: 'Leave a persistent team message',
-		},
-	];
-	if (is_running) {
-		items.push(
-			{
-				value: 'send',
-				label: 'Send prompt',
-				description: 'Send a normal prompt to the running teammate',
-			},
-			{
-				value: 'steer',
-				label: 'Steer current turn',
-				description: 'Queue guidance for the current teammate turn',
-			},
-		);
-	}
-	if (is_running || is_orphaned) {
-		items.push(
-			{
-				value: 'wait',
-				label: 'Wait for idle/offline',
-				description: 'Block until the teammate stops running',
-			},
-			{
-				value: 'shutdown',
-				label: 'Shutdown teammate',
-				description:
-					'Ask attached runner to stop or terminate safe orphan',
-			},
-		);
-	}
-
-	const selected = await show_picker_modal(ctx, {
-		title: member.name,
-		subtitle: `${member.role} • ${format_member_status(member)}`,
-		items,
-		footer: 'enter runs action • esc back',
-	});
-	return selected as TeamMemberModalAction | undefined;
-}
-
-export async function show_team_member_actions_modal(
-	ctx: ExtensionCommandContext,
-	store: TeamStore,
-	team_id: string,
-	runners: Map<string, RpcTeammate>,
-): Promise<void> {
-	while (true) {
-		const status = await get_team_status(store, team_id, runners);
-		const member_name = await show_team_member_picker(ctx, status, {
-			title: 'Teammate actions',
-			subtitle: `${status.team.name} • ${status.members.length} member(s)`,
-		});
-		if (!member_name) return;
-		const member = status.members.find(
-			(item) => item.name === member_name,
-		);
-		if (!member) continue;
-		const action = await show_team_member_action_modal(
-			ctx,
-			member,
-			runners.get(member.name),
-		);
-		if (!action) continue;
-		await run_member_modal_action(
-			ctx,
-			store,
-			team_id,
-			runners,
-			member.name,
-			action,
-		);
-	}
-}
-
-async function run_member_modal_action(
-	ctx: ExtensionCommandContext,
-	store: TeamStore,
-	team_id: string,
-	runners: Map<string, RpcTeammate>,
-	member_name: string,
-	action: TeamMemberModalAction,
-): Promise<void> {
-	if (action === 'dm') {
-		const body = await show_input_modal(ctx, {
-			title: `DM ${member_name}`,
-			label: 'Message',
-		});
-		if (!body) return;
-		const message = await store.send_message(team_id, {
-			from: 'lead',
-			to: member_name,
-			body,
-		});
-		const runner = runners.get(message.to);
-		if (runner?.is_running) {
-			await deliver_message_to_runner(
-				store,
-				team_id,
-				runner,
-				message,
-			);
-		}
-		ctx.ui.notify(`Sent ${message.id} to ${message.to}`);
-		return;
-	}
-
-	if (action === 'send' || action === 'steer') {
-		const prompt = await show_input_modal(ctx, {
-			title:
-				action === 'send'
-					? `Send prompt to ${member_name}`
-					: `Steer ${member_name}`,
-			label: action === 'send' ? 'Prompt' : 'Steering message',
-		});
-		if (!prompt) return;
-		const runner = runners.get(member_name);
-		if (!runner?.is_running)
-			throw new Error(`No running teammate: ${member_name}`);
-		if (action === 'send') await runner.prompt(prompt);
-		else await runner.steer(prompt);
-		ctx.ui.notify(
-			action === 'send'
-				? `Sent prompt to ${member_name}`
-				: `Steered ${member_name}`,
-		);
-		return;
-	}
-
-	if (action === 'wait') {
-		set_team_ui(ctx, store, team_id, runners);
-		ctx.ui.notify(
-			`${member_name} is running in the background; lead session is free`,
-		);
-		return;
-	}
-
-	const confirmed = await show_confirm_modal(ctx, {
-		title: `Shutdown ${member_name}?`,
-		message:
-			'Attached runners are asked to stop; safe orphaned teammate processes are terminated.',
-		confirm_label: 'Shutdown',
-	});
-	if (!confirmed) return;
-	const runner = runners.get(member_name);
-	if (runner?.is_running) {
-		await runner.shutdown('leader requested shutdown');
-		runners.delete(member_name);
-		await store.upsert_member(team_id, {
-			name: member_name,
-			status: 'offline',
-		});
-		ctx.ui.notify(`Shutdown requested for ${member_name}`);
-	} else {
-		const member = await shutdown_orphaned_member(
-			store,
-			team_id,
-			member_name,
-		);
-		ctx.ui.notify(
-			`Terminated orphaned teammate ${member_name}; status ${member.status}`,
-		);
-	}
-}
-
 export async function run_task_modal_action(
 	ctx: ExtensionCommandContext,
 	store: TeamStore,
@@ -761,154 +565,4 @@ export async function run_task_modal_action(
 		result: note || null,
 	});
 	ctx.ui.notify(`Updated task #${task_id} to ${next_status}`);
-}
-
-export async function show_team_dashboard_modal(
-	ctx: ExtensionCommandContext,
-	store: TeamStore,
-	status: TeamStatus,
-	runners: Map<string, RpcTeammate> = new Map(),
-): Promise<'close' | 'results'> {
-	let current_status = status;
-	const dashboard_lines = () =>
-		format_team_dashboard(current_status, {
-			team_dir: store.team_dir(current_status.team.id),
-			mailboxes: collect_team_mailboxes(store, current_status),
-			session_usage: collect_session_usage(current_status.members),
-		}).split('\n');
-
-	return await show_modal<'close' | 'results'>(
-		ctx,
-		{
-			title: 'Team dashboard',
-			subtitle: () =>
-				`${current_status.team.name} • ${format_status_counts(current_status)}`,
-			footer:
-				'live refresh • ↑↓ scroll • enter/s results • q/esc close',
-			overlay_options: { width: '90%', minWidth: 72 },
-		},
-		({ done }, theme, layout, tui) => {
-			let offset = 0;
-			let max_offset = 0;
-			let disposed = false;
-			let refreshing = false;
-			let refresh_queued = false;
-			const refresh = async () => {
-				if (disposed) return;
-				if (refreshing) {
-					refresh_queued = true;
-					return;
-				}
-				refreshing = true;
-				try {
-					current_status = await get_team_status(
-						store,
-						current_status.team.id,
-						runners,
-					);
-					tui.requestRender();
-				} catch {
-					// Keep showing the last known dashboard snapshot.
-				} finally {
-					refreshing = false;
-					if (refresh_queued) {
-						refresh_queued = false;
-						void refresh();
-					}
-				}
-			};
-			let watcher: FSWatcher | undefined;
-			try {
-				watcher = watch(
-					store.events_path(current_status.team.id),
-					{ persistent: false },
-					() => void refresh(),
-				);
-			} catch {
-				// If watching is unavailable, the dashboard still renders the
-				// snapshot captured when it opened.
-			}
-
-			return {
-				render: (width: number) => {
-					const rendered = dashboard_lines().map((line) => {
-						const styled = /^[A-Z][^:]+$/.test(line)
-							? theme.fg('accent', theme.bold(line))
-							: line;
-						return truncateToWidth(styled, width);
-					});
-					const budget = Math.max(
-						1,
-						layout.get_max_body_lines(width),
-					);
-					const visible_count =
-						rendered.length > budget
-							? Math.max(1, budget - 1)
-							: budget;
-					max_offset = Math.max(0, rendered.length - visible_count);
-					offset = Math.max(0, Math.min(offset, max_offset));
-					const end = Math.min(
-						offset + visible_count,
-						rendered.length,
-					);
-					const visible = rendered.slice(offset, end);
-					if (rendered.length > visible_count) {
-						visible.push(
-							theme.fg(
-								'dim',
-								truncateToWidth(
-									`(${offset + 1}-${end}/${rendered.length})`,
-									width,
-								),
-							),
-						);
-					}
-					return visible;
-				},
-				invalidate: () => undefined,
-				dispose: () => {
-					disposed = true;
-					watcher?.close();
-				},
-				handleInput: (data: string) => {
-					const keybindings = getKeybindings();
-					if (
-						keybindings.matches(data, 'tui.select.up') ||
-						data === 'k'
-					) {
-						offset = Math.max(0, offset - 1);
-					} else if (
-						keybindings.matches(data, 'tui.select.down') ||
-						data === 'j'
-					) {
-						offset = Math.min(max_offset, offset + 1);
-					} else if (matchesKey(data, Key.home)) {
-						offset = 0;
-					} else if (matchesKey(data, Key.end)) {
-						offset = max_offset;
-					} else if (matchesKey(data, Key.enter) || data === 's') {
-						done('results');
-					} else if (matchesKey(data, Key.escape) || data === 'q') {
-						done('close');
-					}
-				},
-			};
-		},
-	);
-}
-
-export function present_completed_task_results(
-	ctx: ExtensionCommandContext,
-	status: TeamStatus,
-): void {
-	const text = format_completed_task_results(status);
-	if (
-		has_modal_ui(ctx) &&
-		typeof ctx.ui.setEditorText === 'function'
-	) {
-		ctx.ui.setEditorText(text);
-		ctx.ui.notify('Inserted completed team results into the editor.');
-		return;
-	}
-	ctx.ui.notify(text);
 }
