@@ -1,5 +1,18 @@
 # @spences10/pi-team-mode
 
+## 0.0.31
+
+### Patch Changes
+
+- ed18144: Split team modal dashboard and member action flows into
+  focused helper modules with preserved exports.
+- 24950eb: Add modal coverage and extract shared team member picker to
+  remove duplicated refactor logic.
+- 50ccdcd: Split team store lock, type, member, task, and message
+  helpers into focused tested modules.
+- 4536a3a: Split team-mode tool executor task and message actions into
+  focused helper modules with co-located tests.
+
 ## 0.0.30
 
 ### Patch Changes
