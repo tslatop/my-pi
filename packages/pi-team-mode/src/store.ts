@@ -3,17 +3,13 @@ import {
 	mkdirSync,
 	readdirSync,
 	rmSync,
-	statSync,
 	writeFileSync,
 } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-import type { TeamProcessIdentity } from './process-identity.js';
 import {
-	delay,
 	is_pid_alive,
 	list_json_files,
 	normalize_member_name,
-	normalize_unique_ids,
 	now,
 	random_suffix,
 	read_json,
@@ -28,167 +24,47 @@ import {
 	validate_message,
 	validate_task,
 } from './store-validation.js';
-
-export type TeamMemberRole = 'lead' | 'teammate';
-export type TeamMemberStatus =
-	| 'idle'
-	| 'running'
-	| 'running_attached'
-	| 'running_orphaned'
-	| 'blocked'
-	| 'offline';
-export type TeamTaskStatus =
-	| 'pending'
-	| 'in_progress'
-	| 'blocked'
-	| 'completed'
-	| 'cancelled';
-export type TeamWorkspaceMode = 'shared' | 'worktree';
-
-export interface TeamConfig {
-	version: 1;
-	id: string;
-	name: string;
-	cwd: string;
-	created_at: string;
-	updated_at: string;
-	next_task_id: number;
-}
-
-export interface TeamMember {
-	name: string;
-	role: TeamMemberRole;
-	status: TeamMemberStatus;
-	cwd?: string;
-	model?: string;
-	profile?: string;
-	session_file?: string;
-	pid?: number;
-	process_identity?: TeamProcessIdentity;
-	workspace_mode?: TeamWorkspaceMode;
-	worktree_path?: string;
-	branch?: string;
-	mutating?: boolean;
-	last_seen_at: string;
-	created_at: string;
-	updated_at: string;
-}
-
-export interface TeamTask {
-	id: string;
-	title: string;
-	description?: string;
-	status: TeamTaskStatus;
-	assignee?: string;
-	depends_on: string[];
-	result?: string;
-	created_at: string;
-	updated_at: string;
-	completed_at?: string;
-}
-
-export interface TeamMessage {
-	id: string;
-	from: string;
-	to: string;
-	body: string;
-	urgent: boolean;
-	created_at: string;
-	reply_to?: string;
-	expires_at?: string;
-	requires_ack?: boolean;
-	delivered_at?: string;
-	read_at?: string;
-	acknowledged_at?: string;
-}
-
-export interface TeamEvent {
-	id: string;
-	type: string;
-	created_at: string;
-	data: unknown;
-}
-
-export interface CreateTeamInput {
-	name?: string;
-	cwd: string;
-	lead_name?: string;
-}
-
-export interface UpsertMemberInput {
-	name: string;
-	role?: TeamMemberRole;
-	status?: TeamMemberStatus;
-	cwd?: string;
-	model?: string;
-	profile?: string;
-	session_file?: string;
-	pid?: number;
-	process_identity?: TeamProcessIdentity;
-	workspace_mode?: TeamWorkspaceMode;
-	worktree_path?: string;
-	branch?: string;
-	mutating?: boolean;
-}
-
-export interface CreateTaskInput {
-	title: string;
-	description?: string;
-	assignee?: string;
-	depends_on?: string[];
-	status?: TeamTaskStatus;
-}
-
-export interface UpdateTaskInput {
-	title?: string;
-	description?: string | null;
-	status?: TeamTaskStatus;
-	assignee?: string | null;
-	depends_on?: string[];
-	result?: string | null;
-}
-
-export interface SendMessageInput {
-	from: string;
-	to: string;
-	body: string;
-	urgent?: boolean;
-	reply_to?: string;
-	ttl_ms?: number;
-	requires_ack?: boolean;
-}
-
-export interface TeamStatus {
-	team: TeamConfig;
-	members: TeamMember[];
-	tasks: TeamTask[];
-	counts: Record<TeamTaskStatus, number>;
-}
-
-const LOCK_STALE_AFTER_MS = 30_000;
-
-interface TeamLockInfo {
-	pid: number;
-	created_at: string;
-}
-
-function read_lock_info(lock: string): TeamLockInfo | undefined {
-	try {
-		return read_json<TeamLockInfo>(join(lock, 'owner.json'));
-	} catch {
-		return undefined;
-	}
-}
-
-function is_lock_stale(lock: string): boolean {
-	const info = read_lock_info(lock);
-	if (info?.pid) return !is_pid_alive(info.pid);
-	try {
-		return Date.now() - statSync(lock).mtimeMs > LOCK_STALE_AFTER_MS;
-	} catch {
-		return false;
-	}
-}
+import { with_file_lock } from './store/lock.js';
+import { build_member_record } from './store/member-record.js';
+import {
+	send_message,
+	update_messages,
+	wait_for_message,
+} from './store/message-store.js';
+import {
+	count_tasks,
+	validate_task_dependencies,
+} from './store/task-helpers.js';
+import type {
+	CreateTaskInput,
+	CreateTeamInput,
+	SendMessageInput,
+	TeamConfig,
+	TeamEvent,
+	TeamMember,
+	TeamMessage,
+	TeamStatus,
+	TeamTask,
+	UpdateTaskInput,
+	UpsertMemberInput,
+} from './store/types.js';
+export type {
+	CreateTaskInput,
+	CreateTeamInput,
+	SendMessageInput,
+	TeamConfig,
+	TeamEvent,
+	TeamMember,
+	TeamMemberRole,
+	TeamMemberStatus,
+	TeamMessage,
+	TeamStatus,
+	TeamTask,
+	TeamTaskStatus,
+	TeamWorkspaceMode,
+	UpdateTaskInput,
+	UpsertMemberInput,
+} from './store/types.js';
 
 export class TeamStore {
 	readonly root: string;
@@ -205,44 +81,15 @@ export class TeamStore {
 		return join(this.team_dir(team_id), '.lock');
 	}
 
-	private async with_team_lock<T>(
+	async with_team_lock<T>(
 		team_id: string,
 		fn: () => T | Promise<T>,
 	): Promise<T> {
-		const lock = this.lock_dir(team_id);
-		let acquired = false;
-		for (let attempt = 0; attempt < 250; attempt += 1) {
-			try {
-				mkdirSync(lock, { mode: 0o700 });
-				write_json(join(lock, 'owner.json'), {
-					pid: process.pid,
-					created_at: now(),
-				});
-				acquired = true;
-				break;
-			} catch (error) {
-				if (
-					!error ||
-					typeof error !== 'object' ||
-					!('code' in error) ||
-					error.code !== 'EEXIST'
-				) {
-					throw error;
-				}
-				if (is_lock_stale(lock)) {
-					rmSync(lock, { recursive: true, force: true });
-					continue;
-				}
-				await delay(10);
-			}
-		}
-		if (!acquired)
-			throw new Error(`Timed out locking team ${team_id}`);
-		try {
-			return await fn();
-		} finally {
-			rmSync(lock, { recursive: true, force: true });
-		}
+		return with_file_lock(
+			this.lock_dir(team_id),
+			`team ${team_id}`,
+			fn,
+		);
 	}
 
 	config_path(team_id: string): string {
@@ -338,7 +185,7 @@ export class TeamStore {
 		write_json(this.config_path(team.id), team);
 	}
 
-	private touch_team_unlocked(team_id: string): void {
+	touch_team_unlocked(team_id: string): void {
 		const team = this.load_team(team_id);
 		team.updated_at = now();
 		this.save_team(team);
@@ -355,56 +202,7 @@ export class TeamStore {
 		const existing = existsSync(path)
 			? read_json<TeamMember>(path)
 			: undefined;
-		const workspace_mode =
-			input.workspace_mode ?? existing?.workspace_mode;
-		const worktree_path =
-			workspace_mode === 'worktree'
-				? (input.worktree_path ?? existing?.worktree_path)
-				: undefined;
-		const branch =
-			workspace_mode === 'worktree'
-				? (input.branch ?? existing?.branch)
-				: undefined;
-		const member: TeamMember = {
-			name,
-			role: input.role ?? existing?.role ?? 'teammate',
-			status: input.status ?? existing?.status ?? 'idle',
-			...((input.cwd ?? existing?.cwd)
-				? { cwd: input.cwd ?? existing?.cwd }
-				: {}),
-			...((input.model ?? existing?.model)
-				? { model: input.model ?? existing?.model }
-				: {}),
-			...((input.profile ?? existing?.profile)
-				? { profile: input.profile ?? existing?.profile }
-				: {}),
-			...((input.session_file ?? existing?.session_file)
-				? {
-						session_file:
-							input.session_file ?? existing?.session_file,
-					}
-				: {}),
-			...((input.pid ?? existing?.pid)
-				? { pid: input.pid ?? existing?.pid }
-				: {}),
-			...((input.process_identity ?? existing?.process_identity)
-				? {
-						process_identity:
-							input.process_identity ?? existing?.process_identity,
-					}
-				: {}),
-			...(workspace_mode ? { workspace_mode: workspace_mode } : {}),
-			...(worktree_path ? { worktree_path: worktree_path } : {}),
-			...(branch ? { branch } : {}),
-			...(input.mutating !== undefined
-				? { mutating: input.mutating }
-				: existing?.mutating
-					? { mutating: existing.mutating }
-					: {}),
-			last_seen_at: timestamp,
-			created_at: existing?.created_at ?? timestamp,
-			updated_at: timestamp,
-		};
+		const member = build_member_record(input, existing, timestamp);
 		write_json(path, member);
 		this.touch_team_unlocked(team_id);
 		this.append_event(
@@ -494,8 +292,8 @@ export class TeamStore {
 			const team = this.load_team(team_id);
 			const timestamp = now();
 			const id = String(team.next_task_id);
-			const depends_on = this.validate_task_dependencies(
-				team_id,
+			const depends_on = validate_task_dependencies(
+				this.list_tasks(team_id),
 				id,
 				input.depends_on,
 			);
@@ -540,49 +338,6 @@ export class TeamStore {
 		return read_json<TeamTask>(path);
 	}
 
-	private validate_task_dependencies(
-		team_id: string,
-		task_id: string,
-		depends_on: string[] | undefined,
-	): string[] {
-		const normalized = normalize_unique_ids(depends_on);
-		if (normalized.includes(task_id)) {
-			throw new Error(`Task #${task_id} cannot depend on itself`);
-		}
-
-		const tasks = new Map(
-			this.list_tasks(team_id).map((task) => [task.id, task]),
-		);
-		for (const dep_id of normalized) {
-			if (!tasks.has(dep_id)) {
-				throw new Error(`Unknown dependency task: ${dep_id}`);
-			}
-		}
-
-		const reaches_task = (
-			current_id: string,
-			seen = new Set<string>(),
-		): boolean => {
-			if (current_id === task_id) return true;
-			if (seen.has(current_id)) return false;
-			seen.add(current_id);
-			const current = tasks.get(current_id);
-			if (!current) return false;
-			return current.depends_on.some((dep_id) =>
-				reaches_task(dep_id, seen),
-			);
-		};
-
-		for (const dep_id of normalized) {
-			if (reaches_task(dep_id)) {
-				throw new Error(
-					`Task dependency cycle detected for #${task_id}`,
-				);
-			}
-		}
-		return normalized;
-	}
-
 	private update_task_unlocked(
 		team_id: string,
 		task_id: string,
@@ -617,8 +372,8 @@ export class TeamStore {
 				);
 		}
 		if (input.depends_on !== undefined) {
-			task.depends_on = this.validate_task_dependencies(
-				team_id,
+			task.depends_on = validate_task_dependencies(
+				this.list_tasks(team_id),
 				task.id,
 				input.depends_on,
 			);
@@ -693,44 +448,7 @@ export class TeamStore {
 		team_id: string,
 		input: SendMessageInput,
 	): Promise<TeamMessage> {
-		return this.with_team_lock(team_id, () => {
-			if (!input.body.trim())
-				throw new Error('Message body is required');
-			this.load_team(team_id);
-			const timestamp = now();
-			const from = require_member_name(input.from, 'from');
-			const to = require_member_name(input.to, 'to');
-			const message: TeamMessage = {
-				id: `${Date.now().toString(36)}-${random_suffix()}`,
-				from,
-				to,
-				body: input.body.trim(),
-				urgent: input.urgent ?? false,
-				created_at: timestamp,
-			};
-			if (input.reply_to?.trim()) {
-				const reply_to = input.reply_to.trim();
-				if (safe_segment(reply_to) !== reply_to) {
-					throw new Error(`Invalid reply_to message id: ${reply_to}`);
-				}
-				message.reply_to = reply_to;
-			}
-			if (input.ttl_ms && input.ttl_ms > 0) {
-				message.expires_at = new Date(
-					Date.parse(timestamp) + input.ttl_ms,
-				).toISOString();
-			}
-			if (input.requires_ack !== undefined) {
-				message.requires_ack = input.requires_ack;
-			}
-			write_json(
-				join(this.mailbox_dir(team_id, to), `${message.id}.json`),
-				message,
-			);
-			this.touch_team_unlocked(team_id);
-			this.append_event(team_id, 'message_sent', { message });
-			return message;
-		});
+		return send_message(this, team_id, input);
 	}
 
 	list_messages(team_id: string, member: string): TeamMessage[] {
@@ -751,37 +469,7 @@ export class TeamStore {
 			include_read?: boolean;
 		} = {},
 	): Promise<TeamMessage | undefined> {
-		const normalized_member = require_member_name(member);
-		const from = options.from
-			? require_member_name(options.from, 'from')
-			: undefined;
-		const reply_to = options.reply_to?.trim();
-		if (reply_to && safe_segment(reply_to) !== reply_to) {
-			throw new Error(`Invalid reply_to message id: ${reply_to}`);
-		}
-		const timeout_ms = Math.max(0, options.timeout_ms ?? 30_000);
-		const deadline = Date.now() + timeout_ms;
-		for (;;) {
-			const timestamp = Date.now();
-			const message = this.list_messages(
-				team_id,
-				normalized_member,
-			).find((item) => {
-				if (!options.include_read && item.read_at) return false;
-				if (reply_to && item.reply_to !== reply_to) return false;
-				if (from && item.from !== from) return false;
-				if (
-					item.expires_at &&
-					Date.parse(item.expires_at) <= timestamp
-				) {
-					return false;
-				}
-				return true;
-			});
-			if (message) return message;
-			if (timestamp >= deadline) return undefined;
-			await delay(Math.min(250, deadline - timestamp));
-		}
+		return wait_for_message(this, team_id, member, options);
 	}
 
 	async mark_messages_delivered(
@@ -854,36 +542,13 @@ export class TeamStore {
 		message_ids: string[] | undefined,
 		update: (message: TeamMessage, timestamp: string) => void,
 	): Promise<TeamMessage[]> {
-		return this.with_team_lock(team_id, () => {
-			const normalized_member = require_member_name(member);
-			const id_filter = message_ids
-				? new Set(message_ids.map((id) => safe_segment(id)))
-				: undefined;
-			const messages = this.list_messages(team_id, normalized_member);
-			const timestamp = now();
-			const changed: TeamMessage[] = [];
-			for (const message of messages) {
-				if (id_filter && !id_filter.has(message.id)) continue;
-				const before = JSON.stringify(message);
-				update(message, timestamp);
-				if (JSON.stringify(message) === before) continue;
-				write_json(
-					join(
-						this.mailbox_dir(team_id, normalized_member),
-						`${message.id}.json`,
-					),
-					message,
-				);
-				changed.push(message);
-			}
-			if (changed.length > 0) {
-				this.append_event(team_id, 'messages_updated', {
-					member: normalized_member,
-					messages: changed,
-				});
-			}
-			return messages;
-		});
+		return update_messages(
+			this,
+			team_id,
+			member,
+			message_ids,
+			update,
+		);
 	}
 
 	async get_status(
@@ -897,15 +562,7 @@ export class TeamStore {
 		const team = this.load_team(team_id);
 		const members = this.list_members(team_id);
 		const tasks = this.list_tasks(team_id);
-		const counts: Record<TeamTaskStatus, number> = {
-			pending: 0,
-			in_progress: 0,
-			blocked: 0,
-			completed: 0,
-			cancelled: 0,
-		};
-		for (const task of tasks) counts[task.status] += 1;
-		return { team, members, tasks, counts };
+		return { team, members, tasks, counts: count_tasks(tasks) };
 	}
 
 	append_event(
