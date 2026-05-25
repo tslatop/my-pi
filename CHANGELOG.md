@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.71
+
+### Patch Changes
+
+- 70acfd4: Store default prompt presets as markdown files and edit
+  selected presets directly from the inspector.
+
 ## 0.1.70
 
 ### Patch Changes
