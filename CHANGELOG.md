@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.69
+
+### Patch Changes
+
+- 58d1119: Move handoff into built-in helper and add primitive-check
+  skill to prevent redundant Pi abstractions.
+
 ## 0.1.68
 
 ## 0.1.67
