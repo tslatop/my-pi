@@ -17,7 +17,6 @@ const support_packages = new Set([
 ]);
 
 const lightweight_packages = new Set([
-	'@spences10/pi-handoff',
 	'@spences10/pi-nopeek',
 	'@spences10/pi-omnisearch',
 	'@spences10/pi-recall',

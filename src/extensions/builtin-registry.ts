@@ -326,14 +326,14 @@ export const BUILTIN_EXTENSION_REGISTRY = [
 		label: 'Handoff',
 		docs_label: 'Handoff',
 		description:
-			'Prompt shim for portable handoffs to later sessions and teammates',
+			'Help command for Pi continuation primitives like /fork, /tree, /export, /import, and /share',
 		default_enabled: true,
 		option_name: 'handoff',
 		cli_arg: 'no-handoff',
 		cli_flag: '--no-handoff',
-		cli_description: 'Disable handoff prompt guidance',
+		cli_description: 'Disable handoff helper command',
 		aliases: ['handoff', 'continuation'],
-		load: async () => (await import('@spences10/pi-handoff')).default,
+		load: async () => (await import('./handoff/index.js')).default,
 	},
 	{
 		key: 'team-mode',

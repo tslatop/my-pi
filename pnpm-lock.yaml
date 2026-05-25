@@ -55,9 +55,6 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
         version: 0.75.4
-      '@spences10/pi-handoff':
-        specifier: workspace:*
-        version: link:packages/pi-handoff
       '@spences10/pi-project-trust':
         specifier: workspace:*
         version: link:packages/pi-project-trust
@@ -358,21 +355,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
-
-  packages/pi-handoff:
-    devDependencies:
-      '@earendil-works/pi-coding-agent':
-        specifier: 'catalog:'
-        version: 0.75.4(ws@8.20.1)(zod@4.4.3)
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.7(@types/node@25.9.1)(@vitest/browser-playwright@4.1.7)(@vitest/coverage-v8@4.1.7(@vitest/browser@4.1.7)(vitest@4.1.7))(vite@8.0.14(@types/node@25.9.1)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
 
   packages/pi-lsp:
     dependencies:
