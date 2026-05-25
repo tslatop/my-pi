@@ -1,5 +1,14 @@
 # my-pi
 
+## 0.1.70
+
+### Patch Changes
+
+- be20144: Add a Karpathy prompt layer for simple, surgical, verified
+  code changes.
+- 2b26305: Replace prompt preset settings selector with inspector
+  showing selectable presets and effective prompt preview.
+
 ## 0.1.69
 
 ### Patch Changes
