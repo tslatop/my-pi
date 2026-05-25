@@ -46,4 +46,11 @@ export const DEFAULT_PROMPT_PRESETS: PromptPresetMap = {
 		instructions:
 			'When making a recommendation or implementation plan, briefly mention the key risk, tradeoff, or caveat if one materially matters.',
 	},
+	karpathy: {
+		kind: 'layer',
+		description:
+			'Bias toward simple, surgical, verified code changes',
+		instructions:
+			'Before coding, state assumptions when unclear and surface meaningful tradeoffs. Prefer the minimum code that solves the request; avoid speculative abstractions, flexibility, and unrelated cleanup. Make surgical changes: touch only lines directly tied to the task, match existing style, and mention unrelated issues instead of fixing them. For multi-step work, use brief success criteria and verify with focused checks before reporting.',
+	},
 };
