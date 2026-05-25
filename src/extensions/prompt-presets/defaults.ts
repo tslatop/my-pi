@@ -1,56 +1,46 @@
-import type { PromptPresetMap } from './types.js';
+import { parseFrontmatter } from '@earendil-works/pi-coding-agent';
+import type { PromptPreset, PromptPresetMap } from './types.js';
+
+import bullets from './defaults/bullets.md';
+import clarify_first from './defaults/clarify-first.md';
+import detailed from './defaults/detailed.md';
+import include_risks from './defaults/include-risks.md';
+import karpathy from './defaults/karpathy.md';
+import no_purple_prose from './defaults/no-purple-prose.md';
+import standard from './defaults/standard.md';
+import terse from './defaults/terse.md';
 
 export const DEFAULT_BASE_PROMPT_PRESET_NAME = 'terse';
 
-export const DEFAULT_PROMPT_PRESETS: PromptPresetMap = {
-	terse: {
-		kind: 'base',
-		description: 'Short, direct, no fluff',
-		instructions:
-			"Be concise and direct. Default to the shortest response that fully solves the user's request. Use at most one short paragraph or 3 bullets unless the user explicitly asks for detail. For implementation reports, include only what changed, validation, and the next step if relevant. No purple prose, no filler, no repetitive caveats.",
-	},
-	standard: {
-		kind: 'base',
-		description: 'Clear and concise with key context',
-		instructions:
-			'Be clear, direct, and concise. Include only the reasoning and implementation details that matter. Avoid filler, grandstanding, and ornamental language. Use bullets when they improve scanability.',
-	},
-	detailed: {
-		kind: 'base',
-		description: 'More explanation when nuance matters',
-		instructions:
-			'Be thorough when the task is complex or tradeoffs matter, but stay practical. Explain only the details that help the user decide, verify, or implement. Avoid purple prose and unnecessary scene-setting.',
-	},
-	'no-purple-prose': {
-		kind: 'layer',
-		description: 'Strip out ornamental language',
-		instructions:
-			'Do not use purple prose, flourish, motivational filler, or theatrical transitions. Prefer plain language and concrete statements.',
-	},
-	bullets: {
-		kind: 'layer',
-		description: 'Prefer short bullets when useful',
-		instructions:
-			'When presenting options, findings, or steps, prefer short bullet lists over long paragraphs.',
-	},
-	'clarify-first': {
-		kind: 'layer',
-		description:
-			'Ask brief clarifying questions when requirements are ambiguous',
-		instructions:
-			'If the request is materially ambiguous, ask the minimum clarifying question(s) needed before proceeding. Do not ask unnecessary questions.',
-	},
-	'include-risks': {
-		kind: 'layer',
-		description: 'Call out notable risks or tradeoffs',
-		instructions:
-			'When making a recommendation or implementation plan, briefly mention the key risk, tradeoff, or caveat if one materially matters.',
-	},
-	karpathy: {
-		kind: 'layer',
-		description:
-			'Bias toward simple, surgical, verified code changes',
-		instructions:
-			'Before coding, state assumptions when unclear and surface meaningful tradeoffs. Prefer the minimum code that solves the request; avoid speculative abstractions, flexibility, and unrelated cleanup. Make surgical changes: touch only lines directly tied to the task, match existing style, and mention unrelated issues instead of fixing them. For multi-step work, use brief success criteria and verify with focused checks before reporting.',
-	},
-};
+const DEFAULT_PROMPT_PRESET_FILES = {
+	terse,
+	standard,
+	detailed,
+	'no-purple-prose': no_purple_prose,
+	bullets,
+	'clarify-first': clarify_first,
+	'include-risks': include_risks,
+	karpathy,
+} satisfies Record<string, string>;
+
+function parse_default_prompt_preset(content: string): PromptPreset {
+	const { frontmatter, body } = parseFrontmatter(content);
+	return {
+		kind: frontmatter.kind === 'layer' ? 'layer' : 'base',
+		instructions: body.trim(),
+		...(typeof frontmatter.description === 'string' &&
+		frontmatter.description.trim()
+			? { description: frontmatter.description.trim() }
+			: {}),
+	};
+}
+
+export const DEFAULT_PROMPT_PRESETS: PromptPresetMap =
+	Object.fromEntries(
+		Object.entries(DEFAULT_PROMPT_PRESET_FILES).map(
+			([name, content]) => [
+				name,
+				parse_default_prompt_preset(content),
+			],
+		),
+	);

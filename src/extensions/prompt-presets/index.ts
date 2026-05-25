@@ -3,7 +3,7 @@ import {
 	type ExtensionCommandContext,
 	type ExtensionContext,
 } from '@earendil-works/pi-coding-agent';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
 	format_active_details,
 	format_summary,
@@ -25,11 +25,13 @@ import {
 	persist_state,
 } from './state.js';
 import {
+	format_prompt_preset_markdown,
 	get_global_presets_dir,
 	get_project_presets_dir,
 	get_prompt_preset_file_path,
 	load_persisted_prompt_state,
 	load_prompt_presets,
+	parse_prompt_preset_markdown,
 	remove_project_prompt_preset,
 	save_global_prompt_preset_file,
 	save_project_prompt_preset_file,
@@ -175,45 +177,47 @@ export default async function prompt_presets(pi: ExtensionAPI) {
 		scope: 'project' | 'global' = 'project',
 	): Promise<void> {
 		const existing = presets[name];
-		const kind_choice = await ctx.ui.select('Preset kind', [
-			existing?.kind === 'layer'
-				? 'layer (current)'
-				: 'base (current)',
-			existing?.kind === 'layer' ? 'base' : 'layer',
-		]);
-		if (!kind_choice) return;
-		const kind: PromptPresetKind = kind_choice.startsWith('layer')
-			? 'layer'
-			: 'base';
+		const dir =
+			scope === 'global'
+				? get_global_presets_dir()
+				: get_project_presets_dir(ctx.cwd);
+		const path = get_prompt_preset_file_path(dir, name);
+		const initial_markdown = existsSync(path)
+			? readFileSync(path, 'utf-8')
+			: format_prompt_preset_markdown({
+					kind: existing?.kind ?? 'layer',
+					instructions: existing?.instructions ?? '',
+					...(existing?.description
+						? { description: existing.description }
+						: {}),
+				});
 
-		const description = await ctx.ui.input(
-			`Description for ${name}`,
-			existing?.description ?? '',
+		const edited = await ctx.ui.editor(
+			`Edit ${scope} preset markdown: ${name}`,
+			initial_markdown,
 		);
-		if (description === undefined) return;
+		if (edited === undefined) return;
 
-		const instructions = await ctx.ui.editor(
-			`Edit ${kind} preset: ${name}`,
-			existing?.instructions ?? '',
-		);
-		if (instructions === undefined) return;
+		const { metadata, body } = parse_prompt_preset_markdown(edited);
+		if (!body.trim()) {
+			ctx.ui.notify('Preset instructions cannot be empty', 'warning');
+			return;
+		}
+		const kind: PromptPresetKind =
+			metadata.kind === 'base' ? 'base' : 'layer';
+		const preset = {
+			kind,
+			instructions: body,
+			...(typeof metadata.description === 'string' &&
+			metadata.description.trim()
+				? { description: metadata.description.trim() }
+				: {}),
+		};
 
 		const saved_path =
 			scope === 'global'
-				? save_global_prompt_preset_file(name, {
-						kind,
-						instructions,
-						...(description.trim()
-							? { description: description.trim() }
-							: {}),
-					})
-				: save_project_prompt_preset_file(ctx.cwd, name, {
-						kind,
-						instructions,
-						...(description.trim()
-							? { description: description.trim() }
-							: {}),
-					});
+				? save_global_prompt_preset_file(name, preset)
+				: save_project_prompt_preset_file(ctx.cwd, name, preset);
 
 		presets = load_prompt_presets(ctx.cwd);
 		const normalized = normalize_active_state(
@@ -322,6 +326,9 @@ export default async function prompt_presets(pi: ExtensionAPI) {
 				commit_state(ctx, selected_base, enabled_layers, {
 					notify: 'Updated prompt preset selection',
 				});
+			},
+			async (name, scope) => {
+				await edit_preset(name, ctx, scope);
 			},
 		);
 	}

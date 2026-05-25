@@ -153,7 +153,7 @@ function read_prompt_presets_file(path: string): PromptPresetMap {
 	}
 }
 
-function parse_prompt_preset_markdown(content: string): {
+export function parse_prompt_preset_markdown(content: string): {
 	metadata: Record<string, unknown>;
 	body: string;
 } {
@@ -192,7 +192,9 @@ export function read_prompt_presets_dir(
 	}
 }
 
-function format_prompt_preset_markdown(preset: PromptPreset): string {
+export function format_prompt_preset_markdown(
+	preset: PromptPreset,
+): string {
 	const lines = [
 		'---',
 		`kind: ${preset.kind === 'layer' ? 'layer' : 'base'}`,

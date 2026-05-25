@@ -23,10 +23,13 @@ export interface PromptPresetManagerState {
 	active_layers: ReadonlySet<string>;
 }
 
-type PromptPresetManagerResult = {
-	base_name: string | undefined;
-	layers: ReadonlySet<string>;
-};
+export type PromptPresetManagerResult =
+	| {
+			action: 'apply';
+			base_name: string | undefined;
+			layers: ReadonlySet<string>;
+	  }
+	| { action: 'edit'; name: string; scope: 'project' | 'global' };
 
 type PresetRow =
 	| { type: 'header'; id: string; label: string }
@@ -40,6 +43,10 @@ export async function show_prompt_preset_manager(
 		base_name: string | undefined,
 		layers: ReadonlySet<string>,
 	) => void,
+	on_edit?: (
+		name: string,
+		scope: 'project' | 'global',
+	) => Promise<void>,
 ): Promise<void> {
 	const base_presets = list_base_presets(state.presets);
 	const layer_presets = list_layer_presets(state.presets);
@@ -57,7 +64,7 @@ export async function show_prompt_preset_manager(
 			subtitle: () =>
 				`base: ${state.active_base_name ?? '(none)'} • ${state.active_layers.size} layer(s) currently active`,
 			footer:
-				'↑↓ navigate • space toggle/select • tab item/effective preview • enter apply • c clear • esc cancel',
+				'↑↓ navigate • space toggle/select • tab preview • e edit project • E edit global • enter apply • esc cancel',
 			overlay_options: {
 				width: '92%',
 				minWidth: 72,
@@ -74,6 +81,10 @@ export async function show_prompt_preset_manager(
 	);
 
 	if (!result) return;
+	if (result.action === 'edit') {
+		await on_edit?.(result.name, result.scope);
+		return;
+	}
 	if (
 		result.base_name !== state.active_base_name ||
 		!sets_equal(new Set(state.active_layers), result.layers)
@@ -161,6 +172,7 @@ class PromptPresetInspectorBody implements Component {
 		} else if (data === ' ' || matchesKey(data, Key.enter)) {
 			if (matchesKey(data, Key.enter)) {
 				this.done({
+					action: 'apply',
 					base_name: this.selected_base,
 					layers: new Set(this.enabled_layers),
 				});
@@ -178,9 +190,19 @@ class PromptPresetInspectorBody implements Component {
 			this.preview_offset = 0;
 		} else if (data === 'a') {
 			this.done({
+				action: 'apply',
 				base_name: this.selected_base,
 				layers: new Set(this.enabled_layers),
 			});
+		} else if (data === 'e' || data === 'E') {
+			const row = this.rows[this.selected_index];
+			if (row?.type === 'preset') {
+				this.done({
+					action: 'edit',
+					name: row.preset.name,
+					scope: data === 'E' ? 'global' : 'project',
+				});
+			}
 		} else if (matchesKey(data, Key.escape) || data === 'q') {
 			this.done(undefined);
 		} else if (data === 'J') {
