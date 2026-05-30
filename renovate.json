@@ -6,9 +6,12 @@
 		{
 			"description": "Keep Pi packages aligned across workspace packages",
 			"matchManagers": ["npm"],
-			"matchPackageNames": ["/^@mariozechner\\//"],
+			"matchPackageNames": [
+				"/^@earendil-works\\//",
+				"/^@mariozechner\\//"
+			],
 			"groupName": "Pi packages",
-			"groupSlug": "mariozechner-pi"
+			"groupSlug": "pi-packages"
 		},
 		{
 			"description": "Do not open PRs for temporary/security pins in pnpm-workspace overrides",
