@@ -7,20 +7,23 @@ settings:
 catalogs:
   default:
     '@earendil-works/pi-ai':
-      specifier: 0.76.0
-      version: 0.76.0
+      specifier: 0.77.0
+      version: 0.77.0
     '@earendil-works/pi-coding-agent':
-      specifier: 0.76.0
-      version: 0.76.0
+      specifier: 0.77.0
+      version: 0.77.0
     '@earendil-works/pi-tui':
-      specifier: 0.76.0
-      version: 0.76.0
+      specifier: 0.77.0
+      version: 0.77.0
     '@types/node':
       specifier: ^25.8.0
       version: 25.9.1
     '@vitest/coverage-v8':
       specifier: 4.1.7
       version: 4.1.7
+    typebox:
+      specifier: ^1.1.38
+      version: 1.1.39
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -45,13 +48,13 @@ importers:
     dependencies:
       '@earendil-works/pi-ai':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@spences10/pi-project-trust':
         specifier: workspace:*
         version: link:packages/pi-project-trust
@@ -252,7 +255,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -267,7 +270,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -295,7 +298,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -317,13 +320,13 @@ importers:
     devDependencies:
       '@earendil-works/pi-ai':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -342,10 +345,10 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -370,7 +373,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -401,7 +404,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -416,7 +419,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -431,7 +434,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -465,7 +468,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -480,10 +483,10 @@ importers:
     devDependencies:
       '@earendil-works/pi-ai':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -498,7 +501,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -517,10 +520,10 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -542,10 +545,10 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -560,7 +563,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -579,7 +582,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -607,13 +610,13 @@ importers:
     devDependencies:
       '@earendil-works/pi-ai':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -635,7 +638,7 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -652,10 +655,10 @@ importers:
     devDependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 'catalog:'
-        version: 0.76.0(ws@8.20.1)(zod@4.4.3)
+        version: 0.77.0(ws@8.20.1)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 'catalog:'
-        version: 0.76.0
+        version: 0.77.0
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1
@@ -912,8 +915,8 @@ packages:
     resolution: {integrity: sha512-LHygOgsW2pgXKb3IkXkOAeZPovHr9VF+EixgXVsDNuB4jmhEOXgshy/zksZ7slkUAx10OQ9W1Ed/2jsnhd1NqA==}
     engines: {node: '>=22.19.0'}
 
-  '@earendil-works/pi-agent-core@0.76.0':
-    resolution: {integrity: sha512-gNfR+ScnyAKr/13K8129svRBwO48jIK4jBHZRLaj3l4inKRkCRyCGs6hZnyQCYeiVNbBt1Jcjvb7osss44Q9xw==}
+  '@earendil-works/pi-agent-core@0.77.0':
+    resolution: {integrity: sha512-l/mYLJPjpgiPDmcfnFIGdOBqICkWaf8IawCdAbae5guBrPXg+Z0o84l9OuHyRJPOb8RfedeGg8DtSnq8t7grOg==}
     engines: {node: '>=22.19.0'}
 
   '@earendil-works/pi-ai@0.75.5':
@@ -921,8 +924,8 @@ packages:
     engines: {node: '>=22.19.0'}
     hasBin: true
 
-  '@earendil-works/pi-ai@0.76.0':
-    resolution: {integrity: sha512-RO/L80iTxkK/nM2s5IVuirjH04UBsVzFfAT0qVcP/VwtDe9pjpqL+BVqb3XTyfitTD9tBo/hQuKmagN8Ep5qZA==}
+  '@earendil-works/pi-ai@0.77.0':
+    resolution: {integrity: sha512-H21BrQDPf3ydaeBmS5maNDHxUGFMiKBF/n3WnE+OTWloIZSayeL+/NVEgG3aKQw8fZL6HAMYAGpUIVJgFuKtnw==}
     engines: {node: '>=22.19.0'}
     hasBin: true
 
@@ -931,8 +934,8 @@ packages:
     engines: {node: '>=22.19.0'}
     hasBin: true
 
-  '@earendil-works/pi-coding-agent@0.76.0':
-    resolution: {integrity: sha512-vTnKbgw1rDQq2MD+vcWgyYvEPMV4mMb07tZZMS7FOvlS5t/jzIX9smC+k97YGpfl8dT+L9Uj+MYyvYSBXVaEHw==}
+  '@earendil-works/pi-coding-agent@0.77.0':
+    resolution: {integrity: sha512-huS+k+dhQRR9PlTK7crLfeSRUw3a96V6JYfP0ZH3Zkko/m10gsYk8dKQmwScSy5Dll516pXorz19BURfD6S2qQ==}
     engines: {node: '>=22.19.0'}
     hasBin: true
 
@@ -940,8 +943,8 @@ packages:
     resolution: {integrity: sha512-LkXUM1/49pvzzeI39Y5wjBMlgafcCf67HCLhB9Z7yuXHy4XgT+VqxWcZVW5hBdhQsHZd0znjJotfGH1BzxMfiA==}
     engines: {node: '>=22.19.0'}
 
-  '@earendil-works/pi-tui@0.76.0':
-    resolution: {integrity: sha512-TWQEWqc38gVRYr/VTrlfePQPpJk938gNNLL1xuv0M+9cTkVr880/Q3baZQrxKoLrmN/MmVx7TyR8knYZGxTqqg==}
+  '@earendil-works/pi-tui@0.77.0':
+    resolution: {integrity: sha512-QV/eYtcT3hM9pJjLCkjUFOUmgAm4GPzJ0K4kofVq9+BGU7wNJVzflTO4VY2tYpaI4VSo6A5Hsuw00wY/CDmY/Q==}
     engines: {node: '>=22.19.0'}
 
   '@emnapi/core@1.10.0':
@@ -1326,8 +1329,19 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
+  '@mariozechner/clipboard-darwin-arm64@0.3.9':
+    resolution: {integrity: sha512-BfgV7vCEWZwJwZJw03r6bP5+tf0iI/ANuQYCxi9RNn7FrWB3yzGuMKCrNLRl6V761vXRdL8+OqZ0wd4TqlsNOQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
   '@mariozechner/clipboard-darwin-universal@0.3.6':
     resolution: {integrity: sha512-8BWtPjOtJOJoykml3w0fx0zRrfWP31mXrJwfoA7xzNprkZw1uolCNfgmjDiVBseoKjp16EGITz7bN+61qn8dWA==}
+    engines: {node: '>= 10'}
+    os: [darwin]
+
+  '@mariozechner/clipboard-darwin-universal@0.3.9':
+    resolution: {integrity: sha512-BGGR4iA9Z2shAjI65eI5xtyb3LYNlDW9X3gxKxDbqtbnREohsrqznov6zpKoIrsRWpzlYVEdKphS7ksJ0/ndSQ==}
     engines: {node: '>= 10'}
     os: [darwin]
 
@@ -1337,8 +1351,21 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@mariozechner/clipboard-darwin-x64@0.3.9':
+    resolution: {integrity: sha512-4kURmCbS6nt8uYhtmWpUcJWyPHfmAr5dTpXD1nO3pIfa+TSQ9DbrGOYCKH+aEFW47XhQ4Vp8ZTszie+wfFvDKg==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
   '@mariozechner/clipboard-linux-arm64-gnu@0.3.6':
     resolution: {integrity: sha512-5JFf5rGofrm+V29HNF+wLthXphHdQpMbKDUYJ5tML6/Z5DLlLOV/9Ak4kDPtYyZ+Dzf+kAusE0VsFg4+tfP1IA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@mariozechner/clipboard-linux-arm64-gnu@0.3.9':
+    resolution: {integrity: sha512-g59OkUGP2DDfCOIKypHeYgv2M55u/cKvXa5dSxFbEJ34XvIQMdcVmpKCkGUro3ZgefXiGVdwguvTMQGpHWzIXw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -1351,8 +1378,22 @@ packages:
     os: [linux]
     libc: [musl]
 
+  '@mariozechner/clipboard-linux-arm64-musl@0.3.9':
+    resolution: {integrity: sha512-AGuJdgKsmJdm4Pych7kv3sqe591ERRaAHW3xjLooiFzn8J+PxUyof++7YZrB5Y5tpnTO+K18Og3taj2NpluCRQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
   '@mariozechner/clipboard-linux-riscv64-gnu@0.3.6':
     resolution: {integrity: sha512-4t8BUi5zZ+L77otFQVnVSlaTyAX4TVk9EqQm4syMrEQp96trFEHEwwNHcNEBGzYv5+K7mxay50TthYkz47OWzQ==}
+    engines: {node: '>= 10'}
+    cpu: [riscv64]
+    os: [linux]
+    libc: [glibc]
+
+  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.9':
+    resolution: {integrity: sha512-DXBEAiuMpk7dhS1a9NzNxVAFi1vaKoPu7rQNgY8LIDLGrK3lnIp3nT10DUum+PKVJoJppIP+NAA8IZe4DMNDPw==}
     engines: {node: '>= 10'}
     cpu: [riscv64]
     os: [linux]
@@ -1365,8 +1406,22 @@ packages:
     os: [linux]
     libc: [glibc]
 
+  '@mariozechner/clipboard-linux-x64-gnu@0.3.9':
+    resolution: {integrity: sha512-WORrMLd6EpElEME7JRKfSaY34nW1P5LbdgK5YNCS1ncG2LqmITsSMEJ8nh2mpvxb3TxqbOOKgY7k9eMJYlW9Mw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
   '@mariozechner/clipboard-linux-x64-musl@0.3.6':
     resolution: {integrity: sha512-WfnzIvOCCWQiN0MmltCEo6cLceUDbYe+I7xyFZjaps5A+2Op/M2CY7Rey+C4ucQhrvmpoHmTSFgY9ODWk7snoA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@mariozechner/clipboard-linux-x64-musl@0.3.9':
+    resolution: {integrity: sha512-/DHn+1DrfL6oRaPPWXaOKvonFFrni666fxd+zFqiQEfvBH0tsHVWjq9iqBk0oDp0qaPA72lIMy5BptxISBEhZQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -1378,14 +1433,30 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@mariozechner/clipboard-win32-arm64-msvc@0.3.9':
+    resolution: {integrity: sha512-O5FHD3ErkMwMhNzAfu3ggy0ug4z7btZuoQgwwxlzPrwV2bxlD6WDpqBY4NCgICAgZdDKdp+loUEKVAVt8aYnhQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
   '@mariozechner/clipboard-win32-x64-msvc@0.3.6':
     resolution: {integrity: sha512-S4xfPmERC8ZkiLHe3vekZCjdDwNEETCuvCgQK2kP6/TnvmUkq1y2Pk+DjM4t8uh9KMX9bH4zs5ePcKa8GTXmfg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
 
+  '@mariozechner/clipboard-win32-x64-msvc@0.3.9':
+    resolution: {integrity: sha512-ihQC3EufqEY81vhXBgVBtK4prL+wc62zJsSvxrgz7K1hsdt6OObz6v9p3Rn1OG3GJksTTKMJF0u/guMISHPhSA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
   '@mariozechner/clipboard@0.3.6':
     resolution: {integrity: sha512-MXdtr+6+ntlIVHdrZYuZNQydu6o8yZswFJ2Ln81j2O/Y9B/LDHvEaIm95xWNPkjGTWriSOeLnQJRFs6dYb60bg==}
+    engines: {node: '>= 10'}
+
+  '@mariozechner/clipboard@0.3.9':
+    resolution: {integrity: sha512-ABnA53mdfkGZwOFUdZNv2S0CWGO/EIuPj8Vv9xmBFmSYg/qFc7ihO6q5FcQjvoE67kZpWkEc4AhD6B/os04yuA==}
     engines: {node: '>= 10'}
 
   '@mistralai/mistralai@2.2.1':
@@ -4089,9 +4160,9 @@ snapshots:
       - ws
       - zod
 
-  '@earendil-works/pi-agent-core@0.76.0(ws@8.20.1)(zod@4.4.3)':
+  '@earendil-works/pi-agent-core@0.77.0(ws@8.20.1)(zod@4.4.3)':
     dependencies:
-      '@earendil-works/pi-ai': 0.76.0(ws@8.20.1)(zod@4.4.3)
+      '@earendil-works/pi-ai': 0.77.0(ws@8.20.1)(zod@4.4.3)
       ignore: 7.0.5
       typebox: 1.1.38
       yaml: 2.9.0
@@ -4123,7 +4194,7 @@ snapshots:
       - ws
       - zod
 
-  '@earendil-works/pi-ai@0.76.0(ws@8.20.1)(zod@4.4.3)':
+  '@earendil-works/pi-ai@0.77.0(ws@8.20.1)(zod@4.4.3)':
     dependencies:
       '@anthropic-ai/sdk': 0.91.1(zod@4.4.3)
       '@aws-sdk/client-bedrock-runtime': 3.1048.0
@@ -4172,11 +4243,11 @@ snapshots:
       - ws
       - zod
 
-  '@earendil-works/pi-coding-agent@0.76.0(ws@8.20.1)(zod@4.4.3)':
+  '@earendil-works/pi-coding-agent@0.77.0(ws@8.20.1)(zod@4.4.3)':
     dependencies:
-      '@earendil-works/pi-agent-core': 0.76.0(ws@8.20.1)(zod@4.4.3)
-      '@earendil-works/pi-ai': 0.76.0(ws@8.20.1)(zod@4.4.3)
-      '@earendil-works/pi-tui': 0.76.0
+      '@earendil-works/pi-agent-core': 0.77.0(ws@8.20.1)(zod@4.4.3)
+      '@earendil-works/pi-ai': 0.77.0(ws@8.20.1)(zod@4.4.3)
+      '@earendil-works/pi-tui': 0.77.0
       '@silvia-odwyer/photon-node': 0.3.4
       chalk: 5.6.2
       cross-spawn: 7.0.6
@@ -4192,7 +4263,7 @@ snapshots:
       undici: 8.3.0
       yaml: 2.9.0
     optionalDependencies:
-      '@mariozechner/clipboard': 0.3.6
+      '@mariozechner/clipboard': 0.3.9
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -4206,7 +4277,7 @@ snapshots:
       get-east-asian-width: 1.6.0
       marked: 15.0.12
 
-  '@earendil-works/pi-tui@0.76.0':
+  '@earendil-works/pi-tui@0.77.0':
     dependencies:
       get-east-asian-width: 1.6.0
       marked: 15.0.12
@@ -4479,31 +4550,61 @@ snapshots:
   '@mariozechner/clipboard-darwin-arm64@0.3.6':
     optional: true
 
+  '@mariozechner/clipboard-darwin-arm64@0.3.9':
+    optional: true
+
   '@mariozechner/clipboard-darwin-universal@0.3.6':
+    optional: true
+
+  '@mariozechner/clipboard-darwin-universal@0.3.9':
     optional: true
 
   '@mariozechner/clipboard-darwin-x64@0.3.6':
     optional: true
 
+  '@mariozechner/clipboard-darwin-x64@0.3.9':
+    optional: true
+
   '@mariozechner/clipboard-linux-arm64-gnu@0.3.6':
+    optional: true
+
+  '@mariozechner/clipboard-linux-arm64-gnu@0.3.9':
     optional: true
 
   '@mariozechner/clipboard-linux-arm64-musl@0.3.6':
     optional: true
 
+  '@mariozechner/clipboard-linux-arm64-musl@0.3.9':
+    optional: true
+
   '@mariozechner/clipboard-linux-riscv64-gnu@0.3.6':
+    optional: true
+
+  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.9':
     optional: true
 
   '@mariozechner/clipboard-linux-x64-gnu@0.3.6':
     optional: true
 
+  '@mariozechner/clipboard-linux-x64-gnu@0.3.9':
+    optional: true
+
   '@mariozechner/clipboard-linux-x64-musl@0.3.6':
+    optional: true
+
+  '@mariozechner/clipboard-linux-x64-musl@0.3.9':
     optional: true
 
   '@mariozechner/clipboard-win32-arm64-msvc@0.3.6':
     optional: true
 
+  '@mariozechner/clipboard-win32-arm64-msvc@0.3.9':
+    optional: true
+
   '@mariozechner/clipboard-win32-x64-msvc@0.3.6':
+    optional: true
+
+  '@mariozechner/clipboard-win32-x64-msvc@0.3.9':
     optional: true
 
   '@mariozechner/clipboard@0.3.6':
@@ -4518,6 +4619,20 @@ snapshots:
       '@mariozechner/clipboard-linux-x64-musl': 0.3.6
       '@mariozechner/clipboard-win32-arm64-msvc': 0.3.6
       '@mariozechner/clipboard-win32-x64-msvc': 0.3.6
+    optional: true
+
+  '@mariozechner/clipboard@0.3.9':
+    optionalDependencies:
+      '@mariozechner/clipboard-darwin-arm64': 0.3.9
+      '@mariozechner/clipboard-darwin-universal': 0.3.9
+      '@mariozechner/clipboard-darwin-x64': 0.3.9
+      '@mariozechner/clipboard-linux-arm64-gnu': 0.3.9
+      '@mariozechner/clipboard-linux-arm64-musl': 0.3.9
+      '@mariozechner/clipboard-linux-riscv64-gnu': 0.3.9
+      '@mariozechner/clipboard-linux-x64-gnu': 0.3.9
+      '@mariozechner/clipboard-linux-x64-musl': 0.3.9
+      '@mariozechner/clipboard-win32-arm64-msvc': 0.3.9
+      '@mariozechner/clipboard-win32-x64-msvc': 0.3.9
     optional: true
 
   '@mistralai/mistralai@2.2.1':
