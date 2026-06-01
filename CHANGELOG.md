@@ -1,5 +1,12 @@
 # my-pi
 
+## 0.1.74
+
+### Patch Changes
+
+- b94bea1: Add upstream Pi session, naming, and tool exclusion flags
+  while preserving my-pi-specific UX.
+
 ## 0.1.73
 
 ## 0.1.72
