@@ -2,7 +2,8 @@
 name: pi-validation-flow
 # prettier-ignore
 description: Use when validating Pi monorepo changes after editing TypeScript, Svelte, package manifests, built-in registry, tests, repo tooling, skills, or docs.
-compatibility: Requires the Pi coding-agent monorepo validation scripts.
+compatibility:
+  Requires the Pi coding-agent monorepo validation scripts.
 ---
 
 # Pi Validation Flow

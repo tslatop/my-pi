@@ -1,6 +1,8 @@
 # Package map
 
-`my-pi` can be run as a full distribution with `pnpx my-pi@latest`, while most `@spences10/pi-*` packages can also be installed into vanilla Pi.
+`my-pi` can be run as a full distribution with `pnpx my-pi@latest`,
+while most `@spences10/pi-*` packages can also be installed into
+vanilla Pi.
 
 ## User-installable extension packages
 
@@ -25,7 +27,8 @@
 
 ## Shared support packages
 
-These are published as dependencies but are not normally installed with `pi install` directly:
+These are published as dependencies but are not normally installed
+with `pi install` directly:
 
 - `@spences10/pi-child-env`
 - `@spences10/pi-footer`
@@ -34,4 +37,5 @@ These are published as dependencies but are not normally installed with `pi inst
 - `@spences10/pi-skill-importer`
 - `@spences10/pi-tui-modal`
 
-Check each package README before changing install instructions, commands, or public behavior.
+Check each package README before changing install instructions,
+commands, or public behavior.

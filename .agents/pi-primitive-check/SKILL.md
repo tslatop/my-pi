@@ -2,7 +2,8 @@
 name: pi-primitive-check
 # prettier-ignore
 description: Use when evaluating proposed Pi customisation work against built-in Pi primitives before implementation, especially extensions, packages, slash commands, and workflow ideas.
-compatibility: Requires the Pi coding-agent monorepo docs and source tree.
+compatibility:
+  Requires the Pi coding-agent monorepo docs and source tree.
 ---
 
 # Pi Primitive Check

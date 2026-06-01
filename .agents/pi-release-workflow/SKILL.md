@@ -2,7 +2,8 @@
 name: pi-release-workflow
 # prettier-ignore
 description: Use when preparing or validating Pi monorepo releases, including Changesets, pnpm lockfile updates, package previews, release-age policy, and installability checks.
-compatibility: Requires this Pi coding-agent monorepo release workflow.
+compatibility:
+  Requires this Pi coding-agent monorepo release workflow.
 ---
 
 # Pi Release Workflow

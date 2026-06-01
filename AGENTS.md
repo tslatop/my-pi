@@ -4,7 +4,8 @@ Guidance for coding agents working in this repository.
 
 ## Orientation
 
-This repo is `my-pi`: a curated Pi coding-agent distribution plus reusable `@spences10/pi-*` packages.
+This repo is `my-pi`: a curated Pi coding-agent distribution plus
+reusable `@spences10/pi-*` packages.
 
 Start with:
 
@@ -12,11 +13,13 @@ Start with:
 - `docs/package-map.md` for installable vs support packages.
 - `docs/agent-workflows.md` for repository-specific skill routing.
 - `docs/dependency-overrides.md` before changing pnpm overrides.
-- Package-local `README.md` files before changing package behavior or user-facing docs.
+- Package-local `README.md` files before changing package behavior or
+  user-facing docs.
 
 ## Repository-specific skills
 
-Project skills live directly under `.agents/<skill>/SKILL.md`. Load the matching skill before doing the work:
+Project skills live directly under `.agents/<skill>/SKILL.md`. Load
+the matching skill before doing the work:
 
 | Task                                             | Skill                      |
 | ------------------------------------------------ | -------------------------- |
@@ -31,7 +34,8 @@ Keep skill metadata activation-friendly:
 - single-line `description`
 - `# prettier-ignore` above long descriptions
 - trigger language starts with `Use when...`
-- validate with `pnpx check-skills validate .agents --recursive --json`
+- validate with
+  `pnpx check-skills validate .agents --recursive --json`
 
 ## Source of truth order
 
@@ -47,7 +51,9 @@ Before reporting implementation completion:
 1. Inspect `git diff --name-only`.
 2. Run the narrowest package check/test for touched packages.
 3. Run LSP diagnostics for changed TypeScript/Svelte source files.
-4. Run root checks when shared files, package manifests, lockfiles, registry wiring, or tooling changed.
-5. For skill edits, run `pnpx check-skills validate .agents --recursive --json`.
+4. Run root checks when shared files, package manifests, lockfiles,
+   registry wiring, or tooling changed.
+5. For skill edits, run
+   `pnpx check-skills validate .agents --recursive --json`.
 
 Report changed files, validation run, and unresolved risks only.
