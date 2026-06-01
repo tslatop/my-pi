@@ -1,3 +1,4 @@
+import { write_settings } from '@spences10/pi-settings';
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import {
@@ -9,7 +10,6 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { write_settings } from '@spences10/pi-settings';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
 	create_mcp_config_backup,
@@ -36,6 +36,9 @@ describe('load_mcp_config', () => {
 	const dirs: string[] = [];
 	const original_home = process.env.HOME;
 	const original_agent_dir = process.env.PI_CODING_AGENT_DIR;
+	const original_mcp_allowlist = process.env.MY_PI_MCP_ENV_ALLOWLIST;
+	const original_test_token = process.env.MY_TEST_TOKEN;
+	const original_secret_token = process.env.MY_SECRET_TOKEN;
 
 	afterEach(() => {
 		for (const dir of dirs.splice(0)) {
@@ -50,6 +53,21 @@ describe('load_mcp_config', () => {
 			delete process.env.PI_CODING_AGENT_DIR;
 		} else {
 			process.env.PI_CODING_AGENT_DIR = original_agent_dir;
+		}
+		if (original_mcp_allowlist === undefined) {
+			delete process.env.MY_PI_MCP_ENV_ALLOWLIST;
+		} else {
+			process.env.MY_PI_MCP_ENV_ALLOWLIST = original_mcp_allowlist;
+		}
+		if (original_test_token === undefined) {
+			delete process.env.MY_TEST_TOKEN;
+		} else {
+			process.env.MY_TEST_TOKEN = original_test_token;
+		}
+		if (original_secret_token === undefined) {
+			delete process.env.MY_SECRET_TOKEN;
+		} else {
+			process.env.MY_SECRET_TOKEN = original_secret_token;
 		}
 	});
 
@@ -150,6 +168,75 @@ describe('load_mcp_config', () => {
 				transport: 'http',
 				url: 'https://example.com/mcp',
 				headers: { Authorization: 'Bearer test' },
+			},
+		]);
+	});
+
+	it('expands allowlisted env vars in http headers', () => {
+		const home = tmp_dir();
+		const cwd = tmp_dir();
+		dirs.push(home, cwd);
+		process.env.HOME = home;
+		process.env.MY_PI_MCP_ENV_ALLOWLIST = 'MY_TEST_TOKEN';
+		process.env.MY_TEST_TOKEN = 'secret123';
+
+		writeFileSync(
+			join(cwd, 'mcp.json'),
+			JSON.stringify({
+				mcpServers: {
+					remote: {
+						type: 'http',
+						url: 'https://example.com/mcp',
+						headers: {
+							Authorization: 'Bearer ${MY_TEST_TOKEN}',
+							'X-Custom': 'static',
+						},
+					},
+				},
+			}),
+		);
+
+		expect(load_mcp_config(cwd)).toEqual([
+			{
+				name: 'remote',
+				transport: 'http',
+				url: 'https://example.com/mcp',
+				headers: {
+					Authorization: 'Bearer secret123',
+					'X-Custom': 'static',
+				},
+			},
+		]);
+	});
+
+	it('does not expand non-allowlisted env vars in http headers', () => {
+		const home = tmp_dir();
+		const cwd = tmp_dir();
+		dirs.push(home, cwd);
+		process.env.HOME = home;
+		process.env.MY_SECRET_TOKEN = 'should-not-leak';
+
+		writeFileSync(
+			join(cwd, 'mcp.json'),
+			JSON.stringify({
+				mcpServers: {
+					remote: {
+						type: 'http',
+						url: 'https://example.com/mcp',
+						headers: {
+							Authorization: 'Bearer ${MY_SECRET_TOKEN}',
+						},
+					},
+				},
+			}),
+		);
+
+		expect(load_mcp_config(cwd)).toEqual([
+			{
+				name: 'remote',
+				transport: 'http',
+				url: 'https://example.com/mcp',
+				headers: { Authorization: 'Bearer ' },
 			},
 		]);
 	});

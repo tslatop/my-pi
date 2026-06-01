@@ -1,5 +1,15 @@
 # @spences10/pi-mcp
 
+## 0.0.38
+
+### Patch Changes
+
+- Expand `${VAR}` placeholders in HTTP MCP headers using the MCP
+  child-env allowlist, so remote server tokens can be configured
+  without exposing arbitrary process secrets.
+- Safely expand HTTP MCP header env placeholders using MCP allowlist,
+  preventing arbitrary secret exposure.
+
 ## 0.0.37
 
 ### Patch Changes

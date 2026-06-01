@@ -1,9 +1,33 @@
+import { create_child_process_env } from '../env.js';
 import type {
 	McpHttpServerConfig,
 	McpServerConfig,
 	McpStdioServerConfig,
 	RawMcpServerEntry,
 } from './types.js';
+
+function expand_env_vars(
+	value: string,
+	env: NodeJS.ProcessEnv,
+): string {
+	return value.replace(
+		/\$\{([^}]+)\}/g,
+		(_, key: string) => env[key] ?? '',
+	);
+}
+
+function expand_header_env_vars(
+	headers: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+	if (!headers) return undefined;
+	const safe_env = create_child_process_env();
+	return Object.fromEntries(
+		Object.entries(headers).map(([key, value]) => [
+			key,
+			expand_env_vars(value, safe_env),
+		]),
+	);
+}
 
 function is_string_record(
 	value: unknown,
@@ -61,9 +85,9 @@ export function parse_server(
 			);
 		}
 		is_string_record(entry.headers, 'headers', name);
-		const headers = entry.headers as
-			| Record<string, string>
-			| undefined;
+		const headers = expand_header_env_vars(
+			entry.headers as Record<string, string> | undefined,
+		);
 		const config: McpHttpServerConfig = {
 			name,
 			transport: 'http',
