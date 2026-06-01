@@ -1,11 +1,8 @@
 ---
 name: pi-extension-development
-description:
-  'Build or modify packages in this Pi monorepo. Use when creating Pi
-  extensions, prompt shims, built-in extension wiring, package
-  scaffolds, or packages/pi-* implementation work.'
-compatibility:
-  'Requires the Pi coding-agent monorepo and extension API.'
+# prettier-ignore
+description: Use when creating or modifying Pi extensions, built-in extension wiring, prompt shims, package scaffolds, package READMEs, or packages/pi-* implementation in this monorepo.
+compatibility: Requires the Pi coding-agent monorepo and extension API.
 ---
 
 # Pi Extension Development
