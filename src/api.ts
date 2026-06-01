@@ -19,8 +19,15 @@ import {
 	type LoadExtensionsResult,
 } from '@earendil-works/pi-coding-agent';
 import { apply_project_trust_untrusted_defaults } from '@spences10/pi-project-trust';
+import { existsSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
+import {
+	basename,
+	dirname,
+	isAbsolute,
+	join,
+	resolve,
+} from 'node:path';
 import {
 	BUILTIN_EXTENSION_REGISTRY,
 	type BuiltinExtensionKey,
@@ -57,7 +64,11 @@ export interface CreateMyPiOptions extends BuiltinExtensionOptions {
 	model?: string;
 	thinking?: MyPiThinkingLevel;
 	selected_tools?: string[];
+	excluded_tools?: string[];
 	selected_skills?: string[];
+	session?: string;
+	session_id?: string;
+	startup_session_name?: string;
 	session_dir?: string;
 	system_prompt?: string;
 	append_system_prompt?: string;
@@ -148,6 +159,68 @@ function is_resource_enabled(value: string | undefined): boolean {
 
 function resolve_agent_dir(cwd: string, agent_dir?: string): string {
 	return agent_dir ? resolve(cwd, agent_dir) : getAgentDir();
+}
+
+function resolve_session_file(
+	cwd: string,
+	session_dir: string | undefined,
+	session_ref: string | undefined,
+): string | undefined {
+	if (!session_ref) return undefined;
+	const explicit_path = isAbsolute(session_ref)
+		? session_ref
+		: resolve(cwd, session_ref);
+	if (existsSync(explicit_path)) return explicit_path;
+	if (session_ref.endsWith('.jsonl')) return explicit_path;
+
+	const dir = session_dir ? resolve(cwd, session_dir) : undefined;
+	if (!dir || !existsSync(dir)) return undefined;
+	const matches = readdirSync(dir)
+		.filter(
+			(file) =>
+				file.endsWith('.jsonl') &&
+				(basename(file, '.jsonl').endsWith(session_ref) ||
+					file.includes(session_ref)),
+		)
+		.sort();
+	const match = matches.at(-1);
+	return match ? join(dir, match) : undefined;
+}
+
+function create_session_manager(options: {
+	cwd: string;
+	session_dir?: string;
+	session?: string;
+	session_id?: string;
+	startup_session_name?: string;
+}): SessionManager {
+	const resolved_session_dir = options.session_dir
+		? resolve(options.cwd, options.session_dir)
+		: SessionManager.create(options.cwd).getSessionDir();
+	const session_ref = options.session ?? options.session_id;
+	const session_file = resolve_session_file(
+		options.cwd,
+		resolved_session_dir,
+		session_ref,
+	);
+	const session_manager = session_file
+		? SessionManager.open(
+				session_file,
+				resolved_session_dir,
+				options.cwd,
+			)
+		: SessionManager.create(
+				options.cwd,
+				resolved_session_dir,
+				options.session_id ? { id: options.session_id } : {},
+			);
+	if (
+		options.startup_session_name &&
+		session_manager.getSessionName() !== options.startup_session_name
+	) {
+		session_manager.appendSessionInfo(options.startup_session_name);
+	}
+	return session_manager;
 }
 
 interface ModelRegistryLike {
@@ -306,7 +379,11 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 		model,
 		thinking,
 		selected_tools,
+		excluded_tools,
 		selected_skills,
+		session,
+		session_id,
+		startup_session_name,
 		session_dir,
 		system_prompt,
 		append_system_prompt,
@@ -483,6 +560,9 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 					? { thinkingLevel: effective_thinking }
 					: {}),
 				...(selected_tools?.length ? { tools: selected_tools } : {}),
+				...(excluded_tools?.length
+					? { excludeTools: excluded_tools }
+					: {}),
 			})),
 			services,
 			diagnostics: services.diagnostics,
@@ -494,10 +574,13 @@ export async function create_my_pi(options: CreateMyPiOptions = {}) {
 			await createAgentSessionRuntime(create_runtime, {
 				cwd,
 				agentDir: effective_agent_dir,
-				sessionManager: SessionManager.create(
+				sessionManager: create_session_manager({
 					cwd,
-					session_dir ? resolve(cwd, session_dir) : undefined,
-				),
+					session_dir,
+					session,
+					session_id,
+					startup_session_name,
+				}),
 			}),
 			restore_runtime_env,
 		);

@@ -97,24 +97,33 @@ export function parse_extension_paths(
 		.map((path) => resolve(cwd, path));
 }
 
+function parse_comma_list_flags(
+	argv: string[],
+	flags: readonly string[],
+): string[] | undefined {
+	const values = collect_flag_values(argv, flags)
+		.flatMap((value) => value.split(','))
+		.map((value) => value.trim())
+		.filter(Boolean);
+	return values.length ? [...new Set(values)] : undefined;
+}
+
 export function parse_tool_allowlist(
 	argv: string[],
 ): string[] | undefined {
-	const tools = collect_flag_values(argv, ['--tools', '-t'])
-		.flatMap((value) => value.split(','))
-		.map((tool) => tool.trim())
-		.filter(Boolean);
-	return tools.length ? [...new Set(tools)] : undefined;
+	return parse_comma_list_flags(argv, ['--tools', '-t']);
+}
+
+export function parse_tool_excludelist(
+	argv: string[],
+): string[] | undefined {
+	return parse_comma_list_flags(argv, ['--exclude-tools', '-xt']);
 }
 
 export function parse_skill_allowlist(
 	argv: string[],
 ): string[] | undefined {
-	const skills = collect_flag_values(argv, ['--skill'])
-		.flatMap((value) => value.split(','))
-		.map((skill) => skill.trim())
-		.filter(Boolean);
-	return skills.length ? [...new Set(skills)] : undefined;
+	return parse_comma_list_flags(argv, ['--skill']);
 }
 
 export function parse_thinking_level(

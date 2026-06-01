@@ -12,6 +12,7 @@ import {
 	parse_skill_allowlist,
 	parse_thinking_level,
 	parse_tool_allowlist,
+	parse_tool_excludelist,
 	resolve_builtin_extension_options,
 } from './cli-args.js';
 import { install_sqlite_warning_filter } from './warnings.js';
@@ -36,6 +37,41 @@ async function read_stdin(): Promise<string> {
 		chunks.push(chunk as Buffer);
 	}
 	return Buffer.concat(chunks).toString('utf-8').trim();
+}
+
+async function run_interactive_mode(
+	runtime: any,
+	InteractiveModeClass: any,
+): Promise<void> {
+	const original_write = process.stdout.write.bind(process.stdout);
+	process.stdout.write = ((chunk: any, ...args: any[]) => {
+		if (typeof chunk === 'string') {
+			const escape = String.fromCharCode(27);
+			const styled_hint = new RegExp(
+				`(To resume this session:${escape}\\[[\\d;]*m )pi( --session )`,
+				'g',
+			);
+			chunk = chunk.replace(styled_hint, '$1my-pi$2');
+			chunk = chunk.replace(
+				/(To resume this session: )pi( --session )/g,
+				'$1my-pi$2',
+			);
+		}
+		return original_write(chunk, ...args);
+	}) as typeof process.stdout.write;
+	try {
+		const mode = new InteractiveModeClass(runtime, {
+			migratedProviders: [],
+			modelFallbackMessage: undefined,
+			initialMessage: undefined,
+			initialImages: [],
+			initialMessages: [],
+		});
+		await mode.run();
+	} finally {
+		process.stdout.write =
+			original_write as typeof process.stdout.write;
+	}
 }
 
 const HELP_APPENDIX = `
@@ -203,6 +239,29 @@ const main = defineCommand({
 				'Comma-separated allowlist of tool names to enable',
 			required: false,
 		},
+		'exclude-tools': {
+			type: 'string',
+			alias: 'xt',
+			description: 'Comma-separated list of tool names to disable',
+			required: false,
+		},
+		session: {
+			type: 'string',
+			description: 'Resume a specific session file or session ID',
+			required: false,
+		},
+		'session-id': {
+			type: 'string',
+			description:
+				'Create or resume an exact project-local session ID',
+			required: false,
+		},
+		name: {
+			type: 'string',
+			alias: 'n',
+			description: 'Set the session display name at startup',
+			required: false,
+		},
 		skill: {
 			type: 'string',
 			description: 'Skill name to allow; repeatable in argv parsing',
@@ -229,6 +288,7 @@ const main = defineCommand({
 		const cwd = process.cwd();
 		const extension_paths = parse_extension_paths(process.argv, cwd);
 		const selected_tools = parse_tool_allowlist(process.argv);
+		const excluded_tools = parse_tool_excludelist(process.argv);
 		const selected_skills = parse_skill_allowlist(process.argv);
 		let selected_thinking;
 		try {
@@ -300,6 +360,12 @@ const main = defineCommand({
 			);
 			process.exit(1);
 		}
+		if (args.session && args['session-id']) {
+			console.error(
+				'Error: --session and --session-id cannot be used together.',
+			);
+			process.exit(1);
+		}
 
 		let telemetry_override: boolean | undefined;
 		if (args.telemetry) {
@@ -328,7 +394,11 @@ const main = defineCommand({
 			model: args.model,
 			thinking: selected_thinking,
 			selected_tools,
+			excluded_tools,
 			selected_skills,
+			session: args.session,
+			session_id: args['session-id'],
+			startup_session_name: args.name,
 			system_prompt: args['system-prompt'],
 			append_system_prompt: args['append-system-prompt'],
 			untrusted_repo: args.untrusted,
@@ -351,14 +421,7 @@ const main = defineCommand({
 		} else if (!process.stdout.isTTY) {
 			await print_usage(main as any);
 		} else {
-			const mode = new InteractiveMode(runtime, {
-				migratedProviders: [],
-				modelFallbackMessage: undefined,
-				initialMessage: undefined,
-				initialImages: [],
-				initialMessages: [],
-			});
-			await mode.run();
+			await run_interactive_mode(runtime, InteractiveMode);
 		}
 	},
 });

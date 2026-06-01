@@ -6,6 +6,7 @@ import {
 	parse_skill_allowlist,
 	parse_thinking_level,
 	parse_tool_allowlist,
+	parse_tool_excludelist,
 	resolve_builtin_extension_options,
 } from './cli-args.js';
 import { BUILTIN_EXTENSIONS } from './extensions/builtin-registry.js';
@@ -55,6 +56,17 @@ describe('CLI arg helpers', () => {
 				'my-pi',
 				'--tools=bash,read',
 				'-t',
+				'read,edit',
+			]),
+		).toEqual(['bash', 'read', 'edit']);
+	});
+
+	it('parses and dedupes comma-separated tool excludelists across repeated flags', () => {
+		expect(
+			parse_tool_excludelist([
+				'my-pi',
+				'--exclude-tools=bash,read',
+				'-xt',
 				'read,edit',
 			]),
 		).toEqual(['bash', 'read', 'edit']);
